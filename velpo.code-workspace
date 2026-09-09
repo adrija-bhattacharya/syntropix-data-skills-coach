@@ -1,0 +1,13 @@
+{
+  "folders": [{ "path": "." }],
+  "settings": {},
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      "charliermarsh.ruff",
+      "ms-python.mypy-type-checker",
+      "ms-vscode.makefile-tools"
+    ]
+  }
+}

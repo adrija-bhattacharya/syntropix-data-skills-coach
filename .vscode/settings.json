@@ -1,0 +1,36 @@
+{
+  "python.defaultInterpreterPath": "C:\\Users\\adrija\\anaconda3\\python.exe",
+  "python.analysis.typeCheckingMode": "basic",
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["tests"],
+  "python.terminal.activateEnvironment": true,
+
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  "ruff.importStrategy": "fromEnvironment",
+  "mypy-type-checker.importStrategy": "fromEnvironment",
+  "mypy-type-checker.args": ["--config-file=pyproject.toml"],
+
+  "typescript.tsdk": "frontend/node_modules/typescript/lib",
+  "eslint.enable": false,
+  "[typescript]": { "editor.tabSize": 2 },
+  "[typescriptreact]": { "editor.tabSize": 2 },
+
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.egg-info": true,
+    "**/.pytest_cache": true,
+    "**/.mypy_cache": true,
+    "**/.ruff_cache": true,
+    "frontend/node_modules": true,
+    "velpo/web": true
+  },
+  "search.exclude": { "frontend/node_modules": true, "velpo/web": true },
+  "editor.rulers": [100]
+}
