@@ -45,7 +45,7 @@ class RecommendIn(BaseModel):
     learner_id: str = Field(min_length=1)
     goals: list[str] = Field(min_length=1)
     time_budget_min: float = Field(gt=0)
-    mode: Literal["optimal", "interactive", "pareto"] = "optimal"
+    mode: Literal["sequence", "optimal", "interactive", "pareto"] = "sequence"
     n_paths: int = Field(1, ge=1, le=20)
     ban: list[str] = []
     lock: list[str] = []
@@ -69,15 +69,19 @@ class ExplainIn(BaseModel):
 
 
 def _plan_out(p: Plan) -> dict[str, Any]:
+    reviews = p.reviews or (False,) * len(p.steps)
     return {
         "feasible": p.feasible,
         "note": p.note,
         "total_minutes": round(p.total_seconds / 60, 1),
         "objective": dict(zip(_OBJ_KEYS, p.objective)),
         "steps": [
-            {"resource_id": r, "concept_id": c, "reason": reason}
-            for r, c, reason in zip(p.steps, p.concepts, p.reasons or [""] * len(p.steps))
+            {"resource_id": r, "concept_id": c, "reason": reason, "review": bool(rev)}
+            for r, c, reason, rev in zip(
+                p.steps, p.concepts, p.reasons or [""] * len(p.steps), reviews
+            )
         ],
+        "sessions": [{"start": a, "end": b} for a, b in p.sessions],
     }
 
 

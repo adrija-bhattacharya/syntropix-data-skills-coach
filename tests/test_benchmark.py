@@ -36,6 +36,16 @@ def test_benchmark_summary_velpo_dominates() -> None:
     assert summary["velpo_astar"]["mean_latency_ms"] < summary["aco"]["mean_latency_ms"]
 
 
+def test_sequencing_beats_knapsack_on_position_aware_cost() -> None:
+    from benchmarks.sequencing_bench import run as seq_bench
+
+    s = seq_bench("synthetic")
+    assert s["goals_scored"] >= 3
+    # the sequencing DP optimises the position-aware cost, so it must not lose
+    assert s["knapsack_cost_gap_vs_seq"] > 0.0
+    assert s["greedy_cost_gap_vs_seq"] > 0.0
+
+
 def test_velocity_ablation_signal_on_diverges_off_does_not() -> None:
     from benchmarks.ablation_velocity import run as ablation
 

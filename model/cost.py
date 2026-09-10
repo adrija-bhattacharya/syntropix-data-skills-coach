@@ -20,6 +20,7 @@ from __future__ import annotations
 import math
 from typing import NamedTuple
 
+from config import settings
 from model.knowledge_graph import KnowledgeGraph
 from model.learner import LearnerState, resource_load
 
@@ -87,3 +88,96 @@ def build_cost_vectors(
 ) -> dict[str, CostVector]:
     """Cost vector for every resource in the catalogue.  ``O(R * C)``."""
     return {rid: resource_cost(kg, rid, state, prev_difficulty) for rid in kg.resources}
+
+
+# --------------------------------------------------------------------------- #
+# position-aware costs - the input to the sequencing DP (algorithms.sequencing)
+# --------------------------------------------------------------------------- #
+def predicted_mastery(
+    post_mastery: float, taught_position: int, position: int, half_life_steps: float
+) -> float:
+    """Mastery of a concept last reinforced ``position - taught_position`` steps
+    ago, decaying geometrically with a step-based half-life."""
+    lag = max(0, position - taught_position)
+    return float(post_mastery * 0.5 ** (lag / max(half_life_steps, 1e-6)))
+
+
+def _prereq_mastery_now(
+    kg: KnowledgeGraph,
+    concept: str,
+    taught_at: dict[str, int],
+    position: int,
+    half_life_steps: float,
+) -> float:
+    reqs = [q for q in kg.direct_prerequisites(concept) if q in taught_at]
+    if not reqs:
+        return 1.0
+    post = settings.seq_post_mastery
+    return sum(
+        predicted_mastery(post, taught_at[q], position, half_life_steps) for q in reqs
+    ) / len(reqs)
+
+
+def sequence_step_cost(
+    kg: KnowledgeGraph,
+    concept: str,
+    resource_id: str,
+    state: LearnerState,
+    *,
+    position: int,
+    taught_at: dict[str, int],
+    prev_difficulty: float,
+    half_life_steps: float,
+) -> CostVector:
+    """Cost of teaching ``concept`` (for the first time) with ``resource_id`` at
+    step ``position`` of the sequence, given when its prerequisites were taught.
+
+    Unlike :func:`resource_cost` this is **position-dependent**: a concept taught
+    too early (weak prerequisites) or too late (decayed prerequisites) costs more
+    cognitive load and books prerequisite debt.
+    """
+    r = kg.resources[resource_id]
+    per_concept_time = r.seconds / max(1, len(r.concepts))
+    prereq_m = _prereq_mastery_now(kg, concept, taught_at, position, half_life_steps)
+
+    gain = 0.0
+    for c in r.concepts:
+        gain += expected_mastery_gain(
+            state.decayed_mastery(c), state.velocity.get(c, 1.0), per_concept_time
+        )
+
+    theta = settings.mastery_threshold
+    return CostVector(
+        neg_gain=-gain,
+        seconds=r.seconds,
+        load=resource_load(r.difficulty, prereq_m),
+        diff_jump=abs(r.difficulty - prev_difficulty),
+        neg_review=max(0.0, theta - prereq_m),  # building on shaky prerequisites is a cost
+    )
+
+
+def sequence_review_cost(
+    kg: KnowledgeGraph,
+    concept: str,
+    resource_id: str,
+    *,
+    position: int,
+    taught_at: dict[str, int],
+    prev_difficulty: float,
+    half_life_steps: float,
+) -> CostVector:
+    """Cost of a *review* step: re-teaching an already-covered ``concept`` whose
+    predicted mastery has decayed.  The upside is booked as negative
+    ``neg_review`` (mastery restored)."""
+    r = kg.resources[resource_id]
+    m_now = predicted_mastery(
+        settings.seq_post_mastery, taught_at.get(concept, position), position, half_life_steps
+    )
+    restored = max(0.0, settings.seq_post_mastery - m_now)
+    return CostVector(
+        neg_gain=0.0,
+        seconds=r.seconds,
+        load=0.5 * resource_load(r.difficulty, 1.0),
+        diff_jump=abs(r.difficulty - prev_difficulty),
+        neg_review=-restored,
+    )

@@ -8,7 +8,11 @@ worst-case complexity; each has a test that proves the property it must have.
 | **Graph traversal** - cycle removal (Tarjan SCC + greedy feedback-arc-set) | [`graph_traversal.py`](algorithms/graph_traversal.py) · `remove_cycles` | `O(V+E)` | `tests/test_graph_traversal.py` |
 | **Graph traversal** - ancestor extraction (backward BFS) | `graph_traversal.py` · `ancestors_subgraph` | `O(V+E)` | ″ |
 | **Graph traversal** - topological sort (Kahn, deterministic) | `graph_traversal.py` · `topological_order` | `O(V+E)` | ″ |
-| **Dynamic programming** - constrained multiple-choice knapsack over the topological order (the core; provably optimal, feasible by construction) | [`dynamic_programming.py`](algorithms/dynamic_programming.py) · `solve_optimal` | `O(V·R·B)` time, `O(V·B)` space | `tests/test_dp_optimality.py`, `tests/test_dp_feasibility.py` |
+| **Graph / order theory** - minimum chain cover (Dilworth, via bipartite matching) + order-ideal enumeration | [`poset.py`](algorithms/poset.py) · `min_chain_cover`, `order_ideals` | matching `O(V·E)`; `#ideals ≤ ∏(chain+1)` | `tests/test_poset.py` |
+| **Dynamic programming (the core)** - precedence-constrained **sequencing** DP over the lattice of order ideals: provably-optimal *linear extension* + resource choice, position-dependent costs | [`sequencing.py`](algorithms/sequencing.py) · `solve_sequence` | `O(#ideals · W · R)`, `#ideals = O((n/w+1)^w)` | `tests/test_sequencing.py` (== exhaustive search) |
+| **Dynamic programming** - spaced-review insertion (1-D pass over the sequence) | `sequencing.py` · `insert_reviews` | `O(n · P)` | `tests/test_sequencing.py` |
+| **Dynamic programming** - study-session packing (1-D partition DP) | `sequencing.py` · `pack_sessions` | `O(n²)` | `tests/test_sequencing.py` |
+| **Dynamic programming** - multiple-choice knapsack over a topological order (selection-only; the tractable fallback) | [`dynamic_programming.py`](algorithms/dynamic_programming.py) · `solve_optimal` | `O(V·R·B)` time, `O(V·B)` space | `tests/test_dp_optimality.py`, `tests/test_dp_feasibility.py` |
 | **Dynamic programming** - Pareto version (non-dominated set per state) | `dynamic_programming.py` · `solve_pareto` | `O(V·R·B·F²·d)` | `tests/test_dp_feasibility.py` |
 | **A\* search (anytime)** - feasible incumbent instantly, then branch-and-bound to the same proven optimum; admissible suffix-min heuristic; optional wall-clock `deadline_s` | [`astar.py`](algorithms/astar.py) · `solve_astar` | anytime; ≤ DP worst case | `tests/test_astar.py` |
 | **Pareto / multi-objective** - dominance, non-dominated filter, ε-prune | [`pareto.py`](algorithms/pareto.py) | `O(n²·d)` | `tests/test_pareto.py` |
@@ -24,30 +28,40 @@ worst-case complexity; each has a test that proves the property it must have.
 
 ## Why the guarantees hold
 
-* **Prerequisite validity** - `ancestors_subgraph` returns exactly the goal concepts
-  plus their ancestors: a prerequisite-*closed* set.  Presenting it in a
-  topological order means no resource is ever shown before a resource covering its
-  prerequisites.  Structural, not a runtime check.
-* **Budget** - the DP state is `(concept_index, buckets_used)`; a transition that
-  would exceed `B` buckets is never generated, so an over-budget plan is
-  *unrepresentable*.  No plan fits ⇒ the solver returns `Plan.infeasible(...)`.
-* **Optimality** - `solve_optimal` is a multiple-choice-knapsack DP over a
-  topological order ⇒ the exact global optimum.  `tests/test_dp_optimality.py`
-  checks it equals exhaustive search on random curricula × 5 weight vectors.
-* **Complexity** - `O(V·R·B)` time, `O(V·B)` space, in the docstring of every solver.
+* **Prerequisite validity** - the plan is a *linear extension* of the prerequisite
+  poset: every prefix is an order ideal (down-set), so no concept is ever taught
+  before its prerequisites.  Structural, not a runtime check.
+* **Sequence optimality** - `solve_sequence` is a shortest-path DP over the lattice
+  of order ideals with state `(ideal, last resource)`.  That state is a sufficient
+  statistic for the remaining cost (prerequisite mastery is a function of the
+  ideal and the step index), so the recurrence is exact ⇒ the returned
+  **sequence** (order *and* resources) is the global optimum for the position-aware
+  cost model.  `tests/test_sequencing.py` checks it equals exhaustive search over
+  every linear extension × resource choice on 30 random curricula.
+* **Tractability** - `#order-ideals ≤ ∏(chain length + 1)` over a minimum chain
+  cover `= O((n/w+1)^w)` for poset width `w`.  Curricula are tall and narrow
+  (`tests/test_poset.py` checks width ≤ 4), so this is polynomial.  Above
+  `settings.seq_max_ideals` the engine falls back to `solve_optimal` (still
+  selection-optimal, `O(V·R·B)`, budget-feasible by construction).
+* **Budget** - a pre-check rejects goals whose minimal-time plan can't fit; if the
+  cost-optimal sequence overruns the budget it is re-solved with shortest
+  resources (feasible if any sequence is).
 
 ## Pipeline
 
 ```
 KnowledgeGraph  (model/knowledge_graph.py  <-  curriculum.py  or  benchmarks/datasets.py: real Junyi graph)
    remove_cycles           algorithms/graph_traversal.py    O(V+E)   (real graphs can have cycles)
-   ancestors_subgraph      algorithms/graph_traversal.py    O(V+E)
-   topological_order       algorithms/graph_traversal.py    O(V+E)
-   build_cost_vectors      model/cost.py    <-gain(m, VELOCITY), time, load, |Δd|, -review>
-                                            m = BKT prior -> forgetting decay -> DKT-lite refine
-   solve_optimal / solve_pareto   algorithms/dynamic_programming.py   O(V·R·B)
-   solve_astar             algorithms/astar.py    anytime; feasible now, proven-optimal in <1 ms
-   explain_plan            explain.py    knowledge-graph-grounded reason per step
+   ancestors_subgraph      algorithms/graph_traversal.py    O(V+E)   prerequisite-closed relevant set
+   min_chain_cover         algorithms/poset.py              matching  -> poset width -> #ideals bound
+   solve_sequence          algorithms/sequencing.py         O(#ideals · W · R)   the optimal linear extension
+       step cost           model/cost.py::sequence_step_cost  <- prereq-freshness(pos), gain(VELOCITY), |Δd|
+       m per concept       BKT prior -> forgetting decay -> DKT-lite (PFA) refine
+   insert_reviews          algorithms/sequencing.py         O(n·P)   spaced review where mastery would decay
+   pack_sessions           algorithms/sequencing.py         O(n²)    split into study sessions
+   explain_plan            explain.py                       knowledge-graph-grounded reason per step
+                           (solve_optimal / solve_astar / solve_pareto = selection-only modes / fallback)
 ```
 
 Run it end to end and print the result:  `python velpo.py demo --goal quadratics`
+Does the ordering matter?  `python velpo.py seqbench`

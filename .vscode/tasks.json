@@ -16,6 +16,7 @@
     { "label": "format", "type": "shell", "command": "python velpo.py fmt",   "problemMatcher": [] },
     { "label": "benchmark",          "type": "shell", "command": "python velpo.py benchmark --dataset all", "problemMatcher": [] },
     { "label": "ablation: velocity (N2)", "type": "shell", "command": "python velpo.py ablation", "problemMatcher": [] },
+    { "label": "seqbench: does order matter? (N1)", "type": "shell", "command": "python velpo.py seqbench --dataset all", "problemMatcher": [] },
     { "label": "datasets (N7)",      "type": "shell", "command": "python velpo.py datasets", "problemMatcher": [] },
     {
       "label": "frontend: dev",

@@ -16,6 +16,7 @@ Commands
     serve        build the React UI and serve it + the API at http://localhost:8000
     benchmark    VELPO vs greedy / ACO / DQN   (--dataset synthetic|junyi|all  --runs N)
     ablation     N2 check - does learning velocity change the plan?
+    seqbench     N1 check - does optimising the sequence (not just selection) pay off?
     datasets     download / inspect the benchmark datasets (--full for the whole Junyi graph)
 
 Everything works on Windows PowerShell, macOS and Linux with no `make`.
@@ -94,11 +95,23 @@ def cmd_demo(args: argparse.Namespace) -> int:
     if not plan.feasible:
         print(f"no feasible plan: {plan.note}")
         return 0
-    for i, (rid, reason) in enumerate(zip(plan.steps, plan.reasons or [""] * len(plan.steps)), 1):
-        print(f"{i:2}. {rid:<34} {reason}")
+    if plan.note:
+        print(f"note: {plan.note}\n")
+
+    reasons = plan.reasons or [""] * len(plan.steps)
+    session_start = {a: k + 1 for k, (a, _) in enumerate(plan.sessions)}
+    for i, (rid, reason) in enumerate(zip(plan.steps, reasons)):
+        if i in session_start:
+            print(f"\n  -- session {session_start[i]} --")
+        tag = "R" if plan.is_review(i) else " "
+        print(f" {tag}{i + 1:2}. {rid:<34} {reason}")
+
     o = plan.objective
+    n_rev = sum(plan.reviews) if plan.reviews else 0
+    rev_txt = f" ({n_rev} spaced review{'s' if n_rev != 1 else ''})" if n_rev else ""
     print(
-        f"\n{len(plan.steps)} steps - {plan.total_seconds / 60:.0f} min | "
+        f"\n{len(plan.steps)} steps{rev_txt} - {plan.total_seconds / 60:.0f} min "
+        f"over {len(plan.sessions) or 1} session(s) | "
         f"mastery gain {-o.neg_gain:.2f}  load {o.load:.2f}  diff-jumps {o.diff_jump:.2f}"
     )
     return 0
@@ -175,6 +188,10 @@ def cmd_ablation(_: argparse.Namespace) -> int:
     return _run([*PY, "-m", "benchmarks.ablation_velocity"])
 
 
+def cmd_seqbench(args: argparse.Namespace) -> int:
+    return _run([*PY, "-m", "benchmarks.sequencing_bench", *args.rest])
+
+
 def cmd_datasets(args: argparse.Namespace) -> int:
     from benchmarks.datasets import DATASETS, load
 
@@ -205,7 +222,11 @@ def main(argv: list[str] | None = None) -> int:
         d.add_argument("--dataset", default="synthetic", choices=("synthetic", "junyi"))
         d.add_argument("--goal", default=None)
         d.add_argument("--minutes", type=float, default=120)
-        d.add_argument("--mode", default="optimal", choices=("optimal", "interactive", "pareto"))
+        d.add_argument(
+            "--mode",
+            default="sequence",
+            choices=("sequence", "optimal", "interactive", "pareto"),
+        )
         d.add_argument("--speed", default="normal", choices=("slow", "normal", "fast"))
         d.set_defaults(fn=cmd_demo)
 
@@ -225,6 +246,10 @@ def main(argv: list[str] | None = None) -> int:
     b.set_defaults(fn=cmd_benchmark)
 
     sub.add_parser("ablation").set_defaults(fn=cmd_ablation)
+
+    sb = sub.add_parser("seqbench")
+    sb.add_argument("rest", nargs=argparse.REMAINDER)
+    sb.set_defaults(fn=cmd_seqbench)
 
     ds = sub.add_parser("datasets")
     ds.add_argument("--full", action="store_true", help="download the complete Junyi graph")

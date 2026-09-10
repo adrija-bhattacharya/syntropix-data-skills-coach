@@ -16,14 +16,28 @@ from algorithms.dynamic_programming import (
     solve_optimal,
     solve_pareto,
 )
+from algorithms.sequencing import SequencePlan, plan_sequence
 from config import settings
 from explain import explain_plan, explain_step
 from model.cost import build_cost_vectors
 from model.knowledge_graph import KnowledgeGraph
 from model.learner import Attempt, LearnerState, bkt_update, decay, velocity_update
 
-Mode = Literal["optimal", "interactive", "pareto"]
+Mode = Literal["sequence", "optimal", "interactive", "pareto"]
 _HOUR = 3600.0
+
+
+def _sequence_to_plan(kg: KnowledgeGraph, sp: SequencePlan) -> Plan:
+    return Plan(
+        steps=tuple(s.resource_id for s in sp.steps),
+        concepts=tuple(s.concept for s in sp.steps),
+        objective=sp.objective,
+        total_seconds=sp.total_seconds,
+        feasible=sp.feasible,
+        note=sp.note,
+        reviews=tuple(s.review for s in sp.steps),
+        sessions=sp.sessions,
+    )
 
 
 class LearnerStore(Protocol):
@@ -102,6 +116,20 @@ class Engine:
                 self.kg, goal_list, state, costs, constraints=constraints, deadline_s=deadline_s
             )
             plans = [result if isinstance(result, Plan) else result[0]]
+        elif mode == "sequence":
+            sp = plan_sequence(
+                self.kg,
+                goal_list,
+                state,
+                budget_seconds=time_budget_s,
+                constraints=constraints,
+            )
+            if sp.feasible:
+                plans = [_sequence_to_plan(self.kg, sp)]
+            else:  # poset too wide (or truly infeasible) -> knapsack + heuristic order
+                p = solve_optimal(self.kg, goal_list, state, costs, constraints=constraints)
+                note = "sequencing DP not applicable - knapsack fallback" if p.feasible else sp.note
+                plans = [replace(p, note=(p.note + "; " + note).strip("; ")) if p.feasible else p]
         else:
             plans = [solve_optimal(self.kg, goal_list, state, costs, constraints=constraints)]
 

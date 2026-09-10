@@ -63,7 +63,13 @@ def explain_plan(kg: KnowledgeGraph, plan: Plan, state: LearnerState) -> Plan:
         return plan
     reasons: list[str] = []
     prev = 1.0
-    for rid, cid in zip(plan.steps, plan.concepts):
-        reasons.append(explain_step(kg, rid, cid, state, prev_difficulty=prev))
+    for i, (rid, cid) in enumerate(zip(plan.steps, plan.concepts)):
+        if plan.is_review(i):
+            reasons.append(
+                f"Spaced review of **{_name(kg, cid)}** - taught earlier and predicted to have "
+                f"decayed below the mastery threshold before it is needed again."
+            )
+        else:
+            reasons.append(explain_step(kg, rid, cid, state, prev_difficulty=prev))
         prev = kg.resources[rid].difficulty
     return replace(plan, reasons=tuple(reasons))

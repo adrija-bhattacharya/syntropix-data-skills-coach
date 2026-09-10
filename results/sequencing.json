@@ -1,0 +1,66 @@
+{
+  "dataset": "synthetic",
+  "goals_scored": 5,
+  "knapsack_cost_gap_vs_seq": 0.2555,
+  "greedy_cost_gap_vs_seq": 0.3289,
+  "mean_seq_jumps": 2.2,
+  "mean_knapsack_jumps": 2.0,
+  "total_reviews_inserted": 0,
+  "per_goal": [
+    {
+      "goal": "decimals",
+      "concepts": 2,
+      "reviews": 0,
+      "sessions": 1,
+      "seq_cost": -0.682,
+      "knapsack_cost": -0.682,
+      "greedy_cost": -0.479,
+      "seq_jumps": 1.0,
+      "knapsack_jumps": 1.0
+    },
+    {
+      "goal": "graphing",
+      "concepts": 7,
+      "reviews": 0,
+      "sessions": 2,
+      "seq_cost": -3.456,
+      "knapsack_cost": -2.384,
+      "greedy_cost": -2.184,
+      "seq_jumps": 2.0,
+      "knapsack_jumps": 3.0
+    },
+    {
+      "goal": "inequalities",
+      "concepts": 6,
+      "reviews": 0,
+      "sessions": 2,
+      "seq_cost": -2.76,
+      "knapsack_cost": -2.138,
+      "greedy_cost": -1.935,
+      "seq_jumps": 2.0,
+      "knapsack_jumps": 2.0
+    },
+    {
+      "goal": "quadratics",
+      "concepts": 8,
+      "reviews": 0,
+      "sessions": 3,
+      "seq_cost": -3.512,
+      "knapsack_cost": -2.554,
+      "greedy_cost": -2.35,
+      "seq_jumps": 3.0,
+      "knapsack_jumps": 2.0
+    },
+    {
+      "goal": "word_problems",
+      "concepts": 7,
+      "reviews": 0,
+      "sessions": 3,
+      "seq_cost": -3.398,
+      "knapsack_cost": -2.522,
+      "greedy_cost": -2.319,
+      "seq_jumps": 3.0,
+      "knapsack_jumps": 2.0
+    }
+  ]
+}

@@ -12,11 +12,12 @@ reinforcement learning.
 
 | Property | VELPO | typical RL / metaheuristic system |
 |---|---|---|
-| prerequisite / budget validity | **guaranteed by construction** (encoded in the DP state) | soft reward term - can be violated |
-| optimality | **provably globally optimal** (matches brute force) | "a good path", no guarantee |
-| worst-case cost | **documented `O(V·R·B)`** | not stated |
-| multi-objective | explicit **Pareto front** the teacher chooses from | one hand-tuned weighted sum |
-| learning speed (N2) | **first-class per-concept velocity** in the edge cost | implicit at best |
+| what is optimised (N1) | the **whole sequence** - order *and* resources - by a DP over the poset's order ideals, with **position-aware** costs | a resource set, or "a good path", no guarantee |
+| prerequisite / budget validity | **structural**: the plan is a linear extension of the prerequisite poset | soft reward term - can be violated |
+| worst-case cost | **`O(#ideals · W · R)`, `#ideals = O((n/w+1)^w)`** for width `w` (+ knapsack fallback) | not stated |
+| learning speed (N2) | **first-class per-concept velocity** in the step cost - changes the order and the review count | implicit at best |
+| spaced review | the sequence **re-inserts** a concept when it will decay before the goal | none |
+| study sessions | a partition DP splits the plan into sessions under time + load caps | none |
 | cold-start (N4) | valid path at interaction #0 (graph + Bayesian priors), then DKT-lite refinement | usually unsolved |
 | re-plan (N6) | **anytime A\***: feasible plan instantly, proven-optimal in <1 ms, no retraining | policy retraining, instability |
 | evidence (N7) | one benchmark harness over synthetic **and the real Junyi graph** | "no standard benchmark" |
@@ -45,7 +46,8 @@ See the whole pipeline in one command:
 ```bash
 python velpo.py demo --goal quadratics --minutes 90 --speed fast
 python velpo.py demo --goal quadratics --minutes 90 --speed slow   # different plan - that's N2
-python velpo.py demo --dataset junyi --minutes 600                 # real Junyi prerequisite graph
+python velpo.py demo --dataset junyi --goal multiplication_word_problems --minutes 400   # real graph, sessions + reviews
+python velpo.py seqbench                                           # does optimising the order pay off?
 ```
 
 (`make` still works too - it just forwards to `python velpo.py`.)
@@ -63,7 +65,8 @@ The code sits **directly at the repo root** - no nesting:
 
 ```
 velpo.py        the CLI - every task is one command
-algorithms/     graph_traversal.py · dynamic_programming.py · astar.py (anytime) · pareto.py   <- the DAA core
+algorithms/     poset.py (Dilworth + order ideals) · sequencing.py (the core: order-ideal DP + review + sessions)
+                graph_traversal.py · dynamic_programming.py (knapsack fallback) · astar.py (anytime) · pareto.py
 model/          knowledge_graph.py · learner.py (BKT + velocity + forgetting) · refine.py (DKT-lite) · cost.py
 engine.py       orchestration
 explain.py      knowledge-graph-grounded reason strings
@@ -71,7 +74,7 @@ curriculum.py   labelled synthetic algebra curriculum (demo / API / tests)
 api.py          FastAPI  (+ serves the built SPA at /)
 config.py       tunable constants + weights
 frontend/       React 18 + TS + Vite  ·  TanStack Query · React Router · Zod · Recharts  ·  Vitest + RTL + MSW
-benchmarks/     benchmark.py · ablation_velocity.py · datasets.py (synthetic + real Junyi graph)
+benchmarks/     benchmark.py · sequencing_bench.py · ablation_velocity.py · datasets.py (synthetic + real Junyi graph)
 tests/          the guarantees
 ```
 
@@ -116,6 +119,22 @@ Only VELPO never returns an over-budget plan **and** is never sub-optimal; A\* r
 the proven optimum ~150× faster than ACO.  On the real graph greedy stays in budget
 but is still 27 % from optimal, and ACO/DQN still overrun it.
 
+## Optimising the *order* is worth it (claim N1)
+
+`python velpo.py seqbench` scores three plans with the **same** position-aware cost
+(one that penalises a concept taught before its prerequisites are solid, or long
+after they have decayed):
+
+| plan | synthetic | real Junyi graph |
+|---|---|---|
+| **sequencing DP over order ideals** | — (optimum) | — (optimum) |
+| knapsack-select + difficulty-smoothing heuristic order | **+26 %** | **+38 %** |
+| greedy (shortest per concept, topological order) | **+33 %** | **+70 %** |
+
+On the real graph the DP also auto-inserts 16 spaced reviews across the 4 goals.
+`tests/test_sequencing.py` proves the DP equals exhaustive search over every
+linear extension × resource choice on 30 random curricula.
+
 ## Learning velocity is load-bearing (claim N2)
 
 `python velpo.py ablation` plans the *same* goal for a fast learner (velocity ×3) and a
@@ -132,11 +151,12 @@ So the personalisation comes from velocity itself, not an incidental tie-break.
 
 ## Tests
 
-`python velpo.py test` - 79 Python tests + `python velpo.py ui-test` - 19 React tests;
+`python velpo.py test` - 129 Python tests + `python velpo.py ui-test` - 19 React tests;
 `ruff` + `mypy --strict` + strict `tsc` all clean.  The ones that carry the claims:
 
-* `test_dp_optimality.py` - the DP equals exhaustive search on every random curriculum (N1)
-* `test_dp_feasibility.py` - 250+ random cases pass an independent prereq / budget / coverage checker (N1)
+* `test_sequencing.py` - the order-ideal DP equals exhaustive search over every linear extension × resource choice; reviews and sessions respect their invariants (N1)
+* `test_poset.py` - Dilworth chain cover == max antichain; order-ideal enumeration is correct and complete
+* `test_dp_optimality.py` / `test_dp_feasibility.py` - the knapsack fallback is selection-optimal and always prereq/budget-valid
 * `test_velocity_ablation.py` - learning velocity changes the optimal plan; removing it removes the divergence (N2)
 * `test_refine.py` - valid path at interaction 0, then the DKT-lite estimate tracks the learner (N4)
 * `test_astar.py` - anytime A\* returns a feasible plan under any deadline and the proven optimum without one (N6)

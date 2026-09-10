@@ -1,0 +1,55 @@
+{
+  "dataset": "junyi",
+  "goals_scored": 4,
+  "knapsack_cost_gap_vs_seq": 0.3802,
+  "greedy_cost_gap_vs_seq": 0.7036,
+  "mean_seq_jumps": 6.7,
+  "mean_knapsack_jumps": 4.1,
+  "total_reviews_inserted": 16,
+  "per_goal": [
+    {
+      "goal": "creating_bar_charts_1",
+      "concepts": 40,
+      "reviews": 4,
+      "sessions": 15,
+      "seq_cost": -13.982,
+      "knapsack_cost": -8.467,
+      "greedy_cost": -3.998,
+      "seq_jumps": 6.8,
+      "knapsack_jumps": 4.2
+    },
+    {
+      "goal": "multiplication_word_problems",
+      "concepts": 39,
+      "reviews": 4,
+      "sessions": 15,
+      "seq_cost": -14.177,
+      "knapsack_cost": -8.741,
+      "greedy_cost": -4.242,
+      "seq_jumps": 7.0,
+      "knapsack_jumps": 4.4
+    },
+    {
+      "goal": "reading_pictographs_2",
+      "concepts": 38,
+      "reviews": 4,
+      "sessions": 14,
+      "seq_cost": -13.597,
+      "knapsack_cost": -8.551,
+      "greedy_cost": -4.082,
+      "seq_jumps": 6.5,
+      "knapsack_jumps": 3.9
+    },
+    {
+      "goal": "reading_stem_and_leaf_plots",
+      "concepts": 38,
+      "reviews": 4,
+      "sessions": 14,
+      "seq_cost": -13.597,
+      "knapsack_cost": -8.551,
+      "greedy_cost": -4.082,
+      "seq_jumps": 6.5,
+      "knapsack_jumps": 3.9
+    }
+  ]
+}

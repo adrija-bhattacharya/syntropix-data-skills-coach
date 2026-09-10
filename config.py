@@ -22,6 +22,33 @@ class Settings:
     pareto_epsilon: float = 0.02
     """Grid size for epsilon-pruning the Pareto front (0 = exact)."""
 
+    # --- sequencing DP (algorithms.sequencing) ------------------------
+    seq_max_ideals: int = 16_000
+    """If the relevant poset has more order ideals than this, the sequencing DP
+    is intractable and the engine falls back to knapsack-select + heuristic order."""
+
+    seq_ideal_bound_soft: int = 3_000_000
+    """When the cheap ``prod(chain+1)`` bound is between ``seq_max_ideals`` and
+    this, count the ideals exactly (capped) before deciding to run or fall back."""
+
+    seq_half_life_steps: float = 9.0
+    """Steps after which a concept's post-teaching mastery halves - the decay the
+    sequencing DP plans against (why order and review placement matter)."""
+
+    seq_post_mastery: float = 0.9
+    """Assumed mastery of a concept immediately after it is taught / reviewed."""
+
+    review_threshold: float = 0.6
+    """A covered concept whose predicted mastery drops below this is a review
+    candidate for the in-sequence review pass."""
+
+    max_reviews: int = 4
+    """Cap on review steps the sequence may insert."""
+
+    session_minutes: float = 35.0
+    session_max_load: float = 3.2
+    """Per study-session caps the session-packing DP respects."""
+
     # --- learner model -------------------------------------------------
     velocity_alpha: float = 0.3
     velocity_min: float = 1e-3

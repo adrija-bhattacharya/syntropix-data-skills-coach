@@ -13,38 +13,70 @@ a teacher can constrain the result.
 
 ### Formal
 
-* `G = (C, E)` - a DAG of concepts; edge `(u, v)` means `u` is a prerequisite of `v`.
+* `G = (C, E)` - a DAG of concepts; edge `(u, v)` means `u` is a prerequisite of
+  `v`.  `(C, ≤)` is the induced partial order (`u ≤ v` iff `u` is a transitive
+  prerequisite of `v`).
 * Each concept `c` has a candidate set `R(c)` of resources; resource `r` has a
   difficulty `d(r)` and an expected study time `t(r)`.
 * A learner is `(m, v, h, T)`: per-concept mastery `m`, per-concept velocity `v`
-  (mastery gained per study hour), retention half-lives `h`, remaining budget `T`.
-* A **plan** chooses one `r ∈ R(c)` for every concept in
-  `relevant = goals ∪ ancestors(goals)`.
-* **Feasible** iff, presented in a topological order of `G`, every resource's
-  prerequisite concepts are covered by earlier steps, and `Σ t(r) ≤ T`.
-* **Objective vector** (all "lower is better"):
-  `⟨ −Σ Δmastery(r | m, v),  Σ t(r),  Σ load(r | m),  Σ |Δdifficulty|,  −Σ reviewGain(r | m, h) ⟩`
-* **Single-objective**: minimise `w·F(plan)`.  Solved exactly by DP in `O(V·R·B)`.
-* **Multi-objective**: return the Pareto set.
+  (mastery gained per study hour), retention half-lives `h`, budget `T`.
+* Let `relevant = goals ∪ ancestors(goals)` (prerequisite-closed).
+* A **plan** is a sequence `π = ⟨(c₁, r₁), …, (c_k, r_k)⟩` that is a **linear
+  extension** of `(relevant, ≤)` - each `cᵢ ∈ relevant` appears once (plus
+  optional review repeats), `rᵢ ∈ R(cᵢ)`, and `cᵢ ≤ cⱼ ⇒ i < j`.
+* **Feasible** iff `Σ t(rᵢ) ≤ T` (linear-extension ⇒ prerequisites always precede,
+  by construction).
+* **Position-aware step cost** `f(cᵢ, rᵢ | π₍<ᵢ₎)` depends on the position `i`:
+  prerequisite mastery is `m₀ · 2^{-(i − depth(prereq)) / h_steps}`, so cost rises
+  if `cᵢ` is scheduled too early (weak prereqs) or too late (decayed prereqs).
+* **Objective vector** `F(π)` (all "lower is better"):
+  `⟨ −Σ Δmastery,  Σ t,  Σ load,  Σ |Δdifficulty|,  −Σ reviewGain ⟩`, each term
+  summed over the position-aware step costs.
+* **Single-objective**: minimise `w·F(π)` over all linear extensions and resource
+  choices.  Solved **exactly** by the order-ideal DP in `O(#ideals · W · R)`,
+  `#ideals = O((n/w+1)^w)`.
+* **Multi-objective**: return the Pareto set (`solve_pareto`, selection-only).
 
-## Why dynamic programming (the DAA contribution)
+## Why dynamic programming (the DAA contribution, claim N1)
 
-`relevant` is prerequisite-closed (backward BFS), so any topological order of it is a
-valid study order - *prerequisite validity is structural, not a runtime check*.
-What is left to decide is **which resource per concept**, under a global time
-budget.  That is a **multiple-choice knapsack**, and a knapsack over a topological
-order is a clean 1-D DP:
+`relevant` is prerequisite-closed (backward BFS), so a valid learning path is a
+**linear extension** of the prerequisite partial order, and every *prefix* of a
+path is an **order ideal** (down-set) of that poset.  We do not just pick a
+resource per concept - we choose the **order itself**, because the cost of a step
+depends on where it sits: a concept taught before its prerequisites are solid, or
+long after they have decayed, costs more (`model/cost.py::sequence_step_cost`).
+
+`solve_sequence` is a shortest-path DP over the lattice of order ideals:
 
 ```
-dp[b] = min scalar cost of choosing resources for concepts c_1..c_i (topo order)
-        using at most b time buckets
-dp[b] = min over r in R(c_i) of  dp[b - buckets(r)] + w·cost(r)
+dp[(I, r_last)] = min cost to have taught exactly the concept set I,
+                  ending on resource r_last
+dp[(I ∪ {c}, r)] = min over ℓ of  dp[(I, ℓ)] + stepCost(c, r | position |I|, prev diff of ℓ)
+                   for every c whose prerequisites ⊆ I,  every r ∈ R(c)
 ```
 
-* budget-exceeding transitions are never generated ⇒ over-budget plans are
-  **unrepresentable**;
-* the recurrence is exact ⇒ the result is the **global optimum**;
-* `O(V·R·B)` time, `O(V·B)` space; drops to `O(V·R)` when the budget cannot bind.
+* `(I, r_last)` is a **sufficient statistic** for the remaining cost - prerequisite
+  mastery is a function of `I` and the step index `|I|` - so the recurrence is
+  exact ⇒ the returned **sequence** is the global optimum.
+  `tests/test_sequencing.py` checks it against exhaustive search over every linear
+  extension × resource choice.
+* Order ideals are represented as integer bitmasks; the DP is a BFS over the
+  ideal lattice, smallest-first.
+* **Complexity**: `#ideals ≤ ∏(chain length + 1)` over a minimum chain cover
+  (Dilworth) `= O((n/w + 1)^w)` for width `w`.  Curricula are tall and narrow
+  (width ≤ 4 for the course curriculum), so it is polynomial.  Time
+  `O(#ideals · W · R)`.
+* **Fallback**: above `settings.seq_max_ideals` order ideals the engine drops to
+  `solve_optimal` - the multiple-choice-knapsack DP over a topological order
+  (`dp[b] = min over r of dp[b − buckets(r)] + w·cost(r)`, `O(V·R·B)`, budget
+  feasible by construction, selection-optimal) plus a difficulty-smoothing
+  heuristic order.  `benchmarks/sequencing_bench.py` measures the price of that
+  degradation: the knapsack + heuristic sits ~26 % (synthetic) / ~38 % (real
+  Junyi graph) above the sequencing DP on the position-aware cost.
+* Two follow-on DPs finish the plan: `insert_reviews` (1-D pass, splices spaced
+  review steps where a concept would decay below threshold before it is needed)
+  and `pack_sessions` (1-D partition DP, `O(n²)`, splits the sequence into study
+  sessions under per-session time and load caps).
 
 `solve_astar` (claim **N6**) explores the identical state space best-first with an
 admissible `suffix-min` heuristic.  It is **anytime**: a feasible incumbent (the
@@ -109,9 +141,12 @@ need an inferred one - the hook is in place, the inference is future work.
 
 ## Not claimed as new
 
-Knowledge tracing, prerequisite graphs, the forgetting curve, A\*, Pareto DP, PFA -
-all exist.  The contribution is applying constrained multiple-choice-knapsack DP to
-*this* problem to obtain guarantees the RL / metaheuristic literature lacks
-(feasibility, optimality, a complexity bound), plus learning-velocity as a
-first-class per-concept cost driver, plus the anytime re-plan and the one-metric
-multi-dataset harness.
+Knowledge tracing, prerequisite graphs, the forgetting curve, A\*, Pareto DP, PFA,
+DP over order ideals (it appears in project scheduling / RCPSP) - all exist.  The
+contribution is bringing the **precedence-constrained sequencing DP over order
+ideals** to learning-path optimisation with a **position-aware** cost, so the
+*sequence* (order + resources) is provably optimal - not just the selection - with
+a width-based complexity bound and a documented fallback; plus learning-velocity
+as a first-class per-concept cost driver that changes the order and the number of
+review insertions; plus in-sequence spaced review and session-packing DPs; plus
+the anytime re-plan and the one-metric synthetic + real-graph harness.

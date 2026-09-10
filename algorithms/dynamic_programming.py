@@ -85,10 +85,15 @@ class Plan:
     feasible: bool = True
     reasons: tuple[str, ...] = ()
     note: str = ""
+    reviews: tuple[bool, ...] = ()  # parallel to steps: is this a spaced-review step?
+    sessions: tuple[tuple[int, int], ...] = ()  # [start, end) step-index ranges per study session
 
     @classmethod
     def infeasible(cls, note: str) -> Plan:
         return cls((), (), CostVector.zero(), 0.0, feasible=False, note=note)
+
+    def is_review(self, i: int) -> bool:
+        return bool(self.reviews) and self.reviews[i]
 
 
 @dataclass(frozen=True, slots=True)
