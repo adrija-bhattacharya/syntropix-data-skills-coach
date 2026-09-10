@@ -43,6 +43,24 @@ def test_data_analyst_profiles_are_covered_for_every_band() -> None:
         assert f"data analyst:{band}" in PROFILE_RECOMMENDATIONS
 
 
+def test_sql_practice_platforms_are_in_the_library_and_recommended() -> None:
+    ids = {r.id for r in RESOURCES}
+    assert {"datalemur", "leetcode_sql50", "stratascratch"} <= ids
+    for rid in ("datalemur", "leetcode_sql50", "stratascratch"):
+        r = resource_by_id(rid)
+        assert r is not None and r.kind == "practice" and r.url.startswith("https://")
+    # an intermediate SQL learner is pointed at practice
+    rec = recommend_resources(
+        profile="sql",
+        band="intermediate",
+        concepts={"sql.window_functions"},
+        concept_names={"sql.window_functions": "Window functions"},
+        domains={"sql"},
+        limit=4,
+    )
+    assert any(r.kind == "practice" for r in rec)
+
+
 # --------------------------------------------------------------------------- #
 def test_recommendation_starts_from_the_profile_labels() -> None:
     labelled = PROFILE_RECOMMENDATIONS["data analyst:beginner"]

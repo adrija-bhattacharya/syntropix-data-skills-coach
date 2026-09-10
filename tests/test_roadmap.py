@@ -93,16 +93,46 @@ def test_finish_estimate_is_present_and_future() -> None:
 
 
 # --------------------------------------------------------------------------- #
+_CERT_HOSTS = (
+    "coursera.org",
+    "learn.microsoft.com",
+    "freecodecamp.org",
+    "kaggle.com",
+    "hackerrank.com",
+    "tableau.com",
+    "github.com",
+)
+
+
 def test_certifications_catalogue_is_well_formed() -> None:
-    sql_certs = certifications_for({"sql"})
-    assert sql_certs and all(isinstance(c, Certification) for c in sql_certs)
-    for c in sql_certs:
+    from certifications import CERTIFICATIONS
+
+    ids = [c.id for c in CERTIFICATIONS]
+    assert len(ids) == len(set(ids))
+    for c in CERTIFICATIONS:
+        assert isinstance(c, Certification)
         assert c.url.startswith("https://")
-        assert c.skills and 0.0 <= c.coverage({"select_from", "where"}) <= 1.0
+        assert any(h in c.url for h in _CERT_HOSTS), c.url
+        assert c.skills and c.domains
         assert c.level in ("entry", "associate", "professional")
-    # entry-level listed before professional
-    levels = [c.level for c in certifications_for({"sql", "python", "stats"})]
+
+    sql_certs = certifications_for({"sql"})
+    assert sql_certs and 0.0 <= sql_certs[0].coverage({"select_from", "where"}) <= 1.0
+    # entry before professional, and free before paid within a level
+    seq = certifications_for({"sql", "python", "stats"})
+    levels = [c.level for c in seq]
     assert levels.index("entry") < levels.index("professional")
+    entry = [c for c in seq if c.level == "entry"]
+    assert [c.free for c in entry] == sorted((c.free for c in entry), reverse=True)
+
+
+def test_free_skill_verifications_are_present() -> None:
+    ids = {c.id for c in certifications_for({"sql", "python", "dsa_python"})}
+    assert {"hackerrank_sql", "hackerrank_python", "fcc_relational_db"} <= ids
+    # HackerRank / PL-300 / Coursera all represented
+    provs = {c.provider for c in certifications_for({"sql", "dataviz", "stats"})}
+    assert "HackerRank" in provs and "Microsoft" in provs
+    assert any("Coursera" in p for p in provs)
 
 
 def test_coverage_matches_prefixed_and_bare_ids() -> None:

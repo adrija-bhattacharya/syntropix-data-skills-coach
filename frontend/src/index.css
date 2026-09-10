@@ -791,6 +791,15 @@ textarea {
 .rm-embed-close {
   margin-top: 4px;
 }
+.rm-certs-more {
+  margin-top: 4px;
+}
+.rm-certs-more summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--ink-2);
+  padding: 4px 0;
+}
 
 /* --- deadline calendar (claim C) --- */
 .deadline-box {

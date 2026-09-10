@@ -103,15 +103,29 @@ export function RoadmapView({
 
       <div className="rm-certs">
         <h4 style={{ margin: "4px 0 8px" }}>Certifications for this track</h4>
-        <div className="chips" style={{ marginBottom: 8 }}>
-          <Badge tone="good">
-            {rm.certifications.filter((c) => c.free).length} free to earn
-          </Badge>
-          <Badge>{rm.certifications.length} total</Badge>
-        </div>
-        {rm.certifications.map((c) => (
-          <CertRow key={c.id} c={c} />
-        ))}
+        {(() => {
+          const free = rm.certifications.filter((c) => c.free);
+          const paid = rm.certifications.filter((c) => !c.free);
+          return (
+            <>
+              <div className="chips" style={{ marginBottom: 8 }}>
+                <Badge tone="good">{free.length} free to earn</Badge>
+                <Badge>{paid.length} paid</Badge>
+              </div>
+              {free.map((c) => (
+                <CertRow key={c.id} c={c} />
+              ))}
+              {paid.length > 0 && (
+                <details className="rm-certs-more">
+                  <summary>Show {paid.length} paid certifications</summary>
+                  {paid.map((c) => (
+                    <CertRow key={c.id} c={c} />
+                  ))}
+                </details>
+              )}
+            </>
+          );
+        })()}
         <p className="hint" style={{ marginTop: 8 }}>
           External recommendations — verify current pricing and availability before enrolling.
         </p>
