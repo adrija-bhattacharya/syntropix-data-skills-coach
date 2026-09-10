@@ -3,7 +3,7 @@ PY   ?= python
 NPM  ?= npm
 SRC  := algorithms model config.py curriculum.py engine.py explain.py api.py
 
-.PHONY: setup test lint typecheck format benchmark frontend serve api clean
+.PHONY: setup test lint typecheck format benchmark ablation frontend serve api clean
 
 setup:
 	$(PY) -m pip install -U pip
@@ -27,6 +27,9 @@ typecheck:
 
 benchmark:
 	$(PY) -m benchmarks.benchmark
+
+ablation:
+	$(PY) -m benchmarks.ablation_velocity
 
 frontend:
 	cd frontend && $(NPM) install && $(NPM) run build

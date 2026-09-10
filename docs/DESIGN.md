@@ -58,9 +58,17 @@ it is **not** part of the optimality claim.
 
 * **mastery** - Bayesian Knowledge Tracing (a 2-state HMM); cold-start priors from
   item difficulty.
-* **velocity** - `v ← (1−α)·v + α·(Δmastery / Δhours)`, clipped.  Makes the *same*
-  catalogue produce a compressed plan for a fast learner and a scaffolded one for a
-  slow learner.
+* **velocity** (claim **N2**) - `v ← (1−α)·v + α·(Δmastery / Δhours)`, per concept,
+  clipped.  It enters the edge cost directly through
+  `expected_mastery_gain(current, velocity, seconds) = (1−current)·(1−e^{−v·h/τ})`,
+  so the *same* catalogue + goal produces a compressed, lesson-heavy plan for a
+  fast learner and a shorter, practice-heavy one for a slow learner.
+  `benchmarks/ablation_velocity.py` measures this: with the signal on the optimal
+  solver picks a different resource for ~60 % of concepts (4 of 5 goals get a
+  different plan); flatten every velocity to 1.0 and the divergence drops to 0,
+  proving velocity - not some incidental tie-break - is what personalises the plan.
+  `test_velocity_ablation.py` asserts both halves.  The API exposes it as a
+  `speed` ∈ {slow, normal, fast} knob; the React *Learner* view as a dropdown.
 * **forgetting** - `m(t) = m₀·exp(−Δt / h)`.
 * **cognitive load** - sensor-free proxy from recent error rate + hint usage.
 

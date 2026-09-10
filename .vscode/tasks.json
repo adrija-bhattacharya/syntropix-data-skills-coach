@@ -34,6 +34,12 @@
       "problemMatcher": []
     },
     {
+      "label": "ablation: velocity (N2)",
+      "type": "shell",
+      "command": "python -m benchmarks.ablation_velocity",
+      "problemMatcher": []
+    },
+    {
       "label": "frontend: dev",
       "type": "shell",
       "command": "npm run dev",

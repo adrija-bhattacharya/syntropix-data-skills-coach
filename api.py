@@ -27,6 +27,7 @@ from engine import Engine
 from model.learner import Attempt
 
 _OBJ_KEYS = ("neg_gain", "seconds", "load", "diff_jump", "neg_review")
+_SPEED_MULT = {"slow": 0.45, "normal": 1.0, "fast": 3.0}
 _WEB = Path(__file__).resolve().parent / "web"
 
 app = FastAPI(title="VELPO", version=__version__)
@@ -49,6 +50,9 @@ class RecommendIn(BaseModel):
     ban: list[str] = []
     lock: list[str] = []
     force_order: list[tuple[str, str]] = []
+    speed: Literal["slow", "normal", "fast"] = "normal"
+    """Learning speed (N2): scales the learner's per-concept velocity before
+    planning, so a fast and a slow learner get different optimal plans."""
 
 
 class ObserveIn(BaseModel):
@@ -120,8 +124,9 @@ def recommend(body: RecommendIn) -> dict[str, Any]:
         mode=body.mode,
         n_paths=body.n_paths,
         constraints=tc,
+        speed=_SPEED_MULT[body.speed],
     )
-    meta: dict[str, Any] = {"mode": body.mode, "returned": len(plans)}
+    meta: dict[str, Any] = {"mode": body.mode, "returned": len(plans), "speed": body.speed}
     if plans and not plans[0].feasible:
         meta["infeasible_reason"] = plans[0].note
     return {"paths": [_plan_out(p) for p in plans], "meta": meta}

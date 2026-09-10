@@ -53,6 +53,7 @@ function Learner({ cat }: { cat: Catalogue }) {
   const [goals, setGoals] = useState<string[]>(cat.goals.slice(0, 1));
   const [budget, setBudget] = useState(120);
   const [mode, setMode] = useState<"optimal" | "interactive">("optimal");
+  const [speed, setSpeed] = useState<"slow" | "normal" | "fast">("normal");
   const [path, setPath] = useState<Path | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -71,6 +72,7 @@ function Learner({ cat }: { cat: Catalogue }) {
         goals,
         time_budget_min: budget,
         mode,
+        speed,
       });
       setPath(r.paths[0] ?? null);
     } catch (e) {
@@ -120,6 +122,14 @@ function Learner({ cat }: { cat: Catalogue }) {
           <select value={mode} onChange={(e) => setMode(e.target.value as typeof mode)}>
             <option value="optimal">optimal (dynamic programming)</option>
             <option value="interactive">interactive (A* anytime)</option>
+          </select>
+        </div>
+        <div className="field">
+          <label>Learning speed (N2 &mdash; scales per-concept velocity)</label>
+          <select value={speed} onChange={(e) => setSpeed(e.target.value as typeof speed)}>
+            <option value="slow">slow learner</option>
+            <option value="normal">normal</option>
+            <option value="fast">fast learner</option>
           </select>
         </div>
         <button className="primary" onClick={recommend} disabled={busy || goals.length === 0}>

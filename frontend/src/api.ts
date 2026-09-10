@@ -64,6 +64,7 @@ export const api = {
     ban?: string[];
     lock?: string[];
     force_order?: [string, string][];
+    speed?: "slow" | "normal" | "fast";
   }): Promise<RecommendResponse> => post("/recommend", b),
 
   observe: (b: {

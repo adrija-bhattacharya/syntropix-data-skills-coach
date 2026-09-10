@@ -73,10 +73,23 @@ class Engine:
         mode: Mode = "optimal",
         n_paths: int = 1,
         constraints: TeacherConstraints | None = None,
+        speed: float = 1.0,
     ) -> list[Plan]:
+        """``speed`` scales the learner's per-concept velocity (N2) before the
+        cost vectors are built: ``> 1`` asks "what does the plan look like for a
+        faster learner", ``< 1`` for a slower one.  ``1.0`` uses the estimated
+        velocity unchanged.  This is the only knob that makes the *same*
+        catalogue + goal produce a different optimal plan per learner.
+        """
         state = replace(
             self.ensure(learner_id, time_budget_s=time_budget_s), time_budget_s=time_budget_s
         )
+        if speed != 1.0:
+            lo, hi = settings.velocity_min, settings.velocity_max
+            state = replace(
+                state,
+                velocity={c: min(hi, max(lo, v * speed)) for c, v in state.velocity.items()},
+            )
         costs = build_cost_vectors(self.kg, state)
         goal_list = list(goals)
 

@@ -36,6 +36,15 @@ def test_benchmark_summary_velpo_dominates() -> None:
     assert summary["velpo_astar"]["mean_latency_ms"] < summary["aco"]["mean_latency_ms"]
 
 
+def test_velocity_ablation_signal_on_diverges_off_does_not() -> None:
+    from benchmarks.ablation_velocity import run as ablation
+
+    s = ablation()
+    assert s["divergence_rate_signal_off"] == 0.0
+    assert s["divergence_rate_signal_on"] > 0.2
+    assert s["goals_with_a_different_plan"] >= 1
+
+
 def test_benchmark_is_reproducible() -> None:
     # latency is wall-clock, so compare everything except that
     def without_latency(s: dict) -> dict:

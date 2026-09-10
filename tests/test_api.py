@@ -37,6 +37,16 @@ def test_cold_start_recommend(client: TestClient) -> None:
     assert set(p["objective"]) == {"neg_gain", "seconds", "load", "diff_jump", "neg_review"}
 
 
+def test_speed_knob_changes_the_plan(client: TestClient) -> None:
+    body = {"learner_id": "s", "goals": ["quadratics"], "time_budget_min": 150}
+    fast = client.post("/recommend", json={**body, "learner_id": "f", "speed": "fast"}).json()
+    slow = client.post("/recommend", json={**body, "learner_id": "s", "speed": "slow"}).json()
+    assert fast["meta"]["speed"] == "fast"
+    fast_res = [s["resource_id"] for s in fast["paths"][0]["steps"]]
+    slow_res = [s["resource_id"] for s in slow["paths"][0]["steps"]]
+    assert fast_res != slow_res
+
+
 def test_unknown_goal_is_422(client: TestClient) -> None:
     assert (
         client.post(

@@ -26,6 +26,7 @@ reinforcement learning.
 make setup       # pip install -e ".[dev]"  +  npm install in frontend/
 make test        # pytest  (unit + Hypothesis property tests, incl. DP == brute force)
 make benchmark   # VELPO vs greedy / ACO / DQN  ->  results/summary.csv (+ .png)
+make ablation    # N2 check: does learning velocity actually change the plan?  ->  results/ablation_velocity.csv
 make serve       # build the React UI, then serve it + the API at http://localhost:8000
 make api         # API only, http://localhost:8000/docs
 ```
@@ -73,13 +74,29 @@ tests/          the guarantees
 Only VELPO never returns an over-budget plan; A\* reaches the proven optimum ~600× faster
 than ACO; greedy is fast but 26 % sub-optimal.  Reproduce with `make benchmark`.
 
+## Learning velocity is load-bearing (claim N2)
+
+`make ablation` plans the *same* goal for a fast learner (velocity ×3) and a slow
+learner (velocity ×0.45):
+
+| velocity signal | concepts given a different resource | plans differ for |
+|---|---|---|
+| **on** | **60 %** | **4 / 5 goals** (fast → fuller lessons, slow → shorter practice) |
+| off (all velocity = 1.0) | 0 % | 0 / 5 goals |
+
+So the personalisation comes from velocity itself, not an incidental tie-break.
+`tests/test_velocity_ablation.py` asserts both rows; the UI exposes it as a
+**Learning speed** dropdown in the Learner view.
+
 ## Tests
 
-`make test` - 56 tests, `ruff` + `mypy --strict` + `tsc` all clean.  The two that matter most:
+`make test` - 61 tests, `ruff` + `mypy --strict` + `tsc` all clean.  The three that matter most:
 
 * `tests/test_dp_optimality.py` - the DP equals exhaustive search on every random curriculum
 * `tests/test_dp_feasibility.py` - 250+ random cases, every plan passes an independent
   prerequisite / budget / coverage checker
+* `tests/test_velocity_ablation.py` - learning velocity (N2) changes the optimal plan,
+  and removing the signal removes the divergence
 
 ## License
 
