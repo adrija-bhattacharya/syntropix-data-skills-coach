@@ -80,21 +80,30 @@ explain.py      knowledge-graph-grounded reason strings
 curriculum.py   labelled synthetic algebra curriculum (demo / API / tests)
 api.py          FastAPI  (+ serves the built SPA at /)
 config.py       tunable constants + weights
-frontend/       React 18 + TS + Vite  ·  TanStack Query · React Router · Zod · Recharts  ·  Vitest + RTL + MSW
+frontend/       React 18 + TS + Vite · TanStack Query · Router · Zod · Recharts · Vitest · dark-first, ⌘K
 benchmarks/     benchmark.py · sequencing_bench.py · ablation_velocity.py · datasets.py (synthetic + real Junyi graph)
 tests/          the guarantees
 ```
 
-### Frontend architecture
+### The app
+
+Dark-first, keyboard-first (⌘K command palette), built around one flow:
+
+1. **Home** — type a goal ("binary search tree", "learn python decorators",
+   "photosynthesis").
+2. **Resolve** — `POST /resolve` picks a curated seed graph or builds one from
+   Wikipedia; the concept graph is shown.
+3. **Assess** — a one-question-at-a-time adaptive quiz with a live per-skill
+   ability meter (algebra goals; other domains skip to cold-start priors).
+4. **Plan** — the sequencing DP output as resource cards: source badge, a
+   difficulty ring, the spaced-review markers, session groups, a link to the
+   real open resource, and "why this?" per step.
 
 `frontend/src` is feature-sliced: `lib/` (a zod-validated API client + TanStack
-Query hooks + a theme store), `context/` (shared learner identity), `components/`
-(design-system primitives, an error boundary, the Recharts difficulty and Pareto
-charts), and `features/{learner,teacher}/` (route-split pages; the teacher's
-constraint builder is a `useReducer`).  Server state lives entirely in TanStack
-Query - logging an attempt invalidates the cached recommendation so the plan
-re-solves itself.  `python velpo.py ui-test` runs 19 component/integration tests
-against a mock API (MSW).  Light/dark/system theme, persisted.
+Query hooks + a theme store), `context/`, `components/` (design-system
+primitives, the command palette, the Recharts charts), `features/{home,learn,
+teacher}/`.  Server state lives entirely in TanStack Query.  `python velpo.py
+ui-test` runs 20 component/integration tests against a mock API (MSW).
 
 ## Benchmark
 

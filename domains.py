@@ -259,6 +259,8 @@ def _match_concepts(kg: KnowledgeGraph, want: set[str]) -> list[str]:
     hits = [
         (len(want & _norm(c.name)) + (1 if c.id in want else 0), c.id) for c in kg.concepts.values()
     ]
-    hits = [(s, cid) for s, cid in hits if s > 0]
-    hits.sort(reverse=True)
-    return [cid for _, cid in hits[:2]]
+    hits = sorted(((s, cid) for s, cid in hits if s > 0), reverse=True)
+    if not hits:
+        return []
+    top = hits[0][0]
+    return [cid for s, cid in hits if s == top][:2]  # only the best-scoring concept(s)

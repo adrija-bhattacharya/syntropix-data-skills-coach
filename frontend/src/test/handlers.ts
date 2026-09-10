@@ -17,40 +17,37 @@ export const catalogueFixture: Catalogue = {
     { id: "quadratics:lesson", concepts: ["quadratics"], difficulty: 4, minutes: 15, kind: "lesson" },
   ],
   goals: ["quadratics", "linear_eq"],
+  discovered: false,
 };
 
+function step(id: string, concept: string, reason: string, extra: Record<string, unknown> = {}) {
+  return {
+    resource_id: id,
+    concept_id: concept,
+    reason,
+    review: false,
+    title: `${concept} — an open article`,
+    url: `https://en.wikipedia.org/wiki/${concept}`,
+    source: "wikipedia",
+    kind: "article",
+    difficulty: 2.4,
+    ...extra,
+  };
+}
+
 function planFor(speed: string) {
-  const kind = speed === "fast" ? "lesson" : "practice";
   return {
     feasible: true,
     note: "",
-    total_minutes: speed === "fast" ? 30 : 18,
-    objective: {
-      neg_gain: -2.1,
-      seconds: speed === "fast" ? 1800 : 1080,
-      load: 1.2,
-      diff_jump: 3,
-      neg_review: 0,
-    },
+    total_minutes: speed === "fast" ? 40 : 26,
+    objective: { neg_gain: -2.1, seconds: 1600, load: 1.2, diff_jump: 3, neg_review: 0 },
     steps: [
-      {
-        resource_id: `integers:${kind}`,
-        concept_id: "integers",
-        reason: "Builds **Integers & number line**; no prerequisites; difficulty 1.",
-        review: false,
-      },
-      {
-        resource_id: "fractions:lesson",
-        concept_id: "fractions",
-        reason: "Spaced review of **Fractions** - predicted to have decayed.",
+      step("integers::wikipedia:0", "integers", "Builds **Integers & number line**; no prerequisites."),
+      step("fractions::wikipedia:0", "fractions", "Spaced review of **Fractions**.", {
         review: true,
-      },
-      {
-        resource_id: "quadratics:lesson",
-        concept_id: "quadratics",
-        reason: "Builds **Quadratic equations**; prerequisites covered by earlier steps.",
-        review: false,
-      },
+        difficulty: 1.8,
+      }),
+      step("quadratics::wikipedia:0", "quadratics", "Builds **Quadratic equations**; prerequisites covered."),
     ],
     sessions: [
       { start: 0, end: 2 },
@@ -59,23 +56,66 @@ function planFor(speed: string) {
   };
 }
 
+const RESOLVE = {
+  goal: "quadratic equations",
+  domain: "algebra",
+  source: "seed" as const,
+  assessable: true,
+  goals: ["quadratics"],
+  concepts: catalogueFixture.concepts,
+  prerequisites: [
+    ["integers", "fractions"],
+    ["fractions", "quadratics"],
+  ],
+};
+
+function assessState(answered: number) {
+  const done = answered >= 2;
+  return {
+    done,
+    answered,
+    progress: Math.min(1, answered / 2),
+    question: done
+      ? null
+      : {
+          item_id: `q${answered}`,
+          skill: "integers",
+          kind: "mcq" as const,
+          stem: "Which is smallest?",
+          choices: ["-5", "-1", "0", "3"],
+        },
+    estimates: [
+      { skill: "integers", theta: 0.2, se: 0.7, mastery: 0.55, n_items: answered, confident: false },
+      { skill: "quadratics", theta: -0.3, se: 0.8, mastery: 0.4, n_items: answered, confident: false },
+    ],
+  };
+}
+
 export const handlers = [
   http.get("/catalogue", () => HttpResponse.json(catalogueFixture)),
 
+  http.post("/resolve", async ({ request }) => {
+    const b = (await request.json()) as { goal: string };
+    if (b.goal.includes("__boom__"))
+      return HttpResponse.json({ detail: "could not resolve" }, { status: 502 });
+    return HttpResponse.json({ ...RESOLVE, goal: b.goal });
+  }),
+
+  http.post("/assess/start", () => HttpResponse.json(assessState(0))),
+  http.post("/assess/answer", () => HttpResponse.json(assessState(2))),
+
   http.post("/recommend", async ({ request }) => {
     const body = (await request.json()) as { mode?: string; speed?: string; goals: string[] };
-    if (body.goals.includes("__boom__")) {
-      return HttpResponse.json({ detail: "unknown concepts: ['__boom__']" }, { status: 422 });
-    }
-    if (body.mode === "pareto") {
+    if (body.goals.includes("__boom__"))
+      return HttpResponse.json({ detail: "unknown concepts" }, { status: 422 });
+    if (body.mode === "pareto")
       return HttpResponse.json({
         paths: [planFor("fast"), planFor("slow")],
         meta: { mode: "pareto", returned: 2 },
       });
-    }
     return HttpResponse.json({
       paths: [planFor(body.speed ?? "normal")],
-      meta: { mode: body.mode ?? "optimal", returned: 1, speed: body.speed ?? "normal" },
+      meta: { mode: body.mode ?? "sequence", returned: 1, speed: body.speed ?? "normal" },
     });
   }),
 
@@ -90,6 +130,9 @@ export const handlers = [
 
   http.post("/explain", async ({ request }) => {
     const b = (await request.json()) as { resource_id: string };
-    return HttpResponse.json({ resource_id: b.resource_id, reason: `Why ${b.resource_id}: grounded in the graph.` });
+    return HttpResponse.json({
+      resource_id: b.resource_id,
+      reason: `Why ${b.resource_id}: grounded in the graph.`,
+    });
   }),
 ];

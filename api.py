@@ -57,7 +57,25 @@ def _build_kg() -> KnowledgeGraph:
     return build_curriculum()
 
 
-engine = Engine(_build_kg(), item_bank=build_item_bank())
+engine = Engine(_build_kg(), item_bank=build_item_bank())  # the default (algebra) engine
+_ENGINES: dict[str, Engine] = {}
+
+
+def _engine_for(goal: str | None) -> tuple[Engine, str, bool]:
+    """(engine, domain, assessable) for a free-text goal.  Algebra goals reuse
+    the default engine (which has the calibrated item bank); other domains get a
+    cached engine on their resolved graph, with no diagnostic yet."""
+    if not goal or not goal.strip():
+        return engine, "algebra", True
+    from domains import resolve
+
+    r = resolve(goal)
+    if r.domain == "algebra":
+        return engine, "algebra", True
+    key = f"{r.source}:{r.domain}"
+    if key not in _ENGINES:
+        _ENGINES[key] = Engine(r.kg)
+    return _ENGINES[key], r.domain, False
 
 
 # --------------------------------------------------------------- schemas
@@ -73,6 +91,9 @@ class RecommendIn(BaseModel):
     speed: Literal["slow", "normal", "fast"] = "normal"
     """Learning speed (N2): scales the learner's per-concept velocity before
     planning, so a fast and a slow learner get different optimal plans."""
+    goal: str | None = None
+    """Free-text goal - resolved to a knowledge graph; the concept ids in
+    ``goals`` must come from that graph (see POST /resolve)."""
 
 
 class ObserveIn(BaseModel):
@@ -91,6 +112,7 @@ class ExplainIn(BaseModel):
 class AssessStartIn(BaseModel):
     learner_id: str = Field(min_length=1)
     goals: list[str] = Field(min_length=1)
+    goal: str | None = None
 
 
 class AssessAnswerIn(BaseModel):
@@ -128,19 +150,32 @@ def _assess_out(session: AdaptiveSession) -> dict[str, Any]:
     }
 
 
-def _plan_out(p: Plan) -> dict[str, Any]:
+def _plan_out(p: Plan, kg: KnowledgeGraph) -> dict[str, Any]:
     reviews = p.reviews or (False,) * len(p.steps)
+    steps = []
+    for rid, cid, reason, rev in zip(
+        p.steps, p.concepts, p.reasons or [""] * len(p.steps), reviews
+    ):
+        res = kg.resources.get(rid)
+        steps.append(
+            {
+                "resource_id": rid,
+                "concept_id": cid,
+                "reason": reason,
+                "review": bool(rev),
+                "title": (res.title if res else "") or "",
+                "url": res.url if res else "",
+                "source": res.source if res else "",
+                "kind": res.kind if res else "lesson",
+                "difficulty": res.difficulty if res else 0.0,
+            }
+        )
     return {
         "feasible": p.feasible,
         "note": p.note,
         "total_minutes": round(p.total_seconds / 60, 1),
         "objective": dict(zip(_OBJ_KEYS, p.objective)),
-        "steps": [
-            {"resource_id": r, "concept_id": c, "reason": reason, "review": bool(rev)}
-            for r, c, reason, rev in zip(
-                p.steps, p.concepts, p.reasons or [""] * len(p.steps), reviews
-            )
-        ],
+        "steps": steps,
         "sessions": [{"start": a, "end": b} for a, b in p.sessions],
     }
 
@@ -197,6 +232,7 @@ def resolve_goal(body: ResolveIn) -> dict[str, Any]:
         "goal": body.goal,
         "domain": r.domain,
         "source": r.source,
+        "assessable": r.domain == "algebra",  # the only calibrated item bank so far
         "goals": r.goals,
         "concepts": [{"id": c.id, "name": c.name} for c in r.kg.concepts.values()],
         "prerequisites": [[u, v] for u, v in r.kg.prereq.edges()],
@@ -204,12 +240,13 @@ def resolve_goal(body: ResolveIn) -> dict[str, Any]:
 
 
 @app.get("/discover/{concept_id}")
-def discover(concept_id: str, refresh: bool = False) -> dict[str, Any]:
-    if concept_id not in engine.kg.concepts:
+def discover(concept_id: str, goal: str | None = None, refresh: bool = False) -> dict[str, Any]:
+    eng, _domain, _a = _engine_for(goal)
+    if concept_id not in eng.kg.concepts:
         raise HTTPException(404, f"unknown concept {concept_id!r}")
     from harvest.catalogue import CONCEPT_QUERY, discover_for_concept
 
-    name = CONCEPT_QUERY.get(concept_id, engine.kg.concepts[concept_id].name)
+    name = CONCEPT_QUERY.get(concept_id, eng.kg.concepts[concept_id].name)
     try:
         scored = discover_for_concept(name, domain="math", k=8) if refresh else []
     except Exception as exc:  # discovery hits the network - report, don't crash
@@ -226,8 +263,8 @@ def discover(concept_id: str, refresh: bool = False) -> dict[str, Any]:
                     "difficulty": r.difficulty,
                     "minutes": r.minutes,
                 }
-                for rid in engine.kg.resources_for(concept_id)
-                for r in [engine.kg.resources[rid]]
+                for rid in eng.kg.resources_for(concept_id)
+                for r in [eng.kg.resources[rid]]
             ],
         }
     return {
@@ -250,11 +287,12 @@ def discover(concept_id: str, refresh: bool = False) -> dict[str, Any]:
 
 @app.post("/recommend")
 def recommend(body: RecommendIn) -> dict[str, Any]:
-    unknown = [c for c in body.goals if c not in engine.kg.concepts]
+    eng, domain, _a = _engine_for(body.goal)
+    unknown = [c for c in body.goals if c not in eng.kg.concepts]
     if unknown:
-        raise HTTPException(422, f"unknown concepts: {unknown}")
+        raise HTTPException(422, f"unknown concepts for {domain!r}: {unknown}")
     tc = TeacherConstraints.make(ban=body.ban, lock=body.lock, force_order=body.force_order)
-    plans = engine.recommend(
+    plans = eng.recommend(
         body.learner_id,
         body.goals,
         time_budget_s=body.time_budget_min * 60,
@@ -263,10 +301,15 @@ def recommend(body: RecommendIn) -> dict[str, Any]:
         constraints=tc,
         speed=_SPEED_MULT[body.speed],
     )
-    meta: dict[str, Any] = {"mode": body.mode, "returned": len(plans), "speed": body.speed}
+    meta: dict[str, Any] = {
+        "mode": body.mode,
+        "returned": len(plans),
+        "speed": body.speed,
+        "domain": domain,
+    }
     if plans and not plans[0].feasible:
         meta["infeasible_reason"] = plans[0].note
-    return {"paths": [_plan_out(p) for p in plans], "meta": meta}
+    return {"paths": [_plan_out(p, eng.kg) for p in plans], "meta": meta}
 
 
 @app.post("/observe")
@@ -290,10 +333,15 @@ def observe(body: ObserveIn) -> dict[str, Any]:
 
 @app.post("/assess/start")
 def assess_start(body: AssessStartIn) -> dict[str, Any]:
-    unknown = [c for c in body.goals if c not in engine.kg.concepts]
+    eng, domain, assessable = _engine_for(body.goal)
+    if not assessable:
+        raise HTTPException(
+            422, f"no calibrated diagnostic for {domain!r} yet - plan uses cold-start priors"
+        )
+    unknown = [c for c in body.goals if c not in eng.kg.concepts]
     if unknown:
         raise HTTPException(422, f"unknown concepts: {unknown}")
-    session = engine.start_assessment(body.learner_id, body.goals)
+    session = eng.start_assessment(body.learner_id, body.goals)
     return _assess_out(session)
 
 

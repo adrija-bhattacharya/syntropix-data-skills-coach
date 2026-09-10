@@ -1,15 +1,15 @@
 import { lazy, Suspense } from "react";
-import { NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { Link, NavLink, Route, Routes } from "react-router-dom";
 
+import { CommandPalette } from "./components/CommandPalette";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { Callout, Empty, Spinner } from "./components/ui";
-import { useCatalogue } from "./lib/queries";
 import type { Catalogue } from "./lib/api";
+import { useCatalogue } from "./lib/queries";
+import { HomePage } from "./features/home/HomePage";
+import { LearnPage } from "./features/learn/LearnPage";
 
-const LearnerPage = lazy(() =>
-  import("./features/learner/LearnerPage").then((m) => ({ default: m.LearnerPage })),
-);
 const TeacherPage = lazy(() =>
   import("./features/teacher/TeacherPage").then((m) => ({ default: m.TeacherPage })),
 );
@@ -17,42 +17,39 @@ const TeacherPage = lazy(() =>
 export function App() {
   return (
     <div className="shell">
+      <CommandPalette />
       <header className="topbar">
-        <div className="brand">
-          <b>VELPO</b>
-          <span>Personalised Learning-Path Optimiser</span>
-        </div>
-        <nav className="tabs">
-          <NavLink to="/learner" className={({ isActive }) => (isActive ? "active" : "")}>
-            Learner
-          </NavLink>
-          <NavLink to="/teacher" className={({ isActive }) => (isActive ? "active" : "")}>
-            Teacher console
-          </NavLink>
-        </nav>
+        <Link to="/" className="wordmark">
+          VELPO
+        </Link>
         <span className="spacer" />
+        <NavLink to="/teacher" className={({ isActive }) => `navlink ${isActive ? "active" : ""}`}>
+          Teacher console
+        </NavLink>
+        <span className="kbd">⌘K</span>
         <ThemeToggle />
       </header>
 
       <ErrorBoundary>
-        <CatalogueGate>
-          {(catalogue) => (
-            <Suspense fallback={<Empty>Loading view…</Empty>}>
-              <Routes>
-                <Route path="/" element={<Navigate to="/learner" replace />} />
-                <Route path="/learner" element={<LearnerPage catalogue={catalogue} />} />
-                <Route path="/teacher" element={<TeacherPage catalogue={catalogue} />} />
-                <Route path="*" element={<Navigate to="/learner" replace />} />
-              </Routes>
-            </Suspense>
-          )}
-        </CatalogueGate>
+        <Suspense fallback={<Empty>Loading…</Empty>}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/learn" element={<LearnPage />} />
+            <Route
+              path="/teacher"
+              element={
+                <CatalogueGate>{(cat) => <TeacherPage catalogue={cat} />}</CatalogueGate>
+              }
+            />
+            <Route path="*" element={<HomePage />} />
+          </Routes>
+        </Suspense>
       </ErrorBoundary>
 
       <footer className="foot">
-        Every path is prerequisite-valid and budget-bounded <em>by construction</em>; the optimal
-        solver is provably globally optimal in <code>O(V·R·B)</code>. Anytime A* re-plans in{" "}
-        <code>&lt;1&nbsp;ms</code>.
+        Every path is a linear extension of the prerequisite poset — valid <em>by construction</em>.
+        The sequencing DP is provably optimal; the adaptive test is 2-parameter IRT; resources are
+        real and open.
       </footer>
     </div>
   );
@@ -60,12 +57,7 @@ export function App() {
 
 function CatalogueGate({ children }: { children: (c: Catalogue) => React.ReactNode }) {
   const { data, isPending, isError, error, refetch } = useCatalogue();
-  if (isPending)
-    return (
-      <div style={{ marginTop: 40 }}>
-        <Spinner label="Loading curriculum…" />
-      </div>
-    );
+  if (isPending) return <Spinner label="Loading…" />;
   if (isError)
     return (
       <div style={{ marginTop: 24 }}>

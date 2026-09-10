@@ -17,6 +17,7 @@ export const Catalogue = z.object({
   concepts: z.array(Concept),
   resources: z.array(Resource),
   goals: z.array(z.string()),
+  discovered: z.boolean().default(false),
 });
 
 export const Step = z.object({
@@ -24,6 +25,11 @@ export const Step = z.object({
   concept_id: z.string(),
   reason: z.string(),
   review: z.boolean().default(false),
+  title: z.string().default(""),
+  url: z.string().default(""),
+  source: z.string().default(""),
+  kind: z.string().default("lesson"),
+  difficulty: z.number().default(0),
 });
 export const Session = z.object({ start: z.number(), end: z.number() });
 export const Objective = z.object({
@@ -53,6 +59,52 @@ export const ObserveResponse = z.object({
 });
 export const ExplainResponse = z.object({ resource_id: z.string(), reason: z.string() });
 
+export const ResolveResponse = z.object({
+  goal: z.string(),
+  domain: z.string(),
+  source: z.enum(["seed", "dynamic"]),
+  assessable: z.boolean().default(true),
+  goals: z.array(z.string()),
+  concepts: z.array(Concept),
+  prerequisites: z.array(z.tuple([z.string(), z.string()])),
+});
+
+export const AssessQuestion = z.object({
+  item_id: z.string(),
+  skill: z.string(),
+  kind: z.enum(["mcq", "task"]),
+  stem: z.string(),
+  choices: z.array(z.string()),
+});
+export const SkillEstimate = z.object({
+  skill: z.string(),
+  theta: z.number(),
+  se: z.number(),
+  mastery: z.number(),
+  n_items: z.number(),
+  confident: z.boolean(),
+});
+export const AssessState = z.object({
+  done: z.boolean(),
+  answered: z.number(),
+  progress: z.number(),
+  question: AssessQuestion.nullable(),
+  estimates: z.array(SkillEstimate),
+});
+
+export const DiscoverResource = z.object({
+  title: z.string(),
+  url: z.string(),
+  source: z.string(),
+  kind: z.string(),
+  difficulty: z.number(),
+  minutes: z.number(),
+});
+export const DiscoverResponse = z.object({
+  concept: z.string(),
+  resources: z.array(DiscoverResource),
+});
+
 export type Concept = z.infer<typeof Concept>;
 export type Resource = z.infer<typeof Resource>;
 export type Catalogue = z.infer<typeof Catalogue>;
@@ -63,6 +115,11 @@ export type RecommendResponse = z.infer<typeof RecommendResponse>;
 export type ObserveResponse = z.infer<typeof ObserveResponse>;
 
 export type Session = z.infer<typeof Session>;
+export type ResolveResponse = z.infer<typeof ResolveResponse>;
+export type AssessQuestion = z.infer<typeof AssessQuestion>;
+export type SkillEstimate = z.infer<typeof SkillEstimate>;
+export type AssessState = z.infer<typeof AssessState>;
+export type DiscoverResource = z.infer<typeof DiscoverResource>;
 export type Speed = "slow" | "normal" | "fast";
 export type SolverMode = "sequence" | "optimal" | "interactive" | "pareto";
 
@@ -76,6 +133,7 @@ export interface RecommendInput {
   ban?: string[];
   lock?: string[];
   force_order?: [string, string][];
+  goal?: string; // free-text goal -> resolved to a knowledge graph server-side
 }
 
 export interface ObserveInput {
@@ -139,4 +197,22 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ learner_id, resource_id }),
     }),
+
+  resolve: (goal: string) =>
+    request(ResolveResponse, "/resolve", { method: "POST", body: JSON.stringify({ goal }) }),
+
+  assessStart: (learner_id: string, goals: string[]) =>
+    request(AssessState, "/assess/start", {
+      method: "POST",
+      body: JSON.stringify({ learner_id, goals }),
+    }),
+
+  assessAnswer: (learner_id: string, item_id: string, response: string) =>
+    request(AssessState, "/assess/answer", {
+      method: "POST",
+      body: JSON.stringify({ learner_id, item_id, response }),
+    }),
+
+  discover: (concept_id: string) =>
+    request(DiscoverResponse, `/discover/${encodeURIComponent(concept_id)}`),
 };

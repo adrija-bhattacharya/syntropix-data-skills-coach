@@ -1,7 +1,7 @@
 /** TanStack Query hooks - the only place components touch the network. */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api, type ObserveInput, type RecommendInput } from "./api";
+import { api, type AssessState, type ObserveInput, type RecommendInput } from "./api";
 
 export const keys = {
   catalogue: ["catalogue"] as const,
@@ -48,4 +48,40 @@ export function useExplain() {
     mutationFn: ({ learnerId, resourceId }: { learnerId: string; resourceId: string }) =>
       api.explain(learnerId, resourceId),
   });
+}
+
+export function useResolve(goal: string) {
+  return useQuery({
+    queryKey: ["resolve", goal] as const,
+    queryFn: () => api.resolve(goal),
+    enabled: goal.trim().length > 1,
+    staleTime: Infinity,
+    retry: 0,
+  });
+}
+
+export function useDiscover(conceptId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["discover", conceptId] as const,
+    queryFn: () => api.discover(conceptId),
+    enabled: enabled && conceptId.length > 0,
+    staleTime: Infinity,
+  });
+}
+
+/** Drives the adaptive diagnostic: `start` seeds it, `answer` advances it,
+ *  and the running `state` (question + per-skill estimates) is kept locally. */
+export function useAssessment(learnerId: string) {
+  const qc = useQueryClient();
+  const start = useMutation({
+    mutationFn: (goals: string[]) => api.assessStart(learnerId, goals),
+  });
+  const answer = useMutation({
+    mutationFn: ({ itemId, response }: { itemId: string; response: string }) =>
+      api.assessAnswer(learnerId, itemId, response),
+    onSuccess: (s: AssessState) => {
+      if (s.done) void qc.invalidateQueries({ queryKey: ["recommend"] });
+    },
+  });
+  return { start, answer };
 }
