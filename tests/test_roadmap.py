@@ -38,10 +38,16 @@ def test_pace_scales_the_estimate() -> None:
 
 def test_role_roadmap_groups_by_domain_and_places_certs() -> None:
     r = resolve("become a data analyst")
-    rm = build_roadmap(r.kg, r, _state(r.kg.concept_ids), weekly_hours=6)
+    rm = build_roadmap(r.kg, r, _state(r.kg.concept_ids), weekly_hours=6, band="beginner")
     assert rm.role == "data analyst"
+    assert rm.band == "beginner"
     assert len(rm.phases) >= 3
     assert {"SQL", "pandas & NumPy"} <= {p.title for p in rm.phases}
+    # every roadmap surfaces profile-matched resources with real links
+    assert rm.recommended and all(str(v["url"]).startswith("https://") for v in rm.recommended)
+    assert any(p.videos for p in rm.phases)
+    yt = [v for v in rm.recommended if "youtube.com" in str(v["url"])]
+    assert yt  # at least one YouTube pick for a beginner analyst
     all_phase_certs = {c.id for p in rm.phases for c in p.certifications}
     assert all_phase_certs  # at least one certification is anchored to a phase
     # every phase certification is genuinely covered by that point

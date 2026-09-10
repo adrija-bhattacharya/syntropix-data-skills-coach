@@ -128,7 +128,22 @@ export const handlers = [
   }),
 
   http.post("/roadmap", async ({ request }) => {
-    const b = (await request.json()) as { goal: string; weekly_hours?: number };
+    const b = (await request.json()) as {
+      goal: string;
+      weekly_hours?: number;
+      band?: string;
+    };
+    const vid = {
+      id: "fcc_sql_full",
+      title: "SQL Tutorial - Full Database Course for Beginners",
+      channel: "freeCodeCamp",
+      url: "https://www.youtube.com/watch?v=HXV3zeQKqGY",
+      kind: "video",
+      minutes: 240,
+      level: 1,
+      note: "The standard first SQL course.",
+      free: true,
+    };
     return HttpResponse.json({
       roadmap: {
         goal: "quadratics",
@@ -136,6 +151,7 @@ export const handlers = [
         role: null,
         pace: "steady",
         weekly_hours: b.weekly_hours ?? 5,
+        band: b.band ?? "intermediate",
         starting_readiness: 0.1,
         target_readiness: 1,
         already_have: [],
@@ -146,6 +162,7 @@ export const handlers = [
         deadline: null,
         on_track: null,
         notes: ["Pace: steady - estimates assume an average learning speed."],
+        recommended: [vid],
         phases: [
           {
             index: 1,
@@ -160,6 +177,7 @@ export const handlers = [
             focus: "Work through Integers & number line, Fractions.",
             checkpoint: "Checkpoint: you can use Fractions confidently.",
             resources: [],
+            videos: [vid],
             certifications: [],
           },
           {
@@ -175,6 +193,7 @@ export const handlers = [
             focus: "Work through Quadratic equations.",
             checkpoint: "Checkpoint: you can solve quadratics.",
             resources: [],
+            videos: [],
             certifications: [
               {
                 id: "kaggle_sql",

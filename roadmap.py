@@ -26,6 +26,7 @@ from algorithms.roleplan import solve_role_plan
 from algorithms.sequencing import plan_sequence
 from certifications import Certification, certifications_for
 from config import settings
+from data_resources import LearnResource, recommend_resources
 from domain_data import DOMAIN_PREREQS, ROLES, role_profile
 from domains import Resolved, resolve
 from model.knowledge_graph import KnowledgeGraph
@@ -63,6 +64,7 @@ class RoadmapPhase:
     focus: str
     checkpoint: str
     resources: tuple[dict[str, object], ...]
+    videos: tuple[dict[str, object], ...]  # profile-matched YouTube / docs picks
     certifications: tuple[Certification, ...]
 
 
@@ -81,9 +83,11 @@ class Roadmap:
     total_hours: float
     total_weeks: float
     finish_estimate: str | None
+    band: str = "intermediate"
     deadline: str | None = None
     on_track: bool | None = None
     certifications: tuple[Certification, ...] = ()
+    recommended: tuple[dict[str, object], ...] = ()  # top profile picks for the whole track
     notes: tuple[str, ...] = field(default_factory=tuple)
 
 
@@ -95,10 +99,12 @@ def build_roadmap(
     *,
     weekly_hours: float = 5.0,
     deadline: date | None = None,
+    band: str = "intermediate",
 ) -> Roadmap:
     theta = settings.mastery_threshold
     pace = _pace_of(state)
     mult = _PACE[pace]
+    profile = resolved.domain  # "data analyst" / "sql" / ... - the profile key prefix
     # a roadmap is the *whole* picture: for a curated domain, cover the entire
     # track, not just the closure of one fuzzy-matched concept.
     if resolved.source == "seed":
@@ -108,9 +114,9 @@ def build_roadmap(
 
     role_obj = next((r for r in ROLES if r.name == resolved.domain), None)
     if resolved.source == "role" and role_obj is not None:
-        profile = {k: v for k, v in role_profile(role_obj).items() if k in kg.concepts}
+        role_prof = {k: v for k, v in role_profile(role_obj).items() if k in kg.concepts}
         rp = solve_role_plan(
-            kg, role_obj.name, profile, state, budget_minutes=1e7
+            kg, role_obj.name, role_prof, state, budget_minutes=1e7
         )  # no budget cap: the whole readiness set
         closure = list(rp.chosen)
         start_r, target_r = rp.readiness_before, rp.readiness
@@ -159,6 +165,18 @@ def build_roadmap(
         )
         cert_placed.update(c.id for c in here_certs)
         resources = tuple(res_by_concept[c] for c in cids if c in res_by_concept)[:4]
+        phase_domains = {c.split(".")[0] if "." in c else domain for c in cids}
+        m_here = [state.decayed_mastery(c) for c in new]
+        vids = recommend_resources(
+            profile=profile,
+            band=band,
+            concepts=set(cids),
+            concept_names={c: kg.concepts[c].name for c in cids},
+            domains=phase_domains,
+            mastery=(sum(m_here) / len(m_here)) if m_here else None,
+            limit=3,
+            require_touch=True,
+        )
         phases.append(
             RoadmapPhase(
                 index=i + 1,
@@ -173,6 +191,7 @@ def build_roadmap(
                 focus=_focus_line(names),
                 checkpoint=_checkpoint_line(names),
                 resources=resources,
+                videos=tuple(_res_dict(v) for v in vids),
                 certifications=here_certs,
             )
         )
@@ -188,6 +207,15 @@ def build_roadmap(
         on_track = total_weeks <= weeks_avail + 1e-6
 
     notes = _notes(pace, len(already), len(closure), all_certs, deadline, on_track, total_weeks)
+
+    top = recommend_resources(
+        profile=profile,
+        band=band,
+        concepts=set(closure),
+        concept_names={c: kg.concepts[c].name for c in closure},
+        domains={d for d in domains_seen if d},
+        limit=5,
+    )
 
     return Roadmap(
         goal=resolved.goals[0] if resolved.goals else "",
@@ -207,14 +235,30 @@ def build_roadmap(
         total_hours=total_hours,
         total_weeks=total_weeks,
         finish_estimate=finish,
+        band=band,
         deadline=deadline.isoformat() if deadline else None,
         on_track=on_track,
         certifications=(*all_certs,),
+        recommended=tuple(_res_dict(r) for r in top),
         notes=notes,
     )
 
 
 # --------------------------------------------------------------------------- #
+def _res_dict(r: LearnResource) -> dict[str, object]:
+    return {
+        "id": r.id,
+        "title": r.title,
+        "channel": r.channel,
+        "url": r.url,
+        "kind": r.kind,
+        "minutes": r.minutes,
+        "level": r.level,
+        "note": r.note,
+        "free": r.free,
+    }
+
+
 def _reached(closure: list[str], goals: list[str], state: LearnerState, theta: float) -> float:
     if not goals:
         return 0.0
@@ -350,7 +394,8 @@ def roadmap_for_goal(
     *,
     weekly_hours: float = 5.0,
     deadline: date | None = None,
+    band: str = "intermediate",
 ) -> Roadmap:
     """Convenience: resolve a free-text goal and build the roadmap in one call."""
     r = resolve(goal)
-    return build_roadmap(r.kg, r, state, weekly_hours=weekly_hours, deadline=deadline)
+    return build_roadmap(r.kg, r, state, weekly_hours=weekly_hours, deadline=deadline, band=band)

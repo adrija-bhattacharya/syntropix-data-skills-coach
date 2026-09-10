@@ -5,10 +5,10 @@ import { Button } from "../../components/ui";
 
 const EXAMPLES = [
   "become a data analyst",
-  "SQL window functions",
-  "pandas groupby & joins",
+  "learn SQL",
+  "pandas & data cleaning",
   "A/B testing & hypothesis testing",
-  "DSA with Python — dynamic programming",
+  "data visualisation with Python",
   "I'm a complete beginner",
 ];
 

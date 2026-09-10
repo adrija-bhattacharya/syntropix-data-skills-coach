@@ -2,8 +2,23 @@ import { useMemo } from "react";
 
 import { Badge, Callout, Spinner } from "../../components/ui";
 import { useLearner } from "../../context/LearnerContext";
-import type { Certification, RoadmapInput, RoadmapPhase } from "../../lib/api";
+import type {
+  Band,
+  Certification,
+  LearnResource,
+  RoadmapInput,
+  RoadmapPhase,
+} from "../../lib/api";
 import { useRoadmap } from "../../lib/queries";
+
+const KIND_ICON: Record<string, string> = {
+  video: "▶",
+  playlist: "☰",
+  channel: "▶",
+  course: "\u{1F393}",
+  docs: "\u{1F4DA}",
+  practice: "✎",
+};
 
 const PACE_BLURB: Record<string, string> = {
   deliberate: "measured — you get extra time per topic",
@@ -15,10 +30,12 @@ export function RoadmapView({
   goalText,
   weeklyHours,
   deadline,
+  band,
 }: {
   goalText: string;
   weeklyHours: number;
   deadline?: string;
+  band?: Band;
 }) {
   const { learnerId } = useLearner();
   const input = useMemo<RoadmapInput>(
@@ -27,8 +44,9 @@ export function RoadmapView({
       goal: goalText,
       weekly_hours: weeklyHours,
       deadline: deadline || undefined,
+      band,
     }),
-    [learnerId, goalText, weeklyHours, deadline],
+    [learnerId, goalText, weeklyHours, deadline, band],
   );
   const q = useRoadmap(input, true);
 
@@ -51,6 +69,7 @@ export function RoadmapView({
           </p>
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <Badge tone="neutral">level: {rm.band}</Badge>
           <Badge tone="neutral">pace: {rm.pace}</Badge>
           {rm.on_track === true && <Badge tone="good">on track for {rm.deadline}</Badge>}
           {rm.on_track === false && <Badge tone="warn">tight for {rm.deadline}</Badge>}
@@ -63,6 +82,17 @@ export function RoadmapView({
           {rm.already_have.length > 8 && ` +${rm.already_have.length - 8} more`} — skipped in the
           estimate.
         </p>
+      )}
+
+      {rm.recommended.length > 0 && (
+        <div className="rm-starthere">
+          <h4 style={{ margin: "10px 0 6px" }}>
+            Start here — matched to your profile ({rm.band})
+          </h4>
+          {rm.recommended.map((v) => (
+            <ResourceRow key={v.id} v={v} />
+          ))}
+        </div>
       )}
 
       <ol className="rm-timeline">
@@ -121,6 +151,13 @@ function PhaseRow({ p }: { p: RoadmapPhase }) {
             </span>
           )}
         </div>
+        {p.videos.length > 0 && (
+          <div className="rm-phase-videos">
+            {p.videos.map((v) => (
+              <ResourceRow key={v.id} v={v} />
+            ))}
+          </div>
+        )}
         {p.certifications.map((c) => (
           <div key={c.id} className="rm-cert-inline">
             🎓 <strong>Ready to sit:</strong>{" "}
@@ -134,6 +171,28 @@ function PhaseRow({ p }: { p: RoadmapPhase }) {
         ))}
       </div>
     </li>
+  );
+}
+
+function ResourceRow({ v }: { v: LearnResource }) {
+  return (
+    <div className="rm-res">
+      <span className="rm-res-icon">{KIND_ICON[v.kind] ?? "•"}</span>
+      <div style={{ minWidth: 0 }}>
+        <a href={v.url} target="_blank" rel="noreferrer">
+          {v.title}
+        </a>{" "}
+        <span className="hint">
+          — {v.channel}
+          {v.minutes ? ` · ${Math.round(v.minutes / 60) || 1}h` : ""}
+        </span>
+        {v.note && (
+          <p className="hint" style={{ margin: "1px 0 0" }}>
+            {v.note}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
 

@@ -223,7 +223,12 @@ export function LearnPage() {
           </div>
 
           {planTab === "roadmap" ? (
-            <RoadmapView goalText={goal} weeklyHours={hoursPerWeek} deadline={deadline} />
+            <RoadmapView
+              goalText={goal}
+              weeklyHours={hoursPerWeek}
+              deadline={deadline}
+              band={r.assessable ? band : undefined}
+            />
           ) : (
             <PlanView
               goalText={goal}

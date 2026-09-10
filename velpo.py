@@ -309,10 +309,14 @@ def cmd_roadmap(args: argparse.Namespace) -> int:
     r = resolve(args.goal or "become a data analyst")
     st = LearnerState.cold_start(r.kg.concept_ids, time_budget_s=3600)
     deadline = datetime.strptime(args.by, "%Y-%m-%d").date() if args.by else None
-    rm = build_roadmap(r.kg, r, st, weekly_hours=args.hours_per_week, deadline=deadline)
+    rm = build_roadmap(
+        r.kg, r, st, weekly_hours=args.hours_per_week, deadline=deadline, band=args.band
+    )
 
     head = rm.role or rm.domain
-    print(f"\nRoadmap: {head}   pace {rm.pace}   {args.hours_per_week:.0f} h/week")
+    print(
+        f"\nRoadmap: {head}   pace {rm.pace}   level {rm.band}   {args.hours_per_week:.0f} h/week"
+    )
     print(
         f"~{rm.total_hours:.0f} study hours over ~{rm.total_weeks:.0f} weeks"
         + (f"  ->  ~{rm.finish_estimate}" if rm.finish_estimate else "")
@@ -320,6 +324,12 @@ def cmd_roadmap(args: argparse.Namespace) -> int:
     if rm.already_have:
         extra = " ..." if len(rm.already_have) > 6 else ""
         print(f"already have: {', '.join(rm.already_have[:6])}{extra}")
+
+    print("\nStart here (matched to your profile):")
+    for v in rm.recommended:
+        print(f"  [{v['kind']}] {v['title']} - {v['channel']}")
+        print(f"        {v['url']}")
+
     for p in rm.phases:
         print(
             f"\n  PHASE {p.index} - {p.title}   ({p.new_skills} skills, ~{p.est_hours:.0f} h,"
@@ -327,6 +337,8 @@ def cmd_roadmap(args: argparse.Namespace) -> int:
         )
         print(f"     {p.focus}")
         print(f"     skills: {', '.join(p.concept_names)}")
+        for v in p.videos:
+            print(f"     watch: {v['title']} - {v['channel']}  {v['url']}")
         for cert in p.certifications:
             tag = "free" if cert.free else cert.price_note
             print(f"     >> sit here: {cert.name} ({cert.provider}) - {tag}")
@@ -388,6 +400,7 @@ def cmd_lint(_: argparse.Namespace) -> int:
         "config.py",
         "curriculum.py",
         "certifications.py",
+        "data_resources.py",
         "engine.py",
         "explain.py",
         "roadmap.py",
@@ -409,6 +422,7 @@ def cmd_fmt(_: argparse.Namespace) -> int:
         "config.py",
         "curriculum.py",
         "certifications.py",
+        "data_resources.py",
         "engine.py",
         "explain.py",
         "roadmap.py",
@@ -521,6 +535,12 @@ def main(argv: list[str] | None = None) -> int:
     rd.add_argument("--goal", default=None)
     rd.add_argument("--hours-per-week", type=float, default=5.0, dest="hours_per_week")
     rd.add_argument("--by", default=None, help="optional target date YYYY-MM-DD")
+    rd.add_argument(
+        "--band",
+        default="intermediate",
+        choices=("beginner", "intermediate", "advanced"),
+        help="your self-reported level (selects which resources to recommend)",
+    )
     rd.set_defaults(fn=cmd_roadmap)
 
     gh = sub.add_parser("graph-health")

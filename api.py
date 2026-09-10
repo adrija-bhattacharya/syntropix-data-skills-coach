@@ -53,18 +53,27 @@ app.add_middleware(
 
 
 def _build_kg() -> KnowledgeGraph:
-    """``VELPO_CATALOGUE=discovered`` serves the harvested open-resource catalogue
-    (bundled snapshot); anything else serves the synthetic algebra curriculum."""
-    if os.environ.get("VELPO_CATALOGUE") == "discovered":
+    """``VELPO_CATALOGUE=discovered`` serves the harvested open-resource catalogue;
+    otherwise the default is the curated **SQL** data-analytics track (the most
+    common entry point).  ``VELPO_CATALOGUE=algebra`` keeps the legacy curriculum."""
+    cat = os.environ.get("VELPO_CATALOGUE")
+    if cat == "discovered":
         from harvest import algebra_catalogue
 
         return algebra_catalogue()
-    return build_curriculum()
+    if cat == "algebra":
+        return build_curriculum()
+    from domains import seed_graph
+
+    return seed_graph("sql")
 
 
 _ITEM_BANK_DOMAINS = ("algebra", "sql", "python")  # the calibrated item banks so far
-engine = Engine(_build_kg(), item_bank=build_item_bank())  # the default (algebra) engine
-_ENGINES: dict[str, Engine] = {"seed:algebra": engine}
+_DEFAULT_DOMAIN = "algebra" if os.environ.get("VELPO_CATALOGUE") == "algebra" else "sql"
+engine = Engine(
+    _build_kg(), item_bank=build_item_bank(_DEFAULT_DOMAIN), graph_source="seed"
+)  # default: the SQL data-analytics track
+_ENGINES: dict[str, Engine] = {f"seed:{_DEFAULT_DOMAIN}": engine}
 _LEARNER_ENGINE: dict[str, Engine] = {}  # which engine holds a learner's assessment
 
 
@@ -72,7 +81,7 @@ def _engine_for(goal: str | None) -> tuple[Engine, str, bool]:
     """(engine, domain, assessable) for a free-text goal.  Each resolved graph
     gets a cached engine, with the calibrated item bank when one exists."""
     if not goal or not goal.strip():
-        return engine, "algebra", True
+        return engine, _DEFAULT_DOMAIN, True
     from domains import resolve
 
     r = resolve(goal)
@@ -114,6 +123,9 @@ class RoadmapIn(BaseModel):
     goal: str = Field(min_length=1)
     weekly_hours: float = Field(5.0, gt=0, le=80)
     deadline: date | None = None
+    band: Literal["beginner", "intermediate", "advanced"] | None = None
+    """Self-reported level; defaults to the band from the learner's assessment,
+    else 'intermediate'.  Selects which curated resources to recommend."""
 
 
 class ScheduleIn(BaseModel):
@@ -543,9 +555,11 @@ def _roadmap_out(rm: object) -> dict[str, Any]:
         "total_hours": r.total_hours,
         "total_weeks": r.total_weeks,
         "finish_estimate": r.finish_estimate,
+        "band": r.band,
         "deadline": r.deadline,
         "on_track": r.on_track,
         "notes": list(r.notes),
+        "recommended": list(r.recommended),
         "phases": [
             {
                 "index": p.index,
@@ -560,6 +574,7 @@ def _roadmap_out(rm: object) -> dict[str, Any]:
                 "focus": p.focus,
                 "checkpoint": p.checkpoint,
                 "resources": list(p.resources),
+                "videos": list(p.videos),
                 "certifications": [_cert_out(c) for c in p.certifications],
             }
             for p in r.phases
@@ -593,7 +608,10 @@ def roadmap(body: RoadmapIn) -> dict[str, Any]:
     eng, _domain, _a = _engine_for(body.goal)
     r = resolve(body.goal)
     state = eng.store.get(body.learner_id) or eng.ensure(body.learner_id, time_budget_s=3600.0)
-    rm = build_roadmap(r.kg, r, state, weekly_hours=body.weekly_hours, deadline=body.deadline)
+    band = body.band or eng.assessment_band(body.learner_id) or "intermediate"
+    rm = build_roadmap(
+        r.kg, r, state, weekly_hours=body.weekly_hours, deadline=body.deadline, band=band
+    )
     return {"roadmap": _roadmap_out(rm)}
 
 

@@ -125,6 +125,11 @@ class Engine:
         except KeyError:
             raise KeyError(f"no active assessment for {learner_id!r}") from None
 
+    def assessment_band(self, learner_id: str) -> str | None:
+        """The self-reported band from this learner's diagnostic, if they took one."""
+        sess = self._assessments.get(learner_id)
+        return sess.band if sess is not None else None
+
     def answer_assessment(
         self, learner_id: str, item_id: str, response: str | int
     ) -> AdaptiveSession:

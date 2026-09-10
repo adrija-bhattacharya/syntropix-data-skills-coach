@@ -719,6 +719,33 @@ textarea {
   flex-wrap: wrap;
   font-weight: 600;
 }
+.rm-starthere {
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line));
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  margin: 12px 0 4px;
+  background: color-mix(in srgb, var(--accent) 5%, var(--bg-1));
+}
+.rm-phase-videos {
+  margin-top: 8px;
+  display: grid;
+  gap: 4px;
+}
+.rm-res {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 8px;
+  font-size: 13px;
+  padding: 3px 0;
+}
+.rm-res-icon {
+  color: var(--accent);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.rm-res a {
+  word-break: break-word;
+}
 
 /* --- deadline calendar (claim C) --- */
 .deadline-box {

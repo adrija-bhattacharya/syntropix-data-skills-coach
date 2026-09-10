@@ -99,6 +99,17 @@ export const Certification = z.object({
   hours: z.number(),
   blurb: z.string(),
 });
+export const LearnResource = z.object({
+  id: z.string(),
+  title: z.string(),
+  channel: z.string(),
+  url: z.string(),
+  kind: z.string(),
+  minutes: z.number().default(0),
+  level: z.number().default(3),
+  note: z.string().default(""),
+  free: z.boolean().default(true),
+});
 export const RoadmapPhase = z.object({
   index: z.number(),
   title: z.string(),
@@ -112,6 +123,7 @@ export const RoadmapPhase = z.object({
   focus: z.string().default(""),
   checkpoint: z.string().default(""),
   resources: z.array(z.record(z.unknown())).default([]),
+  videos: z.array(LearnResource).default([]),
   certifications: z.array(Certification).default([]),
 });
 export const Roadmap = z.object({
@@ -127,9 +139,11 @@ export const Roadmap = z.object({
   total_hours: z.number(),
   total_weeks: z.number(),
   finish_estimate: z.string().nullable(),
+  band: z.string().default("intermediate"),
   deadline: z.string().nullable(),
   on_track: z.boolean().nullable(),
   notes: z.array(z.string()).default([]),
+  recommended: z.array(LearnResource).default([]),
   phases: z.array(RoadmapPhase).default([]),
   certifications: z.array(Certification).default([]),
 });
@@ -250,6 +264,7 @@ export type RecommendResponse = z.infer<typeof RecommendResponse>;
 export type CalendarStep = z.infer<typeof CalendarStep>;
 export type CalendarPlan = z.infer<typeof CalendarPlan>;
 export type Certification = z.infer<typeof Certification>;
+export type LearnResource = z.infer<typeof LearnResource>;
 export type RoadmapPhase = z.infer<typeof RoadmapPhase>;
 export type Roadmap = z.infer<typeof Roadmap>;
 export type GraphHealth = z.infer<typeof GraphHealth>;
@@ -292,6 +307,7 @@ export interface RoadmapInput {
   goal: string;
   weekly_hours?: number;
   deadline?: string; // YYYY-MM-DD
+  band?: Band;
 }
 
 export interface ObserveInput {
