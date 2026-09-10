@@ -5,6 +5,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
+__version__ = "1.0.0"
 SEED = 20260909
 
 

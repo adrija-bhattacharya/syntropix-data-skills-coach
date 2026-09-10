@@ -20,8 +20,8 @@ from __future__ import annotations
 import math
 from typing import NamedTuple
 
-from velpo.model.knowledge_graph import KnowledgeGraph
-from velpo.model.learner import LearnerState, resource_load
+from model.knowledge_graph import KnowledgeGraph
+from model.learner import LearnerState, resource_load
 
 _HOUR = 3600.0
 _TAU_H = 0.5  # hours of study at velocity 1.0 to close ~63% of the remaining gap

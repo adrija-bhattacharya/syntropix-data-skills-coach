@@ -3,9 +3,9 @@ from __future__ import annotations
 import numpy as np
 
 from benchmarks.benchmark import aco, dqn, greedy, run
-from velpo.curriculum import build_curriculum
-from velpo.model.cost import build_cost_vectors
-from velpo.model.learner import LearnerState
+from curriculum import build_curriculum
+from model.cost import build_cost_vectors
+from model.learner import LearnerState
 
 
 def test_baselines_are_prerequisite_valid_full_plans() -> None:

@@ -20,11 +20,11 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from velpo import __version__
-from velpo.algorithms.dynamic_programming import Plan, TeacherConstraints
-from velpo.curriculum import build_curriculum
-from velpo.engine import Engine
-from velpo.model.learner import Attempt
+from algorithms.dynamic_programming import Plan, TeacherConstraints
+from config import __version__
+from curriculum import build_curriculum
+from engine import Engine
+from model.learner import Attempt
 
 _OBJ_KEYS = ("neg_gain", "seconds", "load", "diff_jump", "neg_review")
 _WEB = Path(__file__).resolve().parent / "web"

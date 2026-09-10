@@ -16,10 +16,10 @@ venv/
 htmlcov/
 coverage.xml
 
-# frontend  (velpo/web is the built SPA - regenerate with `make frontend`)
+# frontend  (web is the built SPA - regenerate with `make frontend`)
 node_modules/
 frontend/dist/
-/velpo/web/
+/web/
 
 # local dev
 velpo.db

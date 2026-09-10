@@ -6,11 +6,11 @@ from _helpers import random_curriculum
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from velpo.algorithms.astar import solve_astar
-from velpo.algorithms.dynamic_programming import build_plan_context, solve_optimal
-from velpo.model.cost import build_cost_vectors
-from velpo.model.knowledge_graph import KnowledgeGraph
-from velpo.model.learner import LearnerState
+from algorithms.astar import solve_astar
+from algorithms.dynamic_programming import build_plan_context, solve_optimal
+from model.cost import build_cost_vectors
+from model.knowledge_graph import KnowledgeGraph
+from model.learner import LearnerState
 
 WEIGHTS = [(1.0, 0.0, 0.0, 0.0, 0.0), (5.0, 6e-4, 0.4, 0.25, 0.7), (0.0, 1.0, 0.0, 0.0, 0.0)]
 

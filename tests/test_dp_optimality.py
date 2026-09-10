@@ -8,10 +8,10 @@ from _helpers import brute_force, random_curriculum
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from velpo.algorithms.dynamic_programming import solve_optimal
-from velpo.model.cost import build_cost_vectors
-from velpo.model.knowledge_graph import KnowledgeGraph
-from velpo.model.learner import LearnerState
+from algorithms.dynamic_programming import solve_optimal
+from model.cost import build_cost_vectors
+from model.knowledge_graph import KnowledgeGraph
+from model.learner import LearnerState
 
 WEIGHTS = [
     (1.0, 0.0, 0.0, 0.0, 0.0),

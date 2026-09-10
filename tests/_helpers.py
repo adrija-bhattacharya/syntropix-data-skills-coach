@@ -8,11 +8,11 @@ import math
 
 import networkx as nx
 
-from velpo.algorithms.dynamic_programming import Plan, build_plan_context
-from velpo.algorithms.graph_traversal import ancestors_subgraph, topological_order
-from velpo.model.cost import CostVector
-from velpo.model.knowledge_graph import Concept, KnowledgeGraph, Resource
-from velpo.model.learner import LearnerState
+from algorithms.dynamic_programming import Plan, build_plan_context
+from algorithms.graph_traversal import ancestors_subgraph, topological_order
+from model.cost import CostVector
+from model.knowledge_graph import Concept, KnowledgeGraph, Resource
+from model.learner import LearnerState
 
 Weights = tuple[float, float, float, float, float]
 

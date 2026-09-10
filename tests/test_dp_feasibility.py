@@ -7,11 +7,11 @@ from _helpers import assert_feasible, random_curriculum
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from velpo.algorithms.astar import solve_astar
-from velpo.algorithms.dynamic_programming import solve_optimal, solve_pareto
-from velpo.model.cost import build_cost_vectors
-from velpo.model.knowledge_graph import KnowledgeGraph
-from velpo.model.learner import LearnerState
+from algorithms.astar import solve_astar
+from algorithms.dynamic_programming import solve_optimal, solve_pareto
+from model.cost import build_cost_vectors
+from model.knowledge_graph import KnowledgeGraph
+from model.learner import LearnerState
 
 
 def test_curriculum_plans_feasible(kg: KnowledgeGraph) -> None:

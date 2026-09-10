@@ -9,18 +9,18 @@ from collections.abc import Sequence
 from dataclasses import replace
 from typing import Literal, Protocol
 
-from velpo.algorithms.astar import solve_astar
-from velpo.algorithms.dynamic_programming import (
+from algorithms.astar import solve_astar
+from algorithms.dynamic_programming import (
     Plan,
     TeacherConstraints,
     solve_optimal,
     solve_pareto,
 )
-from velpo.config import settings
-from velpo.explain import explain_plan, explain_step
-from velpo.model.cost import build_cost_vectors
-from velpo.model.knowledge_graph import KnowledgeGraph
-from velpo.model.learner import Attempt, LearnerState, bkt_update, decay, velocity_update
+from config import settings
+from explain import explain_plan, explain_step
+from model.cost import build_cost_vectors
+from model.knowledge_graph import KnowledgeGraph
+from model.learner import Attempt, LearnerState, bkt_update, decay, velocity_update
 
 Mode = Literal["optimal", "interactive", "pareto"]
 _HOUR = 3600.0

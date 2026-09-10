@@ -3,7 +3,7 @@ from __future__ import annotations
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from velpo.algorithms.pareto import dominates, epsilon_prune, is_dominated, non_dominated
+from algorithms.pareto import dominates, epsilon_prune, is_dominated, non_dominated
 
 
 def test_dominates() -> None:

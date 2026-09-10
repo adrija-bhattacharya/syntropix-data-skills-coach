@@ -9,8 +9,8 @@
 * :mod:`astar`              - the same optimum, best-first, for fast re-planning.
 """
 
-from velpo.algorithms.astar import solve_astar
-from velpo.algorithms.dynamic_programming import (
+from algorithms.astar import solve_astar
+from algorithms.dynamic_programming import (
     InfeasibleError,
     Plan,
     PlanContext,
@@ -18,12 +18,12 @@ from velpo.algorithms.dynamic_programming import (
     solve_optimal,
     solve_pareto,
 )
-from velpo.algorithms.graph_traversal import (
+from algorithms.graph_traversal import (
     ancestors_subgraph,
     remove_cycles,
     topological_order,
 )
-from velpo.algorithms.pareto import dominates, epsilon_prune, non_dominated
+from algorithms.pareto import dominates, epsilon_prune, non_dominated
 
 __all__ = [
     "InfeasibleError",

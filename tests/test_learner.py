@@ -4,10 +4,10 @@ import numpy as np
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from velpo.config import settings as cfg
-from velpo.model.cost import build_cost_vectors, expected_mastery_gain
-from velpo.model.knowledge_graph import KnowledgeGraph
-from velpo.model.learner import (
+from config import settings as cfg
+from model.cost import build_cost_vectors, expected_mastery_gain
+from model.knowledge_graph import KnowledgeGraph
+from model.learner import (
     Attempt,
     LearnerState,
     bkt_update,

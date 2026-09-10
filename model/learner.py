@@ -16,7 +16,7 @@ import math
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, replace
 
-from velpo.config import settings
+from config import settings
 
 _HOUR = 3600.0
 

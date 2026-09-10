@@ -39,12 +39,12 @@ from dataclasses import dataclass
 
 import networkx as nx
 
-from velpo.algorithms.graph_traversal import ancestors_subgraph, topological_order
-from velpo.algorithms.pareto import epsilon_prune, non_dominated
-from velpo.config import settings
-from velpo.model.cost import CostVector
-from velpo.model.knowledge_graph import KnowledgeGraph
-from velpo.model.learner import LearnerState
+from algorithms.graph_traversal import ancestors_subgraph, topological_order
+from algorithms.pareto import epsilon_prune, non_dominated
+from config import settings
+from model.cost import CostVector
+from model.knowledge_graph import KnowledgeGraph
+from model.learner import LearnerState
 
 NodeId = str
 Weights = tuple[float, float, float, float, float]

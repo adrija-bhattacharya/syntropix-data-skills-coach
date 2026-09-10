@@ -29,8 +29,8 @@
     "**/.mypy_cache": true,
     "**/.ruff_cache": true,
     "frontend/node_modules": true,
-    "velpo/web": true
+    "web": true
   },
-  "search.exclude": { "frontend/node_modules": true, "velpo/web": true },
+  "search.exclude": { "frontend/node_modules": true, "web": true },
   "editor.rulers": [100]
 }

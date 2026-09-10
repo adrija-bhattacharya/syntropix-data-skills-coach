@@ -1,11 +1,11 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-// build output -> velpo/web  (FastAPI serves it from there at /)
+// build output -> web/  (FastAPI serves it from there at /)
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir: process.env.VELPO_UI_OUT || "../velpo/web",
+    outDir: process.env.VELPO_UI_OUT || "../web",
     emptyOutDir: true,
   },
   server: {

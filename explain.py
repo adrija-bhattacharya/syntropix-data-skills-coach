@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from velpo.algorithms.dynamic_programming import Plan
-from velpo.config import settings
-from velpo.model.knowledge_graph import KnowledgeGraph
-from velpo.model.learner import LearnerState
+from algorithms.dynamic_programming import Plan
+from config import settings
+from model.knowledge_graph import KnowledgeGraph
+from model.learner import LearnerState
 
 
 def _name(kg: KnowledgeGraph, cid: str) -> str:

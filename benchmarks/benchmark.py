@@ -26,14 +26,14 @@ from pathlib import Path
 
 import numpy as np
 
-from velpo.algorithms.astar import solve_astar
-from velpo.algorithms.dynamic_programming import Plan, build_plan_context, solve_optimal
-from velpo.algorithms.graph_traversal import ancestors_subgraph, topological_order
-from velpo.config import SEED, seed_everything, settings
-from velpo.curriculum import build_curriculum
-from velpo.model.cost import CostVector, build_cost_vectors
-from velpo.model.knowledge_graph import KnowledgeGraph
-from velpo.model.learner import LearnerState
+from algorithms.astar import solve_astar
+from algorithms.dynamic_programming import Plan, build_plan_context, solve_optimal
+from algorithms.graph_traversal import ancestors_subgraph, topological_order
+from config import SEED, seed_everything, settings
+from curriculum import build_curriculum
+from model.cost import CostVector, build_cost_vectors
+from model.knowledge_graph import KnowledgeGraph
+from model.learner import LearnerState
 
 RESULTS = Path(__file__).resolve().parents[1] / "results"
 _BUCKETS = 40

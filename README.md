@@ -45,15 +45,17 @@ Open **`velpo.code-workspace`**.  It recommends the extensions (Python, Pylance,
 
 ## Layout
 
+The code sits **directly at the repo root** - no nesting:
+
 ```
-velpo/
-  algorithms/   graph_traversal.py · dynamic_programming.py · astar.py · pareto.py   <- the DAA core
-  model/        knowledge_graph.py · learner.py (BKT + velocity + forgetting + load) · cost.py
-  engine.py     orchestration
-  explain.py    knowledge-graph-grounded reason strings
-  curriculum.py labelled synthetic algebra curriculum (demo / API / tests)
-  api.py        FastAPI (+ serves the built SPA at /)
-frontend/       React + TypeScript + Vite  ->  builds into velpo/web
+algorithms/     graph_traversal.py · dynamic_programming.py · astar.py · pareto.py   <- the DAA core
+model/          knowledge_graph.py · learner.py (BKT + velocity + forgetting + load) · cost.py
+engine.py       orchestration
+explain.py      knowledge-graph-grounded reason strings
+curriculum.py   labelled synthetic algebra curriculum (demo / API / tests)
+api.py          FastAPI  (+ serves the built SPA at /)
+config.py       tunable constants + weights
+frontend/       React + TypeScript + Vite  ->  builds into web/
 benchmarks/     benchmark.py  (VELPO vs greedy / ACO / DQN)
 tests/          the guarantees
 ```

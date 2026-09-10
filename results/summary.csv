@@ -1,6 +1,6 @@
 method,safe_behaviour_rate,over_budget_rate,mean_prereq_violations,mean_optimality_gap,mean_latency_ms
-velpo_dp,1.0,0.0,0.0,0.0,0.93
-velpo_astar,1.0,0.0,0.0,0.0,0.525
-greedy,0.667,0.333,0.0,0.2756,0.258
-aco,0.667,0.333,0.0,0.0,483.636
-dqn,0.667,0.333,0.0,0.0164,106.539
+velpo_dp,1.0,0.0,0.0,0.0,0.473
+velpo_astar,1.0,0.0,0.0,0.0,0.336
+greedy,0.662,0.338,0.0,0.2592,0.142
+aco,0.662,0.338,0.0,0.0,117.467
+dqn,0.662,0.338,0.0,0.0087,26.256

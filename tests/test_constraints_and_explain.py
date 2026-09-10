@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 from _helpers import assert_feasible
 
-from velpo.algorithms.astar import solve_astar
-from velpo.algorithms.dynamic_programming import (
+from algorithms.astar import solve_astar
+from algorithms.dynamic_programming import (
     InfeasibleError,
     Plan,
     TeacherConstraints,
@@ -12,10 +12,10 @@ from velpo.algorithms.dynamic_programming import (
     solve_optimal,
     solve_pareto,
 )
-from velpo.explain import explain_plan, explain_step
-from velpo.model.cost import build_cost_vectors
-from velpo.model.knowledge_graph import KnowledgeGraph
-from velpo.model.learner import LearnerState
+from explain import explain_plan, explain_step
+from model.cost import build_cost_vectors
+from model.knowledge_graph import KnowledgeGraph
+from model.learner import LearnerState
 
 
 @pytest.fixture

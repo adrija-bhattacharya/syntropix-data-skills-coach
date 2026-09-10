@@ -6,10 +6,10 @@ os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
 
 import pytest
 
-from velpo.config import seed_everything
-from velpo.curriculum import build_curriculum
-from velpo.model.knowledge_graph import KnowledgeGraph
-from velpo.model.learner import LearnerState
+from config import seed_everything
+from curriculum import build_curriculum
+from model.knowledge_graph import KnowledgeGraph
+from model.learner import LearnerState
 
 
 @pytest.fixture(autouse=True)

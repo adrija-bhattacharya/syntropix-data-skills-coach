@@ -5,8 +5,8 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from velpo.algorithms.graph_traversal import ancestors_subgraph, remove_cycles, topological_order
-from velpo.model.knowledge_graph import KnowledgeGraph
+from algorithms.graph_traversal import ancestors_subgraph, remove_cycles, topological_order
+from model.knowledge_graph import KnowledgeGraph
 
 
 def test_topological_order_respects_edges(kg: KnowledgeGraph) -> None:

@@ -7,7 +7,7 @@ controlled comparison between planners.
 
 from __future__ import annotations
 
-from velpo.model.knowledge_graph import Concept, KnowledgeGraph, Resource
+from model.knowledge_graph import Concept, KnowledgeGraph, Resource
 
 _CONCEPTS: list[tuple[str, str]] = [
     ("integers", "Integers & number line"),

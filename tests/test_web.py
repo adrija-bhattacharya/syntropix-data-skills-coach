@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from velpo import api
-from velpo.curriculum import build_curriculum
-from velpo.engine import Engine, MemoryStore
+import api
+from curriculum import build_curriculum
+from engine import Engine, MemoryStore
 
 
 def test_root_serves_spa_or_hint() -> None:

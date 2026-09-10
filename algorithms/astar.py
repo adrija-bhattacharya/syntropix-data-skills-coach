@@ -14,7 +14,7 @@ import heapq
 import math
 from dataclasses import dataclass
 
-from velpo.algorithms.dynamic_programming import (
+from algorithms.dynamic_programming import (
     InfeasibleError,
     Plan,
     TeacherConstraints,
@@ -23,10 +23,10 @@ from velpo.algorithms.dynamic_programming import (
     _per_concept_argmin,
     build_plan_context,
 )
-from velpo.config import settings
-from velpo.model.cost import CostVector
-from velpo.model.knowledge_graph import KnowledgeGraph
-from velpo.model.learner import LearnerState
+from config import settings
+from model.cost import CostVector
+from model.knowledge_graph import KnowledgeGraph
+from model.learner import LearnerState
 
 _INF = math.inf
 

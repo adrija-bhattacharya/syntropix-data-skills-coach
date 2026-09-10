@@ -3,13 +3,13 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from velpo.curriculum import build_curriculum
-from velpo.engine import Engine, MemoryStore
+from curriculum import build_curriculum
+from engine import Engine, MemoryStore
 
 
 @pytest.fixture
 def client():
-    from velpo import api
+    import api
 
     api.engine = Engine(build_curriculum(), store=MemoryStore())
     return TestClient(api.app)
