@@ -7,7 +7,10 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import replace
-from typing import Literal, Protocol
+from typing import TYPE_CHECKING, Literal, Protocol
+
+if TYPE_CHECKING:
+    from algorithms.roleplan import RolePlan
 
 from algorithms.astar import solve_astar
 from algorithms.dynamic_programming import (
@@ -127,6 +130,24 @@ class Engine:
         if session.done:
             self._apply_assessment(learner_id, session)
         return session
+
+    # ------------------------------------------------------- role-gap plan (claim A)
+    def role_plan(
+        self,
+        learner_id: str,
+        role_name: str,
+        profile: dict[str, float],
+        *,
+        time_budget_s: float,
+    ) -> RolePlan:
+        """Max-hiring-readiness prerequisite-closed set within the budget, sequenced."""
+        from algorithms.roleplan import solve_role_plan
+
+        state = replace(
+            self.ensure(learner_id, time_budget_s=time_budget_s), time_budget_s=time_budget_s
+        )
+        prof = {k: v for k, v in profile.items() if k in self.kg.concepts}
+        return solve_role_plan(self.kg, role_name, prof, state, budget_minutes=time_budget_s / 60.0)
 
     def _apply_assessment(self, learner_id: str, session: AdaptiveSession) -> None:
         """Replace the cold-start priors with the CAT-estimated mastery."""

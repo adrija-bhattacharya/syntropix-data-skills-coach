@@ -100,6 +100,28 @@ def cmd_harvest(args: argparse.Namespace) -> int:
     return 0
 
 
+def _role_demo(resolved: object, goal_text: str, minutes: float) -> int:
+    """Role-gap plan for the terminal: readiness before -> after + the sequence."""
+    from algorithms.roleplan import solve_role_plan
+    from domain_data import ROLES, role_profile
+    from model.learner import LearnerState
+
+    r = resolved  # domains.Resolved
+    kg = r.kg  # type: ignore[attr-defined]
+    role = next(x for x in ROLES if x.name == r.domain)  # type: ignore[attr-defined]
+    prof = {k: v for k, v in role_profile(role).items() if k in kg.concepts}
+    st = LearnerState.cold_start(kg.concept_ids, time_budget_s=minutes * 60)
+    rp = solve_role_plan(kg, role.name, prof, st, budget_minutes=minutes)
+    print(f"\nrole: {role.name}   budget {minutes:.0f} min   ({rp.method})")
+    print(f"hiring readiness:  {rp.readiness_before:.0%}  ->  {rp.readiness:.0%}\n")
+    for i, s in enumerate(rp.sequence.steps, 1):
+        m, ready = rp.steps_curve[i]
+        tag = " (review)" if s.review else ""
+        name = kg.concepts[s.concept].name + tag
+        print(f"  {i:2}. {name:<46} {ready:>4.0%} ready  ({m:.0f} min in)")
+    return 0
+
+
 def cmd_demo(args: argparse.Namespace) -> int:
     from engine import Engine
 
@@ -117,6 +139,8 @@ def cmd_demo(args: argparse.Namespace) -> int:
         from domains import resolve  # free-text goal -> seed graph, role, or dynamic
 
         r = resolve(goal_text)
+        if r.source == "role":
+            return _role_demo(r, goal_text, args.minutes)
         kg, goals = r.kg, r.goals
         goal_hint = f"  [{r.source}: {r.domain}]"
     else:

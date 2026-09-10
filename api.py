@@ -290,8 +290,44 @@ def discover(concept_id: str, goal: str | None = None, refresh: bool = False) ->
     }
 
 
+def _role_recommend(learner_id: str, goal: str, minutes: float, _speed: str) -> dict[str, Any]:
+    from algorithms.roleplan import solve_role_plan
+    from domain_data import ROLES, role_profile
+    from domains import resolve
+
+    r = resolve(goal)
+    role = next(x for x in ROLES if x.name == r.domain)
+    eng, _d, _a = _engine_for(goal)
+    state = eng.ensure(learner_id, time_budget_s=minutes * 60)
+    profile = {k: v for k, v in role_profile(role).items() if k in r.kg.concepts}
+    rp = solve_role_plan(r.kg, role.name, profile, state, budget_minutes=minutes)
+    from engine import _sequence_to_plan
+    from explain import explain_plan
+
+    plan = explain_plan(r.kg, _sequence_to_plan(r.kg, rp.sequence), state)
+    return {
+        "paths": [_plan_out(plan, r.kg)],
+        "meta": {
+            "mode": "role",
+            "domain": r.domain,
+            "role": True,
+            "method": rp.method,
+            "readiness": rp.readiness,
+            "readiness_before": rp.readiness_before,
+            "readiness_curve": [list(p) for p in rp.steps_curve],
+            "covered_weight": rp.covered_weight,
+            "total_weight": rp.total_weight,
+        },
+    }
+
+
 @app.post("/recommend")
 def recommend(body: RecommendIn) -> dict[str, Any]:
+    if body.goal:
+        from domains import resolve
+
+        if resolve(body.goal).source == "role":
+            return _role_recommend(body.learner_id, body.goal, body.time_budget_min, body.speed)
     eng, domain, _a = _engine_for(body.goal)
     unknown = [c for c in body.goals if c not in eng.kg.concepts]
     if unknown:

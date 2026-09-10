@@ -49,6 +49,11 @@ class Settings:
     session_max_load: float = 3.2
     """Per study-session caps the session-packing DP respects."""
 
+    # --- role-gap sequencing (algorithms.roleplan) -------------------
+    role_max_ideals: int = 60_000
+    """Above this many order ideals in the role's relevant poset, the
+    max-readiness prerequisite-closed set is chosen greedily instead of exactly."""
+
     # --- adaptive assessment (model.assessment) ----------------------
     assess_max_items_per_skill: int = 6
     """Hard cap on adaptive items administered per target skill."""

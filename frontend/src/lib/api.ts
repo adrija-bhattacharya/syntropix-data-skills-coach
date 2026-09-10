@@ -49,8 +49,21 @@ export const Path = z.object({
 });
 export const RecommendResponse = z.object({
   paths: z.array(Path),
-  meta: z.record(z.union([z.string(), z.number()])),
+  meta: z.record(z.unknown()),
 });
+
+/** Role-gap meta on a /recommend response when the goal was a job role. */
+export interface RoleMeta {
+  role: true;
+  domain: string;
+  method: string;
+  readiness: number;
+  readiness_before: number;
+  readiness_curve: [number, number][];
+}
+export function roleMeta(meta: Record<string, unknown>): RoleMeta | null {
+  return meta.role === true ? (meta as unknown as RoleMeta) : null;
+}
 export const ObserveResponse = z.object({
   n_interactions: z.number(),
   time_budget_min: z.number(),

@@ -489,3 +489,8 @@ ANALYTICS_ENGINEER = Role(
 )
 
 ROLES: tuple[Role, ...] = (DATA_ANALYST, ANALYTICS_ENGINEER)
+
+
+def role_profile(role: Role) -> dict[str, float]:
+    """``{domain.concept: weight}`` - the ids match :func:`domains.role_graph`."""
+    return {f"{d}.{c}": w for d, c, w in role.skills}
