@@ -1,0 +1,282 @@
+"""A small curated catalogue of **real** certifications for the data-analytics
+track, mapped to the seed domains and concepts they cover.
+
+These are *external recommendations*, not part of the free/open engine - prices,
+providers and availability change, so every entry carries a ``price_note`` and
+the roadmap tells the learner to verify current details.  ``free`` means the
+credential itself can be earned at no cost (e.g. freeCodeCamp, Kaggle Learn).
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+Level = str  # "entry" | "associate" | "professional"
+
+
+@dataclass(frozen=True, slots=True)
+class Certification:
+    id: str
+    name: str
+    provider: str
+    url: str
+    level: Level
+    free: bool
+    price_note: str
+    hours: float
+    domains: tuple[str, ...]
+    skills: tuple[str, ...]  # bare concept ids (domain prefix stripped)
+    blurb: str
+
+    def coverage(self, learned: set[str]) -> float:
+        """Fraction of this certification's skills the learner will have covered
+        (concept ids are compared with any ``domain.`` prefix stripped)."""
+        if not self.skills:
+            return 0.0
+        bare = {c.split(".")[-1] for c in learned}
+        return sum(1 for s in self.skills if s in bare) / len(self.skills)
+
+
+CERTIFICATIONS: tuple[Certification, ...] = (
+    Certification(
+        id="kaggle_sql",
+        name="Intro to SQL + Advanced SQL",
+        provider="Kaggle Learn",
+        url="https://www.kaggle.com/learn/intro-to-sql",
+        level="entry",
+        free=True,
+        price_note="Free — free completion certificates",
+        hours=8.0,
+        domains=("sql",),
+        skills=(
+            "select_from",
+            "where",
+            "group_by",
+            "having",
+            "inner_join",
+            "outer_join",
+            "ctes",
+            "window_functions",
+        ),
+        blurb="Two short hands-on courses: SELECT through window functions on real datasets.",
+    ),
+    Certification(
+        id="fcc_python",
+        name="Scientific Computing with Python",
+        provider="freeCodeCamp",
+        url="https://www.freecodecamp.org/learn/scientific-computing-with-python/",
+        level="entry",
+        free=True,
+        price_note="Free — free certification",
+        hours=30.0,
+        domains=("python",),
+        skills=(
+            "variables",
+            "conditionals",
+            "loops",
+            "lists",
+            "dicts",
+            "functions",
+            "exceptions",
+            "files_csv",
+            "oop_lite",
+        ),
+        blurb="Python from zero through data structures, files and classes, with build projects.",
+    ),
+    Certification(
+        id="fcc_data_analysis_python",
+        name="Data Analysis with Python",
+        provider="freeCodeCamp",
+        url="https://www.freecodecamp.org/learn/data-analysis-with-python/",
+        level="associate",
+        free=True,
+        price_note="Free — free certification",
+        hours=30.0,
+        domains=("python_data", "dataviz"),
+        skills=(
+            "numpy_arrays",
+            "dataframe",
+            "read_write_data",
+            "filtering",
+            "groupby_agg",
+            "merge_join",
+            "missing_data",
+            "matplotlib_basics",
+        ),
+        blurb="NumPy, pandas and matplotlib for real analysis, with five certification projects.",
+    ),
+    Certification(
+        id="kaggle_pandas_viz",
+        name="Pandas + Data Visualization",
+        provider="Kaggle Learn",
+        url="https://www.kaggle.com/learn/pandas",
+        level="entry",
+        free=True,
+        price_note="Free — free completion certificates",
+        hours=7.0,
+        domains=("python_data", "dataviz"),
+        skills=(
+            "dataframe",
+            "selecting",
+            "filtering",
+            "groupby_agg",
+            "missing_data",
+            "apply_map",
+            "rel_plots",
+            "dist_plots",
+        ),
+        blurb="Fast, exercise-driven pandas and plotting micro-courses.",
+    ),
+    Certification(
+        id="google_data_analytics",
+        name="Google Data Analytics Professional Certificate",
+        provider="Google (Coursera)",
+        url="https://www.coursera.org/professional-certificates/google-data-analytics",
+        level="professional",
+        free=False,
+        price_note="Audit free; certificate needs a Coursera subscription (~US$49/mo)",
+        hours=180.0,
+        domains=("spreadsheets", "sql", "dataviz", "stats"),
+        skills=(
+            "pivot_tables",
+            "lookups",
+            "select_from",
+            "group_by",
+            "inner_join",
+            "cleaning_ss",
+            "storytelling",
+            "dashboards",
+            "descriptive",
+            "hypothesis_testing",
+        ),
+        blurb="Broad entry credential: spreadsheets, SQL, R, Tableau, cleaning, case studies.",
+    ),
+    Certification(
+        id="ibm_data_analyst",
+        name="IBM Data Analyst Professional Certificate",
+        provider="IBM (Coursera)",
+        url="https://www.coursera.org/professional-certificates/ibm-data-analyst",
+        level="professional",
+        free=False,
+        price_note="Audit free; certificate needs a Coursera subscription (~US$49/mo)",
+        hours=160.0,
+        domains=("spreadsheets", "sql", "python", "python_data", "dataviz"),
+        skills=(
+            "pivot_tables",
+            "select_from",
+            "group_by",
+            "inner_join",
+            "dataframe",
+            "groupby_agg",
+            "merge_join",
+            "matplotlib_basics",
+            "dashboards",
+        ),
+        blurb="Excel + SQL + Python + pandas + dashboards, assessed with a capstone.",
+    ),
+    Certification(
+        id="michigan_stats_python",
+        name="Statistics with Python Specialization",
+        provider="University of Michigan (Coursera)",
+        url="https://www.coursera.org/specializations/statistics-with-python",
+        level="associate",
+        free=False,
+        price_note="Audit free; certificate needs a Coursera subscription",
+        hours=90.0,
+        domains=("stats", "python"),
+        skills=(
+            "descriptive",
+            "distributions",
+            "confidence_intervals",
+            "hypothesis_testing",
+            "p_value",
+            "t_test",
+            "linear_regression",
+            "ab_testing",
+        ),
+        blurb="Inference and regression done in Python — confidence intervals, tests, modelling.",
+    ),
+    Certification(
+        id="pl300_power_bi",
+        name="Microsoft Certified: Power BI Data Analyst Associate (PL-300)",
+        provider="Microsoft",
+        url="https://learn.microsoft.com/credentials/certifications/data-analyst-associate/",
+        level="associate",
+        free=False,
+        price_note="Exam ~US$165; free official learning paths on Microsoft Learn",
+        hours=60.0,
+        domains=("dataviz", "spreadsheets", "sql"),
+        skills=(
+            "cleaning_ss",
+            "lookups",
+            "select_from",
+            "group_by",
+            "choosing_chart",
+            "storytelling",
+            "dashboards",
+        ),
+        blurb="The recognised BI credential: data modelling, DAX, and Power BI dashboards.",
+    ),
+    Certification(
+        id="tableau_specialist",
+        name="Tableau Desktop Specialist",
+        provider="Tableau (Salesforce)",
+        url="https://www.tableau.com/learn/certification/desktop-specialist",
+        level="entry",
+        free=False,
+        price_note="Exam ~US$100; free training on Tableau's site",
+        hours=30.0,
+        domains=("dataviz",),
+        skills=(
+            "chart_types",
+            "choosing_chart",
+            "rel_plots",
+            "cat_plots",
+            "dashboards",
+            "storytelling",
+        ),
+        blurb="Entry Tableau credential — connecting data, building views and dashboards.",
+    ),
+    Certification(
+        id="github_foundations",
+        name="GitHub Foundations Certification",
+        provider="GitHub",
+        url="https://resources.github.com/learn/certifications/",
+        level="entry",
+        free=False,
+        price_note="Exam ~US$99; free prep on GitHub Skills",
+        hours=15.0,
+        domains=("git",),
+        skills=("stage_commit", "branches", "merge", "remotes", "push_pull", "pull_requests"),
+        blurb="Proves working git/GitHub fluency: branches, remotes, pull requests, collaboration.",
+    ),
+    Certification(
+        id="princeton_algorithms",
+        name="Algorithms, Part I & II",
+        provider="Princeton (Coursera)",
+        url="https://www.coursera.org/learn/algorithms-part1",
+        level="associate",
+        free=True,
+        price_note="Free to audit (no paid certificate offered)",
+        hours=100.0,
+        domains=("dsa_python",),
+        skills=(
+            "big_o",
+            "sorting_dsa",
+            "binary_search_dsa",
+            "stack_queue",
+            "trees_dsa",
+            "graph_repr",
+            "bfs_dfs",
+        ),
+        blurb="The classic algorithms course — analysis, sorting, search trees, graphs.",
+    ),
+)
+
+
+def certifications_for(domains: set[str]) -> list[Certification]:
+    """Every certification that touches at least one of ``domains``, ordered
+    entry -> associate -> professional."""
+    order = {"entry": 0, "associate": 1, "professional": 2}
+    hits = [c for c in CERTIFICATIONS if set(c.domains) & domains]
+    return sorted(hits, key=lambda c: (order.get(c.level, 3), -c.hours))

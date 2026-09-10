@@ -8,6 +8,8 @@
     GET  /assess/{id}      current questions + ability estimates
     POST /recommend        {learner_id, goals[], time_budget_min, mode, n_paths, ban[], lock[], ...}
     POST /schedule         {learner_id, goals[], deadline, weekly_minutes}  deadline calendar (C)
+    POST /graph/health     {goal, learners}     self-healing prerequisite graph (claim D)
+    POST /roadmap          {learner_id, goal, weekly_hours, deadline}   full personalised roadmap
     POST /observe          {learner_id, resource_id, correct, minutes, hints}
     POST /explain          {learner_id, resource_id}
 
@@ -77,7 +79,7 @@ def _engine_for(goal: str | None) -> tuple[Engine, str, bool]:
     key = f"{r.source}:{r.domain}"
     if key not in _ENGINES:
         bank = build_item_bank(r.domain) if r.domain in _ITEM_BANK_DOMAINS else None
-        _ENGINES[key] = Engine(r.kg, item_bank=bank)
+        _ENGINES[key] = Engine(r.kg, item_bank=bank, graph_source=r.source)
     return _ENGINES[key], r.domain, r.domain in _ITEM_BANK_DOMAINS
 
 
@@ -97,6 +99,21 @@ class RecommendIn(BaseModel):
     goal: str | None = None
     """Free-text goal - resolved to a knowledge graph; the concept ids in
     ``goals`` must come from that graph (see POST /resolve)."""
+
+
+class GraphHealthIn(BaseModel):
+    goal: str = Field(min_length=1)
+    learners: int = Field(0, ge=0, le=20000)
+    """> 0 runs a controlled recovery experiment (corrupt the graph, simulate
+    trajectories, heal); 0 reports what real logged attempts say so far."""
+    perturb: int = Field(2, ge=1, le=6)
+
+
+class RoadmapIn(BaseModel):
+    learner_id: str = Field(min_length=1)
+    goal: str = Field(min_length=1)
+    weekly_hours: float = Field(5.0, gt=0, le=80)
+    deadline: date | None = None
 
 
 class ScheduleIn(BaseModel):
@@ -450,6 +467,134 @@ def schedule(body: ScheduleIn) -> dict[str, Any]:
         speed=_SPEED_MULT[body.speed],
     )
     return {"calendar": _calendar_out(cp, eng.kg), "meta": {"domain": domain}}
+
+
+# --------------------------------------------- self-healing graph (claim D)
+def _edge_changes(changes: object) -> list[dict[str, Any]]:
+    from algorithms.graph_health import EdgeChange
+
+    seq: tuple[EdgeChange, ...] = changes  # type: ignore[assignment]
+    return [
+        {
+            "a": c.a,
+            "b": c.b,
+            "a_name": c.a_name,
+            "b_name": c.b_name,
+            "action": c.action,
+            "mean": c.mean,
+            "prior_mean": c.prior_mean,
+            "support": c.support,
+            "summary": c.summary,
+        }
+        for c in seq
+    ]
+
+
+@app.post("/graph/health")
+def graph_health(body: GraphHealthIn) -> dict[str, Any]:
+    from algorithms.graph_health import simulate_recovery
+    from domains import resolve
+
+    r = resolve(body.goal)
+    if body.learners > 0:
+        rec = simulate_recovery(r.kg, learners=body.learners, perturb=body.perturb)
+        rep = rec.report
+        recovery: dict[str, Any] | None = {
+            "hidden": [list(e) for e in rec.hidden],
+            "injected": [list(e) for e in rec.injected],
+            "hidden_recovered": [list(e) for e in rec.hidden_recovered],
+            "injected_pruned": [list(e) for e in rec.injected_pruned],
+            "recall": round(rec.recall, 3),
+            "precision_drop": round(rec.precision_drop, 3),
+        }
+    else:
+        eng, _d, _a = _engine_for(body.goal)
+        rep = eng.graph_health()
+        recovery = None
+    return {
+        "domain": r.domain,
+        "source": r.source,
+        "observations": rep.observations,
+        "watched": rep.watched,
+        "clean": rep.clean,
+        "pruned": _edge_changes(rep.pruned),
+        "added": _edge_changes(rep.added),
+        "suggested": _edge_changes(rep.suggested),
+        "reweighted": _edge_changes(rep.reweighted),
+        "recovery": recovery,
+    }
+
+
+# --------------------------------------------------------- roadmap
+def _roadmap_out(rm: object) -> dict[str, Any]:
+    from roadmap import Roadmap
+
+    r: Roadmap = rm  # type: ignore[assignment]
+    return {
+        "goal": r.goal,
+        "domain": r.domain,
+        "role": r.role,
+        "pace": r.pace,
+        "weekly_hours": r.weekly_hours,
+        "starting_readiness": r.starting_readiness,
+        "target_readiness": r.target_readiness,
+        "already_have": list(r.already_have),
+        "you_are_here": r.you_are_here,
+        "total_hours": r.total_hours,
+        "total_weeks": r.total_weeks,
+        "finish_estimate": r.finish_estimate,
+        "deadline": r.deadline,
+        "on_track": r.on_track,
+        "notes": list(r.notes),
+        "phases": [
+            {
+                "index": p.index,
+                "title": p.title,
+                "domain": p.domain,
+                "concept_ids": list(p.concept_ids),
+                "concept_names": list(p.concept_names),
+                "new_skills": p.new_skills,
+                "est_hours": p.est_hours,
+                "est_weeks": p.est_weeks,
+                "start_week": p.start_week,
+                "focus": p.focus,
+                "checkpoint": p.checkpoint,
+                "resources": list(p.resources),
+                "certifications": [_cert_out(c) for c in p.certifications],
+            }
+            for p in r.phases
+        ],
+        "certifications": [_cert_out(c) for c in r.certifications],
+    }
+
+
+def _cert_out(c: object) -> dict[str, Any]:
+    from certifications import Certification
+
+    x: Certification = c  # type: ignore[assignment]
+    return {
+        "id": x.id,
+        "name": x.name,
+        "provider": x.provider,
+        "url": x.url,
+        "level": x.level,
+        "free": x.free,
+        "price_note": x.price_note,
+        "hours": x.hours,
+        "blurb": x.blurb,
+    }
+
+
+@app.post("/roadmap")
+def roadmap(body: RoadmapIn) -> dict[str, Any]:
+    from domains import resolve
+    from roadmap import build_roadmap
+
+    eng, _domain, _a = _engine_for(body.goal)
+    r = resolve(body.goal)
+    state = eng.store.get(body.learner_id) or eng.ensure(body.learner_id, time_budget_s=3600.0)
+    rm = build_roadmap(r.kg, r, state, weekly_hours=body.weekly_hours, deadline=body.deadline)
+    return {"roadmap": _roadmap_out(rm)}
 
 
 @app.post("/observe")

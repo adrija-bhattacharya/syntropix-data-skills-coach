@@ -9,6 +9,8 @@ Commands
     plan         demo with options (--goal / --minutes / --speed / --mode / --catalogue)
     assess       run the adaptive capability diagnostic in the terminal, then plan from it
     schedule     place the plan on a real calendar for a deadline (--goal / --by / --hours-per-week)
+    roadmap      full personalised roadmap: phases, pace, certifications, finish estimate
+    graph-health self-healing prerequisite graph - what learner trajectories say about the edges
     harvest      discover real open resources (Wikipedia / Wikibooks / MIT / arXiv / YouTube)
     test         run the test suite (pytest)
     lint         ruff check + ruff format --check + mypy --strict
@@ -297,6 +299,82 @@ def cmd_schedule(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_roadmap(args: argparse.Namespace) -> int:
+    from datetime import datetime
+
+    from domains import resolve
+    from model.learner import LearnerState
+    from roadmap import build_roadmap
+
+    r = resolve(args.goal or "become a data analyst")
+    st = LearnerState.cold_start(r.kg.concept_ids, time_budget_s=3600)
+    deadline = datetime.strptime(args.by, "%Y-%m-%d").date() if args.by else None
+    rm = build_roadmap(r.kg, r, st, weekly_hours=args.hours_per_week, deadline=deadline)
+
+    head = rm.role or rm.domain
+    print(f"\nRoadmap: {head}   pace {rm.pace}   {args.hours_per_week:.0f} h/week")
+    print(
+        f"~{rm.total_hours:.0f} study hours over ~{rm.total_weeks:.0f} weeks"
+        + (f"  ->  ~{rm.finish_estimate}" if rm.finish_estimate else "")
+    )
+    if rm.already_have:
+        extra = " ..." if len(rm.already_have) > 6 else ""
+        print(f"already have: {', '.join(rm.already_have[:6])}{extra}")
+    for p in rm.phases:
+        print(
+            f"\n  PHASE {p.index} - {p.title}   ({p.new_skills} skills, ~{p.est_hours:.0f} h,"
+            f" ~{p.est_weeks:.1f} wk, from week {p.start_week:.0f})"
+        )
+        print(f"     {p.focus}")
+        print(f"     skills: {', '.join(p.concept_names)}")
+        for cert in p.certifications:
+            tag = "free" if cert.free else cert.price_note
+            print(f"     >> sit here: {cert.name} ({cert.provider}) - {tag}")
+    print("\nCertifications for this track:")
+    for cert in rm.certifications:
+        tag = "FREE" if cert.free else "paid"
+        print(f"  [{tag}] {cert.name} - {cert.provider}")
+        print(f"         {cert.blurb}")
+        print(f"         {cert.url}   ({cert.price_note})")
+    print()
+    for n in rm.notes:
+        print(f"note: {n}")
+    return 0
+
+
+def cmd_graph_health(args: argparse.Namespace) -> int:
+    from algorithms.graph_health import simulate_recovery
+    from domains import resolve
+
+    r = resolve(args.goal or "learn sql")
+    print(f"\nSelf-healing prerequisite graph - {r.domain} ({r.source})")
+    print(
+        f"controlled experiment: hide {args.perturb} real edges, inject {args.perturb} spurious "
+        f"ones, simulate {args.learners} learners, then heal.\n"
+    )
+    rec = simulate_recovery(r.kg, learners=args.learners, perturb=args.perturb, seed=args.seed)
+    rep = rec.report
+    print(f"observations {rep.observations:,}   watched non-edges {rep.watched}\n")
+    if rep.pruned:
+        print("PRUNED (edge not backed by the data):")
+        for c in rep.pruned:
+            print(f"  - {c.summary}")
+    if rep.added:
+        print("ADDED (missing prerequisite discovered):")
+        for c in rep.added:
+            print(f"  + {c.summary}")
+    if rep.suggested:
+        print("SUGGESTED (borderline - needs review):")
+        for c in rep.suggested:
+            print(f"  ? {c.summary}")
+    print(
+        f"\nrecovery: {len(rec.hidden_recovered)}/{len(rec.hidden)} hidden edges found "
+        f"({rec.recall:.0%}), {len(rec.injected_pruned)}/{len(rec.injected)} spurious edges "
+        f"dropped ({rec.precision_drop:.0%})"
+    )
+    return 0
+
+
 def cmd_test(args: argparse.Namespace) -> int:
     return _run([*PY, "-m", "pytest", *args.rest])
 
@@ -309,8 +387,10 @@ def cmd_lint(_: argparse.Namespace) -> int:
         "benchmarks",
         "config.py",
         "curriculum.py",
+        "certifications.py",
         "engine.py",
         "explain.py",
+        "roadmap.py",
         "api.py",
         "velpo.py",
     ]
@@ -328,8 +408,10 @@ def cmd_fmt(_: argparse.Namespace) -> int:
         "benchmarks",
         "config.py",
         "curriculum.py",
+        "certifications.py",
         "engine.py",
         "explain.py",
+        "roadmap.py",
         "api.py",
         "velpo.py",
     ]
@@ -434,6 +516,19 @@ def main(argv: list[str] | None = None) -> int:
     sc.add_argument("--days", type=int, default=28, help="days from today to the deadline")
     sc.add_argument("--hours-per-week", type=float, default=5.0, dest="hours_per_week")
     sc.set_defaults(fn=cmd_schedule)
+
+    rd = sub.add_parser("roadmap")
+    rd.add_argument("--goal", default=None)
+    rd.add_argument("--hours-per-week", type=float, default=5.0, dest="hours_per_week")
+    rd.add_argument("--by", default=None, help="optional target date YYYY-MM-DD")
+    rd.set_defaults(fn=cmd_roadmap)
+
+    gh = sub.add_parser("graph-health")
+    gh.add_argument("--goal", default=None)
+    gh.add_argument("--learners", type=int, default=6000)
+    gh.add_argument("--perturb", type=int, default=2)
+    gh.add_argument("--seed", type=int, default=0)
+    gh.set_defaults(fn=cmd_graph_health)
 
     t = sub.add_parser("test")
     t.add_argument("rest", nargs=argparse.REMAINDER)

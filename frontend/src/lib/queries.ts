@@ -7,6 +7,7 @@ import {
   type Band,
   type ObserveInput,
   type RecommendInput,
+  type RoadmapInput,
   type ScheduleInput,
 } from "./api";
 
@@ -45,6 +46,26 @@ export function useSchedule(input: ScheduleInput, enabled: boolean) {
     queryFn: () => api.schedule(input),
     enabled: enabled && input.goals.length > 0 && input.deadline.length === 10,
     placeholderData: (prev) => prev,
+  });
+}
+
+/** The full personalised roadmap (phases, pace, certifications). */
+export function useRoadmap(input: RoadmapInput, enabled: boolean) {
+  return useQuery({
+    queryKey: ["roadmap", input] as const,
+    queryFn: () => api.roadmap(input),
+    enabled: enabled && input.goal.trim().length > 1,
+    placeholderData: (prev) => prev,
+  });
+}
+
+/** Self-healing prerequisite graph — the controlled recovery experiment. */
+export function useGraphHealth(goal: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["graph-health", goal] as const,
+    queryFn: () => api.graphHealth(goal),
+    enabled: enabled && goal.trim().length > 1,
+    staleTime: Infinity,
   });
 }
 

@@ -88,6 +88,85 @@ export const ScheduleResponse = z.object({
   meta: z.record(z.unknown()),
 });
 
+export const Certification = z.object({
+  id: z.string(),
+  name: z.string(),
+  provider: z.string(),
+  url: z.string(),
+  level: z.enum(["entry", "associate", "professional"]),
+  free: z.boolean(),
+  price_note: z.string(),
+  hours: z.number(),
+  blurb: z.string(),
+});
+export const RoadmapPhase = z.object({
+  index: z.number(),
+  title: z.string(),
+  domain: z.string().default(""),
+  concept_ids: z.array(z.string()).default([]),
+  concept_names: z.array(z.string()).default([]),
+  new_skills: z.number(),
+  est_hours: z.number(),
+  est_weeks: z.number(),
+  start_week: z.number(),
+  focus: z.string().default(""),
+  checkpoint: z.string().default(""),
+  resources: z.array(z.record(z.unknown())).default([]),
+  certifications: z.array(Certification).default([]),
+});
+export const Roadmap = z.object({
+  goal: z.string(),
+  domain: z.string(),
+  role: z.string().nullable(),
+  pace: z.enum(["deliberate", "steady", "fast"]),
+  weekly_hours: z.number(),
+  starting_readiness: z.number(),
+  target_readiness: z.number(),
+  already_have: z.array(z.string()).default([]),
+  you_are_here: z.record(z.number()).default({}),
+  total_hours: z.number(),
+  total_weeks: z.number(),
+  finish_estimate: z.string().nullable(),
+  deadline: z.string().nullable(),
+  on_track: z.boolean().nullable(),
+  notes: z.array(z.string()).default([]),
+  phases: z.array(RoadmapPhase).default([]),
+  certifications: z.array(Certification).default([]),
+});
+export const RoadmapResponse = z.object({ roadmap: Roadmap });
+
+export const GraphEdgeChange = z.object({
+  a: z.string(),
+  b: z.string(),
+  a_name: z.string(),
+  b_name: z.string(),
+  action: z.enum(["prune", "suggest", "add", "strengthen", "weaken"]),
+  mean: z.number(),
+  prior_mean: z.number(),
+  support: z.number(),
+  summary: z.string(),
+});
+export const GraphHealth = z.object({
+  domain: z.string(),
+  source: z.string(),
+  observations: z.number(),
+  watched: z.number(),
+  clean: z.boolean(),
+  pruned: z.array(GraphEdgeChange).default([]),
+  added: z.array(GraphEdgeChange).default([]),
+  suggested: z.array(GraphEdgeChange).default([]),
+  reweighted: z.array(GraphEdgeChange).default([]),
+  recovery: z
+    .object({
+      recall: z.number(),
+      precision_drop: z.number(),
+      hidden: z.array(z.array(z.string())),
+      injected: z.array(z.array(z.string())),
+    })
+    .nullable()
+    .default(null),
+});
+
 /** Role-gap meta on a /recommend response when the goal was a job role. */
 export interface RoleMeta {
   role: true;
@@ -170,6 +249,11 @@ export type Path = z.infer<typeof Path>;
 export type RecommendResponse = z.infer<typeof RecommendResponse>;
 export type CalendarStep = z.infer<typeof CalendarStep>;
 export type CalendarPlan = z.infer<typeof CalendarPlan>;
+export type Certification = z.infer<typeof Certification>;
+export type RoadmapPhase = z.infer<typeof RoadmapPhase>;
+export type Roadmap = z.infer<typeof Roadmap>;
+export type GraphHealth = z.infer<typeof GraphHealth>;
+export type GraphEdgeChange = z.infer<typeof GraphEdgeChange>;
 export type ObserveResponse = z.infer<typeof ObserveResponse>;
 
 export type Session = z.infer<typeof Session>;
@@ -201,6 +285,13 @@ export interface ScheduleInput {
   deadline: string; // YYYY-MM-DD
   weekly_minutes?: number;
   speed?: Speed;
+}
+
+export interface RoadmapInput {
+  learner_id: string;
+  goal: string;
+  weekly_hours?: number;
+  deadline?: string; // YYYY-MM-DD
 }
 
 export interface ObserveInput {
@@ -285,4 +376,13 @@ export const api = {
 
   schedule: (input: ScheduleInput) =>
     request(ScheduleResponse, "/schedule", { method: "POST", body: JSON.stringify(input) }),
+
+  roadmap: (input: RoadmapInput) =>
+    request(RoadmapResponse, "/roadmap", { method: "POST", body: JSON.stringify(input) }),
+
+  graphHealth: (goal: string, learners = 6000) =>
+    request(GraphHealth, "/graph/health", {
+      method: "POST",
+      body: JSON.stringify({ goal, learners }),
+    }),
 };

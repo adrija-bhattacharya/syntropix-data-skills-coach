@@ -109,13 +109,22 @@ def _prereq_mastery_now(
     position: int,
     half_life_steps: float,
 ) -> float:
+    """Confidence-weighted mean predicted mastery of ``concept``'s prerequisites.
+
+    Each prerequisite is weighted by ``kg.edge_confidence`` (claim D): an edge the
+    self-healing pass found shaky contributes little prerequisite debt, and a
+    concept whose every incoming edge is near-zero is treated as having no real
+    prerequisites at all."""
     reqs = [q for q in kg.direct_prerequisites(concept) if q in taught_at]
     if not reqs:
         return 1.0
     post = settings.seq_post_mastery
-    return sum(
-        predicted_mastery(post, taught_at[q], position, half_life_steps) for q in reqs
-    ) / len(reqs)
+    num = den = 0.0
+    for q in reqs:
+        w = kg.edge_confidence(q, concept)
+        num += w * predicted_mastery(post, taught_at[q], position, half_life_steps)
+        den += w
+    return 1.0 if den < 1e-6 else num / den
 
 
 def sequence_step_cost(
@@ -150,7 +159,7 @@ def sequence_step_cost(
     # claim B: a prerequisite the adaptive test measured but left uncertain is a
     # cost even when its point estimate looks fine.
     risk = sum(
-        max(0.0, theta - state.effective_mastery(q))
+        kg.edge_confidence(q, concept) * max(0.0, theta - state.effective_mastery(q))
         for q in kg.direct_prerequisites(concept)
         if q in state.mastery_se
     )

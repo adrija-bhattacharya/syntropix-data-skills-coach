@@ -127,6 +127,86 @@ export const handlers = [
     });
   }),
 
+  http.post("/roadmap", async ({ request }) => {
+    const b = (await request.json()) as { goal: string; weekly_hours?: number };
+    return HttpResponse.json({
+      roadmap: {
+        goal: "quadratics",
+        domain: "algebra",
+        role: null,
+        pace: "steady",
+        weekly_hours: b.weekly_hours ?? 5,
+        starting_readiness: 0.1,
+        target_readiness: 1,
+        already_have: [],
+        you_are_here: {},
+        total_hours: 40,
+        total_weeks: 8,
+        finish_estimate: "2026-05-01",
+        deadline: null,
+        on_track: null,
+        notes: ["Pace: steady - estimates assume an average learning speed."],
+        phases: [
+          {
+            index: 1,
+            title: "Foundations of algebra",
+            domain: "algebra",
+            concept_ids: ["integers", "fractions"],
+            concept_names: ["Integers & number line", "Fractions"],
+            new_skills: 2,
+            est_hours: 16,
+            est_weeks: 3.2,
+            start_week: 0,
+            focus: "Work through Integers & number line, Fractions.",
+            checkpoint: "Checkpoint: you can use Fractions confidently.",
+            resources: [],
+            certifications: [],
+          },
+          {
+            index: 2,
+            title: "Applying algebra",
+            domain: "algebra",
+            concept_ids: ["quadratics"],
+            concept_names: ["Quadratic equations"],
+            new_skills: 1,
+            est_hours: 24,
+            est_weeks: 4.8,
+            start_week: 3.2,
+            focus: "Work through Quadratic equations.",
+            checkpoint: "Checkpoint: you can solve quadratics.",
+            resources: [],
+            certifications: [
+              {
+                id: "kaggle_sql",
+                name: "Intro to SQL + Advanced SQL",
+                provider: "Kaggle Learn",
+                url: "https://www.kaggle.com/learn/intro-to-sql",
+                level: "entry",
+                free: true,
+                price_note: "Free — free completion certificates",
+                hours: 8,
+                blurb: "Two short hands-on courses.",
+              },
+            ],
+          },
+        ],
+        certifications: [
+          {
+            id: "kaggle_sql",
+            name: "Intro to SQL + Advanced SQL",
+            provider: "Kaggle Learn",
+            url: "https://www.kaggle.com/learn/intro-to-sql",
+            level: "entry",
+            free: true,
+            price_note: "Free — free completion certificates",
+            hours: 8,
+            blurb: "Two short hands-on courses.",
+          },
+        ],
+      },
+    });
+  }),
+
   http.post("/schedule", async ({ request }) => {
     const b = (await request.json()) as { deadline: string; goals: string[] };
     if (b.goals.includes("__boom__"))

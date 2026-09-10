@@ -186,3 +186,29 @@ def test_schedule_infeasible_reports_hours_gap(client: TestClient) -> None:
     cal = client.post("/schedule", json=body).json()["calendar"]
     assert not cal["feasible"]
     assert cal["hours_per_week_needed"] > cal["hours_per_week"]
+
+
+def test_graph_health_recovers_a_corrupted_graph(client: TestClient) -> None:
+    body = {"goal": "learn sql", "learners": 5000, "perturb": 2}
+    h = client.post("/graph/health", json=body).json()
+    assert h["domain"] == "sql"
+    assert h["recovery"]["recall"] >= 0.5
+    assert h["recovery"]["precision_drop"] == 1.0
+    for change in (*h["pruned"], *h["added"]):
+        assert change["summary"] and "->" in change["summary"]
+
+
+def test_graph_health_live_is_clean_without_evidence(client: TestClient) -> None:
+    h = client.post("/graph/health", json={"goal": "learn sql", "learners": 0}).json()
+    assert h["observations"] == 0
+    assert h["clean"] is True
+
+
+def test_roadmap_endpoint(client: TestClient) -> None:
+    body = {"learner_id": "rm1", "goal": "become a data analyst", "weekly_hours": 6}
+    rm = client.post("/roadmap", json=body).json()["roadmap"]
+    assert rm["role"] == "data analyst"
+    assert rm["total_weeks"] > 0 and rm["finish_estimate"]
+    assert len(rm["phases"]) >= 3
+    assert any(p["certifications"] for p in rm["phases"])
+    assert rm["certifications"][0]["url"].startswith("https://")

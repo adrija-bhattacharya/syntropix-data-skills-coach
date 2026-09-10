@@ -95,6 +95,14 @@ class KnowledgeGraph:
     def direct_prerequisites(self, concept_id: str) -> set[str]:
         return set(self.prereq.predecessors(concept_id))
 
+    def edge_confidence(self, a: str, b: str) -> float:
+        """``P(a is a genuine prerequisite of b)`` from the self-healing pass
+        (claim D); ``1.0`` for any edge that pass never touched."""
+        if not self.prereq.has_edge(a, b):
+            return 0.0
+        conf = self.prereq[a][b].get("confidence")
+        return 1.0 if conf is None else float(conf)
+
     def all_prerequisites(self, concept_id: str) -> set[str]:
         """Every transitive prerequisite concept.  ``O(V + E)``."""
         return set(nx.ancestors(self.prereq, concept_id))

@@ -9,6 +9,11 @@ import { LearnPage } from "./LearnPage";
 
 const at = (goal: string) => ({ route: `/learn?goal=${encodeURIComponent(goal)}` });
 
+/** The plan page opens on the roadmap tab; switch to the sequenced study plan. */
+async function toStudyPlan(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByRole("tab", { name: /study plan/i }));
+}
+
 describe("LearnPage — goal → assess → plan", () => {
   it("resolves the goal and shows the concept graph", async () => {
     renderApp(<LearnPage />, at("quadratic equations"));
@@ -28,6 +33,11 @@ describe("LearnPage — goal → assess → plan", () => {
     await user.click(screen.getByRole("button", { name: /-5/ }));
     await user.click(await screen.findByRole("button", { name: /see my plan/i }));
 
+    // the roadmap is shown first
+    expect(await screen.findByText(/Roadmap —/i)).toBeInTheDocument();
+    expect(screen.getByText(/Certifications for this track/i)).toBeInTheDocument();
+
+    await toStudyPlan(user);
     expect(await screen.findByText("3 steps")).toBeInTheDocument();
     expect(screen.getByText(/quadratics — an open article/)).toBeInTheDocument();
     expect(screen.getAllByText(/wikipedia/).length).toBeGreaterThan(0);
@@ -62,6 +72,7 @@ describe("LearnPage — goal → assess → plan", () => {
 
     expect(await screen.findByText(/No calibrated diagnostic/i)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /build my plan/i }));
+    await toStudyPlan(user);
     expect(await screen.findByText("3 steps")).toBeInTheDocument();
   });
 
@@ -83,10 +94,26 @@ describe("LearnPage — goal → assess → plan", () => {
     await user.click(await screen.findByText("-5"));
     await user.click(await screen.findByRole("button", { name: /see my plan/i }));
 
+    await toStudyPlan(user);
     expect(await screen.findByText(/on track/i)).toBeInTheDocument();
     expect(screen.getByText(/every goal skill ≥ 75%/i)).toBeInTheDocument();
     expect(screen.getAllByText(/reinforce/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/3 d slack/i)).toBeInTheDocument();
+  });
+
+  it("shows the personalised roadmap with phases and certifications", async () => {
+    const user = userEvent.setup();
+    renderApp(<LearnPage />, at("quadratic equations"));
+    await user.click(await screen.findByRole("button", { name: /^Continue/i }));
+    await user.click(await screen.findByRole("button", { name: /Intermediate/ }));
+    await user.click(await screen.findByText("-5"));
+    await user.click(await screen.findByRole("button", { name: /see my plan/i }));
+
+    expect(await screen.findByText(/Foundations of algebra/i)).toBeInTheDocument();
+    expect(screen.getByText(/Applying algebra/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/pace/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Intro to SQL \+ Advanced SQL/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Ready to sit:/i)).toBeInTheDocument();
   });
 
   it("shows the hiring-readiness meter for a role goal", async () => {
@@ -137,6 +164,7 @@ describe("LearnPage — goal → assess → plan", () => {
     const user = userEvent.setup();
     renderApp(<LearnPage />, at("become a data analyst"));
     await user.click(await screen.findByRole("button", { name: /build my plan/i }));
+    await toStudyPlan(user);
     expect(await screen.findByText(/hiring readiness/i)).toBeInTheDocument();
     expect(screen.getByText(/10% →/)).toBeInTheDocument();
     expect(screen.getByText("62%")).toBeInTheDocument();
@@ -149,6 +177,7 @@ describe("LearnPage — goal → assess → plan", () => {
     await user.click(await screen.findByRole("button", { name: /Intermediate/ }));
     await user.click(await screen.findByText("-5"));
     await user.click(await screen.findByRole("button", { name: /see my plan/i }));
+    await toStudyPlan(user);
 
     const links = await screen.findAllByRole("link");
     const wiki = links.filter((a) => a.getAttribute("href")?.includes("wikipedia.org"));
@@ -163,6 +192,7 @@ describe("LearnPage — goal → assess → plan", () => {
     })));
     renderApp(<LearnPage />, at("bst"));
     await user.click(await screen.findByRole("button", { name: /build my plan/i }));
+    await toStudyPlan(user);
     const why = await screen.findAllByRole("button", { name: /why this/i });
     await user.click(why[0]!);
     expect(await screen.findByText(/grounded in the graph/i)).toBeInTheDocument();

@@ -20,6 +20,7 @@ from algorithms.dynamic_programming import (
     solve_optimal,
     solve_pareto,
 )
+from algorithms.graph_health import GraphEvidence, GraphHealthReport
 from algorithms.graph_traversal import ancestors_subgraph
 from algorithms.scheduling import Availability, CalendarPlan, schedule_on_calendar
 from algorithms.sequencing import SequencePlan, plan_sequence
@@ -71,11 +72,13 @@ class Engine:
         store: LearnerStore | None = None,
         *,
         item_bank: ItemBank | None = None,
+        graph_source: str = "seed",
     ) -> None:
         self.kg = kg
         self.store = store or MemoryStore()
         self.item_bank = item_bank
         self._assessments: dict[str, AdaptiveSession] = {}
+        self.evidence = GraphEvidence.for_graph(kg, source=graph_source)
 
     # ------------------------------------------------------------- learner
     def ensure(self, learner_id: str, *, time_budget_s: float) -> LearnerState:
@@ -269,6 +272,11 @@ class Engine:
 
         state = state.copy()
         now = attempt.at or (state.now_s + attempt.seconds)
+        # claim D: snapshot the learner's mastery of *everything else* before this
+        # attempt, so the prerequisite-graph evidence sees "attempted c with / without a".
+        snapshot = {c: state.decayed_mastery(c) for c in self.kg.concept_ids}
+        for c in r.concepts:
+            self.evidence.record(snapshot, c, attempt.correct)
         for c in r.concepts:
             prior = decay(
                 state.mastery.get(c, settings.bkt_p_init),
@@ -289,6 +297,18 @@ class Engine:
         state.time_budget_s = max(0.0, state.time_budget_s - attempt.seconds)
         self.store.put(learner_id, state)
         return state
+
+    # ------------------------------------------------- self-healing graph (claim D)
+    def graph_health(self) -> GraphHealthReport:
+        """Dry run: what the accumulated trajectory evidence says about the graph."""
+        _healed, report = self.evidence.heal(self.kg)
+        return report
+
+    def heal_graph(self) -> GraphHealthReport:
+        """Apply the repairs and plan on the healed graph from now on."""
+        healed, report = self.evidence.heal(self.kg)
+        self.kg = healed
+        return report
 
     # ------------------------------------------------------------- explain
     def explain(self, learner_id: str, resource_id: str) -> str:

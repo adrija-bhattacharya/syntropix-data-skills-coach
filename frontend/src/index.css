@@ -607,6 +607,119 @@ textarea {
   background: color-mix(in srgb, var(--warn) 6%, var(--bg-1));
 }
 
+/* --- segmented control --- */
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+.seg button {
+  appearance: none;
+  border: 0;
+  background: var(--bg-1);
+  color: var(--ink-2);
+  font: 600 13px/1 var(--sans, inherit);
+  padding: 8px 16px;
+  cursor: pointer;
+}
+.seg button.on {
+  background: var(--accent);
+  color: #0a0b0f;
+}
+
+/* --- roadmap (claim: personalised roadmap) --- */
+.roadmap {
+  animation: rise 0.3s var(--spring) both;
+}
+.rm-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.rm-timeline {
+  list-style: none;
+  margin: 18px 0;
+  padding: 0;
+}
+.rm-phase {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 12px;
+  padding-bottom: 18px;
+  position: relative;
+}
+.rm-phase::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 30px;
+  bottom: 0;
+  width: 2px;
+  background: var(--line);
+}
+.rm-phase:last-child::before {
+  display: none;
+}
+.rm-phase-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  font: 700 13px/1 var(--mono);
+  color: var(--accent);
+  z-index: 1;
+}
+.rm-phase-title {
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.rm-phase-meta {
+  font: 500 12px/1 var(--mono);
+  color: var(--ink-2);
+}
+.rm-phase-focus {
+  margin: 4px 0 8px;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.rm-cert-inline {
+  margin-top: 8px;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--accent-2) 8%, var(--bg-1));
+  border: 1px solid color-mix(in srgb, var(--accent-2) 25%, transparent);
+}
+.rm-certs {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  margin-top: 6px;
+}
+.rm-cert {
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+.rm-cert:first-of-type {
+  border-top: 0;
+}
+.rm-cert-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-weight: 600;
+}
+
 /* --- deadline calendar (claim C) --- */
 .deadline-box {
   border: 1px solid var(--line);

@@ -6,8 +6,10 @@ import type { Band } from "../../lib/api";
 import { useResolve } from "../../lib/queries";
 import { AssessQuiz } from "./AssessQuiz";
 import { PlanView } from "./PlanView";
+import { RoadmapView } from "./RoadmapView";
 
 type Step = "resolve" | "band" | "assess" | "plan";
+type PlanTab = "roadmap" | "plan";
 
 const BANDS: { value: Band; title: string; blurb: string }[] = [
   { value: "beginner", title: "Beginner", blurb: "New to this. The plan starts from the basics — we'll mostly go by what you told us." },
@@ -25,6 +27,7 @@ export function LearnPage() {
   const [speed, setSpeed] = useState<"slow" | "normal" | "fast">("normal");
   const [deadline, setDeadline] = useState("");
   const [hoursPerWeek, setHoursPerWeek] = useState(5);
+  const [planTab, setPlanTab] = useState<PlanTab>("roadmap");
 
   const skillNames = useMemo(() => {
     const m: Record<string, string> = {};
@@ -109,6 +112,19 @@ export function LearnPage() {
                 style={{ display: "block", marginTop: 4 }}
               />
             </label>
+            <label style={{ fontSize: 12, color: "var(--ink-2)" }}>
+              Hours per week
+              <input
+                type="range"
+                min={1}
+                max={30}
+                step={1}
+                value={hoursPerWeek}
+                onChange={(e) => setHoursPerWeek(Number(e.target.value))}
+                style={{ display: "block", width: 160 }}
+              />
+              <span style={{ fontFamily: "var(--mono)" }}>{hoursPerWeek} h/week</span>
+            </label>
           </div>
 
           <details className="deadline-box" style={{ marginTop: 16 }}>
@@ -122,19 +138,6 @@ export function LearnPage() {
                   onChange={(e) => setDeadline(e.target.value)}
                   style={{ display: "block", marginTop: 4 }}
                 />
-              </label>
-              <label style={{ fontSize: 12, color: "var(--ink-2)" }}>
-                Hours per week
-                <input
-                  type="range"
-                  min={1}
-                  max={30}
-                  step={1}
-                  value={hoursPerWeek}
-                  onChange={(e) => setHoursPerWeek(Number(e.target.value))}
-                  style={{ display: "block", width: 180 }}
-                />
-                <span style={{ fontFamily: "var(--mono)" }}>{hoursPerWeek} h/week</span>
               </label>
             </div>
             <p className="hint">
@@ -200,14 +203,37 @@ export function LearnPage() {
 
       {active === "plan" && (
         <div className="panel">
-          <PlanView
-            goalText={goal}
-            goals={r.goals}
-            minutes={minutes}
-            speed={speed}
-            deadline={deadline}
-            hoursPerWeek={hoursPerWeek}
-          />
+          <div className="seg" role="tablist" style={{ marginBottom: 16 }}>
+            <button
+              role="tab"
+              aria-selected={planTab === "roadmap"}
+              className={planTab === "roadmap" ? "on" : ""}
+              onClick={() => setPlanTab("roadmap")}
+            >
+              Full roadmap
+            </button>
+            <button
+              role="tab"
+              aria-selected={planTab === "plan"}
+              className={planTab === "plan" ? "on" : ""}
+              onClick={() => setPlanTab("plan")}
+            >
+              Study plan
+            </button>
+          </div>
+
+          {planTab === "roadmap" ? (
+            <RoadmapView goalText={goal} weeklyHours={hoursPerWeek} deadline={deadline} />
+          ) : (
+            <PlanView
+              goalText={goal}
+              goals={r.goals}
+              minutes={minutes}
+              speed={speed}
+              deadline={deadline}
+              hoursPerWeek={hoursPerWeek}
+            />
+          )}
         </div>
       )}
     </div>

@@ -31,6 +31,8 @@ Wikipedia**.
 | a job role (claim A) | picks the **prerequisite-closed concept set of maximum hiring-readiness inside the budget** — a knapsack over the order-ideal lattice of a weighted poset — and reports a readiness curve | not addressed |
 | measurement risk (claim B) | the adaptive test returns mastery **± a standard error**; the planner acts on the **pessimistic lower confidence bound**, reports `P(ready)` per goal skill, and **splices a confidence check** before the concepts that build on a pivotal prerequisite the test left uncertain — two learners with the *same* point mastery get *different* plans | point estimate only; uncertainty discarded |
 | a deadline (claim C) | give a **target date** + **weekly availability** and VELPO embeds the plan on a **real calendar** — precedence list-scheduling of the steps plus **expanding-interval reinforcements** — with a guarantee that every goal skill is **≥ threshold on the date** (forgetting between slots modelled), or a precise diagnostic (*"needs ≈ 6.5 h/week for this date"*) | a flat list, no dates, no retention math |
+| the graph itself (claim D) | every prerequisite edge carries a **Bayesian confidence** revised from learner trajectories (*did attempting B without A actually predict failure?*); the graph **prunes** edges the data doesn't support, **discovers missing** ones, and the cost model scales prerequisite debt by edge confidence — a **self-healing** knowledge graph | the graph is fixed and trusted as authored |
+| the whole picture | a **personalised roadmap**: the full skill set as ordered **phases**, time estimates scaled by your **measured pace**, **real certifications** placed at the phase where you've covered enough to sit them, and a **finish estimate** / calendar check | a single next-step list |
 | cold-start (N4) | the adaptive test seeds mastery at interaction #0; then DKT-lite refinement | usually unsolved |
 | re-plan (N6) | **anytime A\***: feasible plan instantly, proven-optimal in <1 ms, no retraining | policy retraining, instability |
 | evidence (N7) | one benchmark harness over synthetic **and the real Junyi graph** | "no standard benchmark" |
@@ -49,6 +51,8 @@ python velpo.py demo --catalogue discovered   # plan against the discovered open
 python velpo.py plan --goal "become a data analyst"   # a role -> the union of the skills it needs
 python velpo.py plan --goal "SQL window functions"    # free-text goal -> seed graph, or built from Wikipedia
 python velpo.py schedule --goal "learn sql" --by 2026-11-01 --hours-per-week 5   # plan on a real calendar for a deadline
+python velpo.py roadmap --goal "become a data analyst" --hours-per-week 8         # full roadmap: phases, pace, certifications
+python velpo.py graph-health --goal "learn sql"                                  # self-healing prerequisite graph (recovery demo)
 python velpo.py test        # the whole test suite
 python velpo.py lint        # ruff + ruff format --check + mypy --strict
 python velpo.py serve       # build the React UI + serve it & the API at http://localhost:8000

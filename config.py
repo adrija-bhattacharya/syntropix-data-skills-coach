@@ -81,6 +81,35 @@ class Settings:
 
     calendar_deadline_days_default: int = 28
 
+    # --- roadmap -------------------------------------------------------
+    roadmap_min_hours_per_skill: float = 2.0
+    """Floor on the effort a single skill is estimated to take, before the
+    per-learner pace multiplier - the synthetic resource minutes are tuned for
+    the sequencing DP, not for a realistic study estimate."""
+
+    # --- self-healing prerequisite graph (claim D) ----------------
+    graph_evidence_weight: float = 1.0
+    """Pseudo-count added to an edge's Beta posterior per discriminating attempt."""
+
+    graph_min_support_prune: float = 12.0
+    graph_min_support_add: float = 12.0
+    """Evidence (attempts) an edge / candidate needs before it can be
+    pruned / added by the self-healing pass."""
+
+    graph_prune_below: float = 0.35
+    """Posterior mean below which a well-supported edge is dropped."""
+
+    graph_add_above: float = 0.72
+    graph_autoadd_above: float = 0.85
+    """A watched non-edge above ``add_above`` is suggested; above ``autoadd_above``
+    it is spliced in automatically (when it keeps the graph acyclic)."""
+
+    graph_reweight_delta: float = 0.15
+    """Posterior-mean shift from the prior that counts as strengthened/weakened."""
+
+    graph_max_candidates: int = 240
+    """Cap on watched non-edges per graph."""
+
     # --- role-gap sequencing (algorithms.roleplan) -------------------
     role_max_ideals: int = 60_000
     """Above this many order ideals in the role's relevant poset, the
