@@ -107,6 +107,10 @@ class LearnerState:
     n_interactions: int = 0
     recent: list[Attempt] = field(default_factory=list)
     refiner: MasteryRefiner = field(default_factory=MasteryRefiner)
+    mastery_se: dict[str, float] = field(default_factory=dict)
+    """Posterior SD (logit scale) of the mastery estimate for concepts the
+    adaptive test actually measured - empty everywhere else.  Drives the
+    risk-aware planning claim: an uncertain skill is treated pessimistically."""
 
     @classmethod
     def cold_start(
@@ -149,6 +153,29 @@ class LearnerState:
         theta = settings.mastery_threshold if threshold is None else threshold
         return self.mastery.get(concept_id, 0.0) >= theta
 
+    # ---- risk-aware (claim B): the estimator's uncertainty matters ----
+    def effective_mastery(self, concept_id: str) -> float:
+        """The mastery the planner should *act on*: the point estimate, pulled
+        toward a pessimistic lower confidence bound for skills the adaptive test
+        measured with residual uncertainty (``kappa`` standard deviations)."""
+        m = self.decayed_mastery(concept_id)
+        se = self.mastery_se.get(concept_id)
+        if not se or settings.risk_kappa <= 0.0:
+            return m
+        return _sigmoid(_logit(m) - settings.risk_kappa * se)
+
+    def confidence(self, concept_id: str, threshold: float | None = None) -> float:
+        """``P(true mastery >= threshold)`` from the estimator's posterior.
+        1.0 for a skill we never measured but the point estimate clears; the
+        Gaussian tail otherwise."""
+        theta = settings.mastery_threshold if threshold is None else threshold
+        m = self.decayed_mastery(concept_id)
+        se = self.mastery_se.get(concept_id)
+        if not se:
+            return 1.0 if m >= theta else 0.0
+        z = (_logit(m) - _logit(theta)) / se
+        return 0.5 * (1.0 + math.erf(z / math.sqrt(2.0)))
+
     def copy(self) -> LearnerState:
         return replace(
             self,
@@ -158,4 +185,14 @@ class LearnerState:
             last_seen=dict(self.last_seen),
             recent=list(self.recent),
             refiner=self.refiner.copy(),
+            mastery_se=dict(self.mastery_se),
         )
+
+
+def _logit(p: float) -> float:
+    p = min(1.0 - 1e-6, max(1e-6, p))
+    return math.log(p / (1.0 - p))
+
+
+def _sigmoid(x: float) -> float:
+    return 1.0 / (1.0 + math.exp(-max(-40.0, min(40.0, x))))

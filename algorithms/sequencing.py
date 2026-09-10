@@ -64,6 +64,7 @@ class SeqStep:
     concept: NodeId
     resource_id: NodeId
     review: bool = False
+    check: bool = False  # claim B: a risk-driven confidence check, not new teaching
 
 
 @dataclass(frozen=True, slots=True)
@@ -387,6 +388,84 @@ def _shortest_resource(kg: KnowledgeGraph, concept: str) -> str:
 
 
 # --------------------------------------------------------------------------- #
+# stage 2b - risk-aware confidence checks (claim B)
+# --------------------------------------------------------------------------- #
+def insert_checks(
+    kg: KnowledgeGraph,
+    plan: SequencePlan,
+    state: LearnerState,
+    goals: list[NodeId],
+    *,
+    weights: Weights | None = None,
+    half_life_steps: float | None = None,
+) -> SequencePlan:
+    """Splice a short *confidence check* right after any concept the adaptive
+    test left uncertain (``state.confidence(c) < settings.risk_confidence_target``)
+    that gates two or more downstream concepts.
+
+    This is the observable half of claim B: two learners with the *same* point
+    mastery for a pivotal prerequisite get different plans - the one the test
+    measured confidently proceeds, the one it measured with wide error bars is
+    asked to verify before the downstream concepts pile on top.  Skills the test
+    never touched (``mastery_se`` empty) are never checked here.
+    """
+    if not plan.feasible or not plan.steps or settings.risk_kappa <= 0.0:
+        return plan
+    w = settings.weights if weights is None else weights
+    hl = settings.seq_half_life_steps if half_life_steps is None else half_life_steps
+    target = settings.risk_confidence_target
+
+    steps = list(plan.steps)
+    vec = plan.objective
+    inserted = 0
+    i = 0
+    while i < len(steps) and inserted < settings.risk_max_checks:
+        s = steps[i]
+        c = s.concept
+        if (
+            not s.review
+            and not s.check
+            and c in state.mastery_se
+            and kg.prereq.out_degree(c) >= 2
+            and state.confidence(c) < target
+        ):
+            rid = _shortest_resource(kg, c)
+            taught_at = {st.concept: j for j, st in enumerate(steps)}
+            prev_d = kg.resources[steps[i].resource_id].difficulty
+            cv = sequence_review_cost(
+                kg,
+                c,
+                rid,
+                position=i + 1,
+                taught_at=taught_at,
+                prev_difficulty=prev_d,
+                half_life_steps=hl,
+            )
+            steps.insert(i + 1, SeqStep(c, rid, check=True))
+            vec = vec + cv
+            inserted += 1
+            i += 2
+            continue
+        i += 1
+
+    if inserted == 0:
+        return plan
+    total_seconds = sum(kg.resources[st.resource_id].seconds for st in steps)
+    tail = f"{inserted} confidence check{'s' if inserted != 1 else ''} (claim B)"
+    note = f"{plan.note}; {tail}" if plan.note else tail
+    return SequencePlan(
+        tuple(steps),
+        vec,
+        vec.scalarise(w),
+        total_seconds,
+        note=note,
+        reasons=plan.reasons,
+        ideals=plan.ideals,
+        poset_width=plan.poset_width,
+    )
+
+
+# --------------------------------------------------------------------------- #
 # stage 3 - pack the sequence into study sessions
 # --------------------------------------------------------------------------- #
 def pack_sessions(
@@ -465,8 +544,10 @@ def plan_sequence(
     constraints: TeacherConstraints | None = None,
     reviews: bool = True,
     sessions: bool = True,
+    checks: bool = True,
 ) -> SequencePlan:
-    """Stage 1 (order-ideal DP) -> stage 2 (spaced reviews) -> stage 3 (sessions)."""
+    """Stage 1 (order-ideal DP) -> stage 2 (spaced reviews) -> stage 2b
+    (risk-aware confidence checks) -> stage 3 (sessions)."""
     plan = solve_sequence(
         kg, goals, state, weights=weights, budget_seconds=budget_seconds, constraints=constraints
     )
@@ -474,6 +555,8 @@ def plan_sequence(
         return plan
     if reviews:
         plan = insert_reviews(kg, plan, state, goals, weights=weights)
+    if checks:
+        plan = insert_checks(kg, plan, state, goals, weights=weights)
     if sessions:
         plan = pack_sessions(kg, plan)
     return plan

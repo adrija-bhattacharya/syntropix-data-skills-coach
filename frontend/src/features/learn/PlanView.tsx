@@ -86,6 +86,9 @@ function RoleReadiness({ role }: { role: RoleMeta }) {
 function PlanBody({ plan, learnerId }: { plan: Path; learnerId: string }) {
   const sessionStart = new Map(plan.sessions.map((s, i) => [s.start, i + 1]));
   const nReviews = plan.steps.filter((s) => s.review).length;
+  const nChecks = plan.steps.filter((s) => s.check).length;
+  const minConf =
+    plan.min_confidence != null ? Math.round(plan.min_confidence * 100) : null;
 
   return (
     <div>
@@ -95,7 +98,20 @@ function PlanBody({ plan, learnerId }: { plan: Path; learnerId: string }) {
         <Badge tone="good">prerequisite-valid</Badge>
         {plan.sessions.length > 1 && <Badge>{plan.sessions.length} sessions</Badge>}
         {nReviews > 0 && <Badge tone="good">{nReviews} spaced reviews</Badge>}
+        {nChecks > 0 && <Badge tone="warn">{nChecks} confidence checks</Badge>}
+        {minConf != null && (
+          <Badge mono tone={minConf >= 80 ? "good" : "warn"}>
+            P(ready) ≥ {minConf}%
+          </Badge>
+        )}
       </div>
+      {minConf != null && minConf < 80 && (
+        <Callout tone="warn">
+          The adaptive test left one or more pivotal prerequisites uncertain. The plan acts on the
+          pessimistic edge of that estimate and adds quick confidence checks before the concepts
+          that depend on them.
+        </Callout>
+      )}
 
       {plan.steps.map((s, i) => (
         <div key={`${s.resource_id}-${i}`}>

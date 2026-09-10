@@ -32,7 +32,7 @@ from curriculum import build_curriculum
 from engine import Engine
 from model.assessment import AdaptiveSession
 from model.knowledge_graph import KnowledgeGraph
-from model.learner import Attempt
+from model.learner import Attempt, LearnerState
 
 _OBJ_KEYS = ("neg_gain", "seconds", "load", "diff_jump", "neg_review")
 _SPEED_MULT = {"slow": 0.45, "normal": 1.0, "fast": 3.0}
@@ -155,11 +155,12 @@ def _assess_out(session: AdaptiveSession) -> dict[str, Any]:
     }
 
 
-def _plan_out(p: Plan, kg: KnowledgeGraph) -> dict[str, Any]:
+def _plan_out(p: Plan, kg: KnowledgeGraph, state: LearnerState | None = None) -> dict[str, Any]:
     reviews = p.reviews or (False,) * len(p.steps)
+    checks = p.checks or (False,) * len(p.steps)
     steps = []
-    for rid, cid, reason, rev in zip(
-        p.steps, p.concepts, p.reasons or [""] * len(p.steps), reviews
+    for rid, cid, reason, rev, chk in zip(
+        p.steps, p.concepts, p.reasons or [""] * len(p.steps), reviews, checks
     ):
         res = kg.resources.get(rid)
         steps.append(
@@ -168,6 +169,7 @@ def _plan_out(p: Plan, kg: KnowledgeGraph) -> dict[str, Any]:
                 "concept_id": cid,
                 "reason": reason,
                 "review": bool(rev),
+                "check": bool(chk),
                 "title": (res.title if res else "") or "",
                 "url": res.url if res else "",
                 "source": res.source if res else "",
@@ -175,7 +177,7 @@ def _plan_out(p: Plan, kg: KnowledgeGraph) -> dict[str, Any]:
                 "difficulty": res.difficulty if res else 0.0,
             }
         )
-    return {
+    out: dict[str, Any] = {
         "feasible": p.feasible,
         "note": p.note,
         "total_minutes": round(p.total_seconds / 60, 1),
@@ -183,6 +185,16 @@ def _plan_out(p: Plan, kg: KnowledgeGraph) -> dict[str, Any]:
         "steps": steps,
         "sessions": [{"start": a, "end": b} for a, b in p.sessions],
     }
+    if state is not None:
+        measured = {
+            cid: round(state.confidence(cid), 4)
+            for cid in dict.fromkeys(p.concepts)
+            if cid in state.mastery_se
+        }
+        if measured:
+            out["confidence"] = measured
+            out["min_confidence"] = round(min(measured.values()), 4)
+    return out
 
 
 # --------------------------------------------------------------- endpoints
@@ -306,7 +318,7 @@ def _role_recommend(learner_id: str, goal: str, minutes: float, _speed: str) -> 
 
     plan = explain_plan(r.kg, _sequence_to_plan(r.kg, rp.sequence), state)
     return {
-        "paths": [_plan_out(plan, r.kg)],
+        "paths": [_plan_out(plan, r.kg, state)],
         "meta": {
             "mode": "role",
             "domain": r.domain,
@@ -350,7 +362,15 @@ def recommend(body: RecommendIn) -> dict[str, Any]:
     }
     if plans and not plans[0].feasible:
         meta["infeasible_reason"] = plans[0].note
-    return {"paths": [_plan_out(p, eng.kg) for p in plans], "meta": meta}
+    lstate = eng.store.get(body.learner_id)
+    paths = [_plan_out(p, eng.kg, lstate) for p in plans]
+    if paths and "confidence" in paths[0]:
+        conf0 = paths[0]["confidence"]
+        goal_conf = {c: conf0[c] for c in body.goals if c in conf0}
+        if goal_conf:
+            meta["goal_confidence"] = goal_conf
+            meta["plan_confidence"] = min(goal_conf.values())
+    return {"paths": paths, "meta": meta}
 
 
 @app.post("/observe")

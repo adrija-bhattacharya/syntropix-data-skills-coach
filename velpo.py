@@ -116,7 +116,7 @@ def _role_demo(resolved: object, goal_text: str, minutes: float) -> int:
     print(f"hiring readiness:  {rp.readiness_before:.0%}  ->  {rp.readiness:.0%}\n")
     for i, s in enumerate(rp.sequence.steps, 1):
         m, ready = rp.steps_curve[i]
-        tag = " (review)" if s.review else ""
+        tag = " (review)" if s.review else " (check)" if s.check else ""
         name = kg.concepts[s.concept].name + tag
         print(f"  {i:2}. {name:<46} {ready:>4.0%} ready  ({m:.0f} min in)")
     return 0
@@ -179,7 +179,7 @@ def cmd_demo(args: argparse.Namespace) -> int:
     for i, (rid, reason) in enumerate(zip(plan.steps, reasons)):
         if i in session_start:
             print(f"\n  -- session {session_start[i]} --")
-        tag = "R" if plan.is_review(i) else " "
+        tag = "R" if plan.is_review(i) else "C" if plan.is_check(i) else " "
         res = kg.resources[rid]
         label = f"{res.source}: {res.title}" if res.title else rid
         print(f" {tag}{i + 1:2}. {label}")
@@ -189,7 +189,9 @@ def cmd_demo(args: argparse.Namespace) -> int:
 
     o = plan.objective
     n_rev = sum(plan.reviews) if plan.reviews else 0
+    n_chk = sum(plan.checks) if plan.checks else 0
     rev_txt = f" ({n_rev} spaced review{'s' if n_rev != 1 else ''})" if n_rev else ""
+    rev_txt += f" ({n_chk} confidence check{'s' if n_chk != 1 else ''})" if n_chk else ""
     print(
         f"\n{len(plan.steps)} steps{rev_txt} - {plan.total_seconds / 60:.0f} min "
         f"over {len(plan.sessions) or 1} session(s) | "

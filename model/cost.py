@@ -64,14 +64,14 @@ def resource_cost(
 
     gain = review = 0.0
     for c in r.concepts:
-        m = state.decayed_mastery(c)
+        m = state.effective_mastery(c)  # risk-adjusted for measured-but-uncertain skills (claim B)
         gain += expected_mastery_gain(m, state.velocity.get(c, 1.0), per_concept_time)
         if state.last_seen.get(c, 0.0) > 0.0:
             review += max(0.0, 1.0 - m)
 
     prereqs = kg.prerequisites_of_resource(resource_id)
     prereq_mastery = (
-        sum(state.decayed_mastery(c) for c in prereqs) / len(prereqs) if prereqs else 1.0
+        sum(state.effective_mastery(c) for c in prereqs) / len(prereqs) if prereqs else 1.0
     )
 
     return CostVector(
@@ -143,16 +143,23 @@ def sequence_step_cost(
     gain = 0.0
     for c in r.concepts:
         gain += expected_mastery_gain(
-            state.decayed_mastery(c), state.velocity.get(c, 1.0), per_concept_time
+            state.effective_mastery(c), state.velocity.get(c, 1.0), per_concept_time
         )
 
     theta = settings.mastery_threshold
+    # claim B: a prerequisite the adaptive test measured but left uncertain is a
+    # cost even when its point estimate looks fine.
+    risk = sum(
+        max(0.0, theta - state.effective_mastery(q))
+        for q in kg.direct_prerequisites(concept)
+        if q in state.mastery_se
+    )
     return CostVector(
         neg_gain=-gain,
         seconds=r.seconds,
         load=resource_load(r.difficulty, prereq_m),
         diff_jump=abs(r.difficulty - prev_difficulty),
-        neg_review=max(0.0, theta - prereq_m),  # building on shaky prerequisites is a cost
+        neg_review=max(0.0, theta - prereq_m) + 0.5 * risk,
     )
 
 

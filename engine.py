@@ -41,6 +41,7 @@ def _sequence_to_plan(kg: KnowledgeGraph, sp: SequencePlan) -> Plan:
         feasible=sp.feasible,
         note=sp.note,
         reviews=tuple(s.review for s in sp.steps),
+        checks=tuple(s.check for s in sp.steps),
         sessions=sp.sessions,
     )
 
@@ -150,14 +151,15 @@ class Engine:
         return solve_role_plan(self.kg, role_name, prof, state, budget_minutes=time_budget_s / 60.0)
 
     def _apply_assessment(self, learner_id: str, session: AdaptiveSession) -> None:
-        """Replace the cold-start priors with the CAT-estimated mastery."""
+        """Replace the cold-start priors with the CAT-estimated mastery, and keep
+        the estimator's per-skill uncertainty for risk-aware planning (claim B)."""
         current = self.store.get(learner_id)
         budget = current.time_budget_s if current else 3600.0
-        assessed = session.to_mastery()
         state = LearnerState.cold_start(self.kg.concept_ids, time_budget_s=budget)
-        for c in self.kg.concept_ids:
-            if c in assessed:
-                state.mastery[c] = assessed[c]
+        for c, est in session.estimates().items():
+            if c in state.mastery:
+                state.mastery[c] = est.mastery
+                state.mastery_se[c] = est.se
         self.store.put(learner_id, state)
 
     # ------------------------------------------------------------- recommend

@@ -25,6 +25,7 @@ export const Step = z.object({
   concept_id: z.string(),
   reason: z.string(),
   review: z.boolean().default(false),
+  check: z.boolean().default(false),
   title: z.string().default(""),
   url: z.string().default(""),
   source: z.string().default(""),
@@ -46,6 +47,8 @@ export const Path = z.object({
   objective: Objective,
   steps: z.array(Step),
   sessions: z.array(Session).default([]),
+  confidence: z.record(z.number()).optional(),
+  min_confidence: z.number().optional(),
 });
 export const RecommendResponse = z.object({
   paths: z.array(Path),

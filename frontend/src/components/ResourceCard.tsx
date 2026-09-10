@@ -21,7 +21,7 @@ export function ResourceCard({ step, learnerId }: { step: Step; learnerId: strin
   const ring = Math.round((Math.min(step.difficulty, 5) / 5) * 100);
 
   return (
-    <div className={step.review ? "rescard review" : "rescard"}>
+    <div className={step.check ? "rescard check" : step.review ? "rescard review" : "rescard"}>
       <div className="ring" style={{ ["--p" as string]: ring }} title={`difficulty ${step.difficulty}/5`}>
         <span>{step.difficulty ? step.difficulty.toFixed(1) : "•"}</span>
       </div>
@@ -42,6 +42,7 @@ export function ResourceCard({ step, learnerId }: { step: Step; learnerId: strin
             </span>
           )}
           {step.review && <Badge tone="good">spaced review</Badge>}
+          {step.check && <Badge tone="warn">confidence check</Badge>}
         </div>
         <div
           className="why"

@@ -602,6 +602,10 @@ textarea {
 .rescard.review {
   border-color: color-mix(in srgb, var(--good) 35%, transparent);
 }
+.rescard.check {
+  border-color: color-mix(in srgb, var(--warn) 45%, transparent);
+  background: color-mix(in srgb, var(--warn) 6%, var(--bg-1));
+}
 .ring {
   --p: 0;
   flex: none;

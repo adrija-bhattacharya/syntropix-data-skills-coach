@@ -86,6 +86,7 @@ class Plan:
     reasons: tuple[str, ...] = ()
     note: str = ""
     reviews: tuple[bool, ...] = ()  # parallel to steps: is this a spaced-review step?
+    checks: tuple[bool, ...] = ()  # parallel to steps: is this a risk-driven confidence check?
     sessions: tuple[tuple[int, int], ...] = ()  # [start, end) step-index ranges per study session
 
     @classmethod
@@ -94,6 +95,9 @@ class Plan:
 
     def is_review(self, i: int) -> bool:
         return bool(self.reviews) and self.reviews[i]
+
+    def is_check(self, i: int) -> bool:
+        return bool(self.checks) and self.checks[i]
 
 
 @dataclass(frozen=True, slots=True)

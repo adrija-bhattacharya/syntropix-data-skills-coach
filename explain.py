@@ -64,7 +64,14 @@ def explain_plan(kg: KnowledgeGraph, plan: Plan, state: LearnerState) -> Plan:
     reasons: list[str] = []
     prev = 1.0
     for i, (rid, cid) in enumerate(zip(plan.steps, plan.concepts)):
-        if plan.is_review(i):
+        if plan.is_check(i):
+            conf = state.confidence(cid)
+            reasons.append(
+                f"Confidence check on **{_name(kg, cid)}** - the adaptive test placed it near "
+                f"the threshold (P(ready) ≈ {conf:.0%}) and it gates several later concepts, "
+                f"so verify it before building on top."
+            )
+        elif plan.is_review(i):
             reasons.append(
                 f"Spaced review of **{_name(kg, cid)}** - taught earlier and predicted to have "
                 f"decayed below the mastery threshold before it is needed again."

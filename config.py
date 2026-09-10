@@ -49,6 +49,18 @@ class Settings:
     session_max_load: float = 3.2
     """Per study-session caps the session-packing DP respects."""
 
+    # --- risk-aware planning (claim B) ------------------------------
+    risk_kappa: float = 0.7
+    """Standard deviations to subtract from a measured skill's logit-mastery
+    before the planner acts on it (0 disables risk-aware planning)."""
+
+    risk_confidence_target: float = 0.8
+    """Below this ``P(ready)`` for a skill that gates >= 2 downstream concepts,
+    the sequencer splices a quick confidence check right after it is taught."""
+
+    risk_max_checks: int = 3
+    """Cap on risk-driven confidence-check steps a single plan may insert."""
+
     # --- role-gap sequencing (algorithms.roleplan) -------------------
     role_max_ideals: int = 60_000
     """Above this many order ideals in the role's relevant poset, the
