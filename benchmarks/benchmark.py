@@ -29,8 +29,8 @@ import numpy as np
 from algorithms.astar import solve_astar
 from algorithms.dynamic_programming import Plan, build_plan_context, solve_optimal
 from algorithms.graph_traversal import ancestors_subgraph, topological_order
+from benchmarks.datasets import DATASETS, load
 from config import SEED, seed_everything, settings
-from curriculum import build_curriculum
 from model.cost import CostVector, build_cost_vectors
 from model.knowledge_graph import KnowledgeGraph
 from model.learner import LearnerState
@@ -163,7 +163,9 @@ def _brute(kg, goals, state, costs) -> float:
     if not order:
         return 0.0
     cand = [kg.resources_for(c) for c in order]
-    if np.prod([len(c) for c in cand]) > 200_000:
+    if (
+        math.prod(len(c) for c in cand) > 200_000
+    ):  # exact bigint - np.prod overflows int32 on Windows
         return math.nan
     ctx = build_plan_context(kg, goals, state, costs, budget_buckets=_BUCKETS)
     best = math.inf
@@ -189,11 +191,10 @@ def _prereq_violations(kg, plan: list[str]) -> int:
     return v
 
 
-def run(runs: int = 80) -> dict[str, dict[str, float]]:
+def run(runs: int = 80, dataset: str = "synthetic") -> dict[str, dict[str, float]]:
     seed_everything(SEED)
     rng = np.random.default_rng(SEED)
-    kg = build_curriculum()
-    sinks = kg.sink_concepts()
+    kg, sinks = load(dataset)
 
     acc: dict[str, dict[str, list[float]]] = {}
     for i in range(runs):
@@ -201,17 +202,36 @@ def run(runs: int = 80) -> dict[str, dict[str, float]]:
         relevant = topological_order(ancestors_subgraph(kg.prereq, goals))
         min_s = sum(min(kg.resources[r].seconds for r in kg.resources_for(c)) for c in relevant)
         tight = i % 3 == 0
-        budget_s = float(min_s * (rng.uniform(0.6, 0.92) if tight else rng.uniform(1.3, 2.2)))
+        lo_hi = (0.6, 0.92) if tight else (1.3, 2.2)
+        if dataset != "synthetic":  # coarser bucket discretisation on big real graphs
+            lo_hi = (1.05, 1.35) if tight else (1.6, 2.6)
+        budget_s = float(min_s * rng.uniform(*lo_hi))
         state = LearnerState.cold_start(kg.concept_ids, time_budget_s=budget_s)
         costs = build_cost_vectors(kg, state)
-        opt = _brute(kg, goals, state, costs)
 
+        big = len(relevant) > 20
+        # optimality reference: exhaustive search when tractable, else the DP
+        # (provably optimal - see tests/test_dp_optimality.py) as ground truth.
+        opt = _brute(kg, goals, state, costs)
+        if not math.isfinite(opt):
+            dp_steps = _velpo_dp(kg, goals, state, costs)
+            opt = sum(costs[r].scalarise(_W) for r in dp_steps) if dp_steps else math.nan
         planners: dict[str, Callable[[], list[str]]] = {
             "velpo_dp": partial(_velpo_dp, kg, goals, state, costs),
             "velpo_astar": partial(_velpo_astar, kg, goals, state, costs),
             "greedy": partial(greedy, kg, goals),
-            "aco": partial(aco, kg, goals, costs=costs, budget_s=budget_s),
-            "dqn": partial(dqn, kg, goals, costs=costs, budget_s=budget_s),
+            "aco": partial(
+                aco,
+                kg,
+                goals,
+                costs=costs,
+                budget_s=budget_s,
+                n_ants=12 if big else 20,
+                n_iter=15 if big else 40,
+            ),
+            "dqn": partial(
+                dqn, kg, goals, costs=costs, budget_s=budget_s, episodes=150 if big else 400
+            ),
         }
         for name, fn in planners.items():
             t0 = time.perf_counter()
@@ -240,21 +260,22 @@ def run(runs: int = 80) -> dict[str, dict[str, float]]:
         for name, s in acc.items()
     }
     RESULTS.mkdir(exist_ok=True)
-    (RESULTS / "summary.json").write_text(json.dumps(summary, indent=2))
-    _write_csv(summary)
-    _plot(summary)
+    tag = "" if dataset == "synthetic" else f"_{dataset}"
+    (RESULTS / f"summary{tag}.json").write_text(json.dumps(summary, indent=2))
+    _write_csv(summary, tag)
+    _plot(summary, tag)
     return summary
 
 
-def _write_csv(summary: dict[str, dict[str, float]]) -> None:
+def _write_csv(summary: dict[str, dict[str, float]], tag: str = "") -> None:
     cols = next(iter(summary.values())).keys()
     lines = ["method," + ",".join(cols)]
     for name, row in summary.items():
         lines.append(name + "," + ",".join(str(row[c]) for c in cols))
-    (RESULTS / "summary.csv").write_text("\n".join(lines) + "\n")
+    (RESULTS / f"summary{tag}.csv").write_text("\n".join(lines) + "\n")
 
 
-def _plot(summary: dict[str, dict[str, float]]) -> None:
+def _plot(summary: dict[str, dict[str, float]], tag: str = "") -> None:
     try:
         import matplotlib
 
@@ -272,13 +293,13 @@ def _plot(summary: dict[str, dict[str, float]]) -> None:
     for a in ax:
         a.tick_params(axis="x", rotation=25)
     fig.tight_layout()
-    fig.savefig(RESULTS / "summary.png", dpi=140)
+    fig.savefig(RESULTS / f"summary{tag}.png", dpi=140)
     plt.close(fig)
 
 
-if __name__ == "__main__":
-    result = run()
+def _print(dataset: str, result: dict[str, dict[str, float]]) -> None:
     width = max(len(k) for k in result)
+    print(f"\n[{dataset}]")
     print(f"{'method':<{width}}  safe  over  viol  gap     lat_ms")
     for name, row in result.items():
         print(
@@ -286,3 +307,15 @@ if __name__ == "__main__":
             f"{row['mean_prereq_violations']:.2f}  {row['mean_optimality_gap']:+.4f}  "
             f"{row['mean_latency_ms']:.2f}"
         )
+
+
+if __name__ == "__main__":
+    import argparse
+
+    ap = argparse.ArgumentParser(description="VELPO vs baselines")
+    ap.add_argument("--dataset", choices=(*DATASETS, "all"), default="synthetic")
+    ap.add_argument("--runs", type=int, default=80)
+    args = ap.parse_args()
+    names = DATASETS if args.dataset == "all" else (args.dataset,)
+    for ds in names:
+        _print(ds, run(runs=args.runs, dataset=ds))

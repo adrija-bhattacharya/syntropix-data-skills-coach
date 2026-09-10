@@ -139,7 +139,9 @@ def build_plan_context(
     sub = ancestors_subgraph(prereq, goals)
     order = tuple(topological_order(sub))
     n_buckets = settings.budget_buckets if budget_buckets is None else budget_buckets
-    n_buckets = max(n_buckets, len(order))  # each concept needs >= 1 bucket
+    # >= 2 buckets per concept keeps the ceil() discretisation error under ~25 %
+    # even when every concept is picked (matters on large real graphs).
+    n_buckets = max(n_buckets, 2 * len(order))
 
     candidates: dict[NodeId, tuple[NodeId, ...]] = {}
     for c in order:

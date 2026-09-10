@@ -2,43 +2,21 @@
   "version": "2.0.0",
   "options": { "cwd": "${workspaceFolder}" },
   "tasks": [
-    {
-      "label": "setup",
-      "type": "shell",
-      "command": "python -m pip install -e \".[dev]\" && cd frontend && npm install",
-      "problemMatcher": []
-    },
+    { "label": "setup",   "type": "shell", "command": "python velpo.py setup",   "problemMatcher": [] },
+    { "label": "doctor",  "type": "shell", "command": "python velpo.py doctor",  "problemMatcher": [] },
+    { "label": "demo",    "type": "shell", "command": "python velpo.py demo",    "problemMatcher": [] },
     {
       "label": "test",
       "type": "shell",
-      "command": "python -m pytest -q",
+      "command": "python velpo.py test",
       "group": { "kind": "test", "isDefault": true },
       "problemMatcher": []
     },
-    {
-      "label": "lint",
-      "type": "shell",
-      "command": "python -m ruff check algorithms model tests benchmarks *.py && python -m mypy",
-      "problemMatcher": []
-    },
-    {
-      "label": "format",
-      "type": "shell",
-      "command": "python -m ruff format algorithms model tests benchmarks *.py && python -m ruff check --fix algorithms model tests benchmarks *.py",
-      "problemMatcher": []
-    },
-    {
-      "label": "benchmark",
-      "type": "shell",
-      "command": "python -m benchmarks.benchmark",
-      "problemMatcher": []
-    },
-    {
-      "label": "ablation: velocity (N2)",
-      "type": "shell",
-      "command": "python -m benchmarks.ablation_velocity",
-      "problemMatcher": []
-    },
+    { "label": "lint",   "type": "shell", "command": "python velpo.py lint",  "problemMatcher": [] },
+    { "label": "format", "type": "shell", "command": "python velpo.py fmt",   "problemMatcher": [] },
+    { "label": "benchmark",          "type": "shell", "command": "python velpo.py benchmark --dataset all", "problemMatcher": [] },
+    { "label": "ablation: velocity (N2)", "type": "shell", "command": "python velpo.py ablation", "problemMatcher": [] },
+    { "label": "datasets (N7)",      "type": "shell", "command": "python velpo.py datasets", "problemMatcher": [] },
     {
       "label": "frontend: dev",
       "type": "shell",
@@ -47,11 +25,6 @@
       "isBackground": true,
       "problemMatcher": []
     },
-    {
-      "label": "run app (build UI + serve)",
-      "type": "shell",
-      "command": "cd frontend && npm run build && cd .. && python -m uvicorn api:app --port 8000",
-      "problemMatcher": []
-    }
+    { "label": "run app (build UI + serve)", "type": "shell", "command": "python velpo.py serve", "problemMatcher": [] }
   ]
 }

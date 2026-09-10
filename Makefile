@@ -1,45 +1,22 @@
-# VELPO - dev tasks.  Works in Git Bash / WSL / macOS / Linux.
-PY   ?= python
-NPM  ?= npm
-SRC  := algorithms model config.py curriculum.py engine.py explain.py api.py
+# VELPO - thin wrapper over `python velpo.py` (which needs no make; works on Windows too).
+PY ?= python
 
-.PHONY: setup test lint typecheck format benchmark ablation frontend serve api clean
+.PHONY: setup doctor demo test lint fmt benchmark ablation datasets api ui serve clean
 
-setup:
-	$(PY) -m pip install -U pip
-	$(PY) -m pip install -e ".[dev]"
-	cd frontend && $(NPM) install
-
-test:
-	$(PY) -m pytest --cov --cov-report=term-missing
-
-lint:
-	$(PY) -m ruff check $(SRC) tests benchmarks
-	$(PY) -m ruff format --check $(SRC) tests benchmarks
-	cd frontend && $(NPM) run lint
-
-format:
-	$(PY) -m ruff format $(SRC) tests benchmarks
-	$(PY) -m ruff check --fix $(SRC) tests benchmarks
-
-typecheck:
-	$(PY) -m mypy
-
-benchmark:
-	$(PY) -m benchmarks.benchmark
-
-ablation:
-	$(PY) -m benchmarks.ablation_velocity
-
-frontend:
-	cd frontend && $(NPM) install && $(NPM) run build
-
-serve: frontend
-	$(PY) -m uvicorn api:app --port 8000
-
-api:
-	$(PY) -m uvicorn api:app --reload --port 8000
+setup:      ; $(PY) velpo.py setup
+doctor:     ; $(PY) velpo.py doctor
+demo:       ; $(PY) velpo.py demo
+test:       ; $(PY) velpo.py test
+lint:       ; $(PY) velpo.py lint
+fmt:        ; $(PY) velpo.py fmt
+benchmark:  ; $(PY) velpo.py benchmark
+ablation:   ; $(PY) velpo.py ablation
+datasets:   ; $(PY) velpo.py datasets
+api:        ; $(PY) velpo.py api
+ui:         ; $(PY) velpo.py ui
+serve:      ; $(PY) velpo.py serve
 
 clean:
-	rm -rf build dist .pytest_cache .mypy_cache .ruff_cache htmlcov .coverage web frontend/dist frontend/node_modules *.egg-info
+	rm -rf build dist .pytest_cache .mypy_cache .ruff_cache htmlcov .coverage web \
+	       frontend/dist frontend/node_modules benchmarks/data/cache *.egg-info
 	find . -type d -name __pycache__ -prune -exec rm -rf {} +

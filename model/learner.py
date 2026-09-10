@@ -17,6 +17,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, replace
 
 from config import settings
+from model.refine import MasteryRefiner
 
 _HOUR = 3600.0
 
@@ -105,6 +106,7 @@ class LearnerState:
     now_s: float = 0.0
     n_interactions: int = 0
     recent: list[Attempt] = field(default_factory=list)
+    refiner: MasteryRefiner = field(default_factory=MasteryRefiner)
 
     @classmethod
     def cold_start(
@@ -134,9 +136,14 @@ class LearnerState:
         )
 
     def decayed_mastery(self, concept_id: str) -> float:
+        """Current best estimate: BKT prior, decayed by elapsed time (Ebbinghaus),
+        then refined by the DKT-lite / PFA model once attempts exist (N4)."""
         m0 = self.mastery.get(concept_id, 0.0)
         elapsed_h = max(0.0, (self.now_s - self.last_seen.get(concept_id, 0.0)) / _HOUR)
-        return decay(m0, elapsed_h, self.half_life.get(concept_id, settings.forgetting_half_life_h))
+        decayed = decay(
+            m0, elapsed_h, self.half_life.get(concept_id, settings.forgetting_half_life_h)
+        )
+        return self.refiner.refined(concept_id, decayed)
 
     def is_mastered(self, concept_id: str, threshold: float | None = None) -> bool:
         theta = settings.mastery_threshold if threshold is None else threshold
@@ -150,4 +157,5 @@ class LearnerState:
             half_life=dict(self.half_life),
             last_seen=dict(self.last_seen),
             recent=list(self.recent),
+            refiner=self.refiner.copy(),
         )

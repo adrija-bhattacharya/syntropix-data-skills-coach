@@ -4,34 +4,34 @@
     "over_budget_rate": 0.0,
     "mean_prereq_violations": 0.0,
     "mean_optimality_gap": 0.0,
-    "mean_latency_ms": 0.473
+    "mean_latency_ms": 0.698
   },
   "velpo_astar": {
     "safe_behaviour_rate": 1.0,
     "over_budget_rate": 0.0,
     "mean_prereq_violations": 0.0,
     "mean_optimality_gap": 0.0,
-    "mean_latency_ms": 0.336
+    "mean_latency_ms": 0.501
   },
   "greedy": {
     "safe_behaviour_rate": 0.662,
     "over_budget_rate": 0.338,
     "mean_prereq_violations": 0.0,
     "mean_optimality_gap": 0.2592,
-    "mean_latency_ms": 0.142
+    "mean_latency_ms": 0.194
   },
   "aco": {
     "safe_behaviour_rate": 0.662,
     "over_budget_rate": 0.338,
     "mean_prereq_violations": 0.0,
     "mean_optimality_gap": 0.0,
-    "mean_latency_ms": 117.467
+    "mean_latency_ms": 327.903
   },
   "dqn": {
     "safe_behaviour_rate": 0.662,
     "over_budget_rate": 0.338,
     "mean_prereq_violations": 0.0,
     "mean_optimality_gap": 0.0087,
-    "mean_latency_ms": 26.256
+    "mean_latency_ms": 72.265
   }
 }

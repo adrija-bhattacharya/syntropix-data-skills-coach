@@ -74,6 +74,7 @@ class Engine:
         n_paths: int = 1,
         constraints: TeacherConstraints | None = None,
         speed: float = 1.0,
+        deadline_s: float | None = None,
     ) -> list[Plan]:
         """``speed`` scales the learner's per-concept velocity (N2) before the
         cost vectors are built: ``> 1`` asks "what does the plan look like for a
@@ -97,7 +98,9 @@ class Engine:
             plans = solve_pareto(self.kg, goal_list, state, costs, constraints=constraints)
             plans = plans[:n_paths] if n_paths > 0 else plans
         elif mode == "interactive":
-            result = solve_astar(self.kg, goal_list, state, costs, constraints=constraints)
+            result = solve_astar(
+                self.kg, goal_list, state, costs, constraints=constraints, deadline_s=deadline_s
+            )
             plans = [result if isinstance(result, Plan) else result[0]]
         else:
             plans = [solve_optimal(self.kg, goal_list, state, costs, constraints=constraints)]
@@ -126,6 +129,7 @@ class Engine:
             state.velocity[c] = velocity_update(
                 state.velocity.get(c, 1.0), post - prior, attempt.seconds / max(1, len(r.concepts))
             )
+            state.refiner.observe(c, attempt.correct)  # N4: DKT-lite refinement
             state.mastery[c] = post
             state.last_seen[c] = now
         state.recent.append(attempt)

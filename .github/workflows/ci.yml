@@ -17,6 +17,7 @@ jobs:
       - run: python -m ruff format --check algorithms model tests benchmarks *.py
       - run: python -m mypy
       - run: python -m pytest --cov --cov-fail-under=85
+      - run: python velpo.py demo --goal quadratics --minutes 90    # CLI smoke
 
   frontend:
     runs-on: ubuntu-latest

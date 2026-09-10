@@ -47,6 +47,37 @@ def test_astar_equals_dp_random(seed: int, n: int, wi: int, scale: float) -> Non
         assert a.objective.scalarise(w) == pytest.approx(dp.objective.scalarise(w), rel=1e-9)
 
 
+def test_astar_anytime_returns_feasible_plan_under_a_tiny_deadline(kg: KnowledgeGraph) -> None:
+    state = LearnerState.cold_start(kg.concept_ids, time_budget_s=3500)  # tight but feasible
+    costs = build_cost_vectors(kg, state)
+    res = solve_astar(
+        kg, ["word_problems"], state, costs, budget_buckets=40, deadline_s=0.0, return_stats=True
+    )
+    plan, stats = res  # type: ignore[misc]
+    assert plan.feasible  # an incumbent is always available immediately
+    assert not stats.optimal
+    assert "anytime" in plan.note
+
+
+def test_astar_reaches_the_proven_optimum_with_no_deadline(kg: KnowledgeGraph) -> None:
+    state = LearnerState.cold_start(kg.concept_ids, time_budget_s=3500)
+    costs = build_cost_vectors(kg, state)
+    w = (5.0, 6e-4, 0.4, 0.25, 0.7)
+    dp = solve_optimal(kg, ["word_problems"], state, costs, w, budget_buckets=40)
+    res = solve_astar(kg, ["word_problems"], state, costs, w, budget_buckets=40, return_stats=True)
+    plan, stats = res  # type: ignore[misc]
+    assert stats.optimal
+    assert plan.objective.scalarise(w) == pytest.approx(dp.objective.scalarise(w))
+
+
+def test_astar_replan_latency_is_well_under_100ms(kg: KnowledgeGraph) -> None:
+    state = LearnerState.cold_start(kg.concept_ids, time_budget_s=3500)
+    costs = build_cost_vectors(kg, state)
+    res = solve_astar(kg, ["word_problems"], state, costs, budget_buckets=40, return_stats=True)
+    _, stats = res  # type: ignore[misc]
+    assert stats.elapsed_ms < 100.0
+
+
 def test_astar_expands_fewer_states_than_dp_table() -> None:
     ratios = []
     for seed in range(30):

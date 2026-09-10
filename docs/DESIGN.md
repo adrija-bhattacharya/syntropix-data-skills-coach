@@ -46,8 +46,13 @@ dp[b] = min over r in R(c_i) of  dp[b - buckets(r)] + w·cost(r)
 * the recurrence is exact ⇒ the result is the **global optimum**;
 * `O(V·R·B)` time, `O(V·B)` space; drops to `O(V·R)` when the budget cannot bind.
 
-`solve_astar` explores the identical state space best-first with an admissible
-`suffix-min` heuristic - same optimum, fewer expansions, for interactive re-planning.
+`solve_astar` (claim **N6**) explores the identical state space best-first with an
+admissible `suffix-min` heuristic.  It is **anytime**: a feasible incumbent (the
+per-concept cheapest-by-time choice) is available before the search starts, then
+branch-and-bound improves it and - with no `deadline_s` - proves it optimal,
+identical to `solve_optimal`, in well under 1 ms on the course curriculum (~3 ms on
+a 40-concept slice of the real Junyi graph).  So "re-plan after every interaction"
+needs no retraining, no policy instability, no sim-to-real gap.
 `solve_pareto` keeps a non-dominated *set* per state and returns the front.
 
 Difficulty-smoothing (ordering the chosen resources so consecutive difficulties are
@@ -57,7 +62,12 @@ it is **not** part of the optimality claim.
 ## Learner model (lightweight, CPU-only)
 
 * **mastery** - Bayesian Knowledge Tracing (a 2-state HMM); cold-start priors from
-  item difficulty.
+  item difficulty, so there is a valid, near-optimal path at **interaction 0**
+  (claim **N4**).  As attempts arrive, `model/refine.py` (a compact online
+  Performance-Factors-Analysis model - "DKT-lite", pure NumPy, no RNN) is blended
+  into the estimate with a weight that ramps from 0 to 1 over the first few
+  attempts per concept: the learned model *refines*, never *replaces*, the
+  cold-start estimate.  `tests/test_refine.py` checks both ends.
 * **velocity** (claim **N2**) - `v ← (1−α)·v + α·(Δmastery / Δhours)`, per concept,
   clipped.  It enters the edge cost directly through
   `expected_mastery_gain(current, velocity, seconds) = (1−current)·(1−e^{−v·h/τ})`,
@@ -79,10 +89,29 @@ resource; `force_order` adds a prerequisite edge (rejected if it creates a cycle
 The solver simply re-solves.  If a constraint admits no plan the solver returns
 `Plan.infeasible(...)`.
 
+## Benchmark harness (claim N7)
+
+`benchmarks/datasets.py` reduces every dataset to the pair `(KnowledgeGraph,
+goals)` so `benchmarks/benchmark.py` runs **one** metric set - safe-behaviour,
+over-budget, optimality gap (vs exhaustive search when tractable, else the
+provably-optimal DP), latency - across all of them.  Two datasets ship:
+
+* `synthetic` - the hand-authored algebra curriculum.
+* `junyi` - the **real** Junyi Academy prerequisite graph (776 concepts, 985
+  edges; a 57-concept offline sample is bundled, `--full` downloads the rest from
+  the open mirror).  The prerequisite edges are real; the per-resource difficulty
+  and time are synthesised from DAG depth and clearly labelled.  Real graphs can
+  carry annotation cycles, so `remove_cycles` (N1) runs on the way in.
+
+Adding ASSISTments / EdNet is one more `load_*` that ends in
+`knowledge_graph_from_edges`; their logs carry no prerequisite graph, so they
+need an inferred one - the hook is in place, the inference is future work.
+
 ## Not claimed as new
 
-Knowledge tracing, prerequisite graphs, the forgetting curve, A\*, Pareto DP - all
-exist.  The contribution is applying constrained multiple-choice-knapsack DP to
+Knowledge tracing, prerequisite graphs, the forgetting curve, A\*, Pareto DP, PFA -
+all exist.  The contribution is applying constrained multiple-choice-knapsack DP to
 *this* problem to obtain guarantees the RL / metaheuristic literature lacks
 (feasibility, optimality, a complexity bound), plus learning-velocity as a
-first-class per-concept cost driver.
+first-class per-concept cost driver, plus the anytime re-plan and the one-metric
+multi-dataset harness.
