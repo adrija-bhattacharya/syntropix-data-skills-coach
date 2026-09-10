@@ -34,6 +34,7 @@ python velpo.py lint        # ruff + ruff format --check + mypy --strict
 python velpo.py serve       # build the React UI + serve it & the API at http://localhost:8000
 python velpo.py api         # API only (autoreload)  -> http://localhost:8000/docs
 python velpo.py ui          # React dev server        -> http://localhost:5173  (needs `api` too)
+python velpo.py ui-test     # strict tsc + the React test suite (vitest + Testing Library + MSW)
 python velpo.py benchmark --dataset all   # VELPO vs greedy / ACO / DQN  -> results/summary*.csv
 python velpo.py ablation    # N2 check: does learning velocity change the plan?
 python velpo.py datasets    # list / download the benchmark datasets  (--full = whole Junyi graph)
@@ -69,10 +70,21 @@ explain.py      knowledge-graph-grounded reason strings
 curriculum.py   labelled synthetic algebra curriculum (demo / API / tests)
 api.py          FastAPI  (+ serves the built SPA at /)
 config.py       tunable constants + weights
-frontend/       React + TypeScript + Vite  ->  builds into web/
+frontend/       React 18 + TS + Vite  ·  TanStack Query · React Router · Zod · Recharts  ·  Vitest + RTL + MSW
 benchmarks/     benchmark.py · ablation_velocity.py · datasets.py (synthetic + real Junyi graph)
 tests/          the guarantees
 ```
+
+### Frontend architecture
+
+`frontend/src` is feature-sliced: `lib/` (a zod-validated API client + TanStack
+Query hooks + a theme store), `context/` (shared learner identity), `components/`
+(design-system primitives, an error boundary, the Recharts difficulty and Pareto
+charts), and `features/{learner,teacher}/` (route-split pages; the teacher's
+constraint builder is a `useReducer`).  Server state lives entirely in TanStack
+Query - logging an attempt invalidates the cached recommendation so the plan
+re-solves itself.  `python velpo.py ui-test` runs 19 component/integration tests
+against a mock API (MSW).  Light/dark/system theme, persisted.
 
 ## Benchmark
 
@@ -120,8 +132,8 @@ So the personalisation comes from velocity itself, not an incidental tie-break.
 
 ## Tests
 
-`python velpo.py test` - 79 tests, `ruff` + `mypy --strict` + `tsc` all clean.  The ones
-that carry the claims:
+`python velpo.py test` - 79 Python tests + `python velpo.py ui-test` - 19 React tests;
+`ruff` + `mypy --strict` + strict `tsc` all clean.  The ones that carry the claims:
 
 * `test_dp_optimality.py` - the DP equals exhaustive search on every random curriculum (N1)
 * `test_dp_feasibility.py` - 250+ random cases pass an independent prereq / budget / coverage checker (N1)

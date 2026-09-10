@@ -25,6 +25,7 @@
       "isBackground": true,
       "problemMatcher": []
     },
+    { "label": "frontend: test", "type": "shell", "command": "python velpo.py ui-test", "problemMatcher": [] },
     { "label": "run app (build UI + serve)", "type": "shell", "command": "python velpo.py serve", "problemMatcher": [] }
   ]
 }

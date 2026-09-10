@@ -12,6 +12,7 @@ Commands
     fmt          auto-format and auto-fix (ruff)
     api          run the API with autoreload at http://localhost:8000  (/docs for the UI)
     ui           run the React dev server at http://localhost:5173  (needs `api` in another shell)
+    ui-test      typecheck (strict tsc) + run the React tests (vitest + Testing Library + MSW)
     serve        build the React UI and serve it + the API at http://localhost:8000
     benchmark    VELPO vs greedy / ACO / DQN   (--dataset synthetic|junyi|all  --runs N)
     ablation     N2 check - does learning velocity change the plan?
@@ -152,6 +153,12 @@ def cmd_ui(_: argparse.Namespace) -> int:
     return _run([_npm(), "run", "dev"], cwd=FRONTEND)
 
 
+def cmd_ui_test(_: argparse.Namespace) -> int:
+    rc = _run([_npm(), "run", "lint"], cwd=FRONTEND)  # tsc --noEmit (strict)
+    rc |= _run([_npm(), "run", "test"], cwd=FRONTEND)  # vitest + RTL + MSW
+    return rc
+
+
 def cmd_serve(_: argparse.Namespace) -> int:
     if (FRONTEND / "package.json").exists():
         rc = _run([_npm(), "run", "build"], cwd=FRONTEND)
@@ -210,6 +217,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("fmt").set_defaults(fn=cmd_fmt)
     sub.add_parser("api").set_defaults(fn=cmd_api)
     sub.add_parser("ui").set_defaults(fn=cmd_ui)
+    sub.add_parser("ui-test").set_defaults(fn=cmd_ui_test)
     sub.add_parser("serve").set_defaults(fn=cmd_serve)
 
     b = sub.add_parser("benchmark")

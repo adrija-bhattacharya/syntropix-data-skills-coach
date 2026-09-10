@@ -1,48 +1,144 @@
-import type { Catalogue, Path } from "../api";
-import { OBJ_LABELS } from "../api";
+import { memo, useState } from "react";
+import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-export function PathCard({ path, catalogue }: { path: Path; catalogue: Catalogue }) {
+import type { Catalogue, Path } from "../lib/api";
+import { OBJECTIVE_KEYS, OBJECTIVE_META, num } from "../lib/format";
+import { useExplain } from "../lib/queries";
+import { Badge, Button, Callout } from "./ui";
+
+export const PathCard = memo(function PathCard({
+  path,
+  catalogue,
+  learnerId,
+}: {
+  path: Path;
+  catalogue: Catalogue;
+  learnerId: string;
+}) {
   if (!path.feasible) {
     return (
-      <div className="card warn">
-        <strong>No feasible plan.</strong> {path.note}
-      </div>
+      <Callout tone="warn">
+        <strong>No feasible plan.</strong> {path.note || "The time budget cannot fit the prerequisite closure."}
+      </Callout>
     );
   }
-  if (path.steps.length === 0) return <div className="card">Goal already satisfied.</div>;
-  const res = new Map(catalogue.resources.map((r) => [r.id, r]));
+  if (path.steps.length === 0) return <Callout>Goal already satisfied — nothing to study.</Callout>;
+
+  const byId = new Map(catalogue.resources.map((r) => [r.id, r]));
+  const curve = path.steps.map((s, i) => ({
+    i: i + 1,
+    difficulty: byId.get(s.resource_id)?.difficulty ?? 0,
+  }));
 
   return (
-    <div className="card">
-      <div className="path-head">
-        {path.steps.length} steps &middot; ~{Math.round(path.total_minutes)} min
+    <div>
+      <div className="plan-head">
+        <span className="title">{path.steps.length} steps</span>
+        <Badge mono>~{Math.round(path.total_minutes)} min</Badge>
+        <Badge tone="good">prerequisite-valid</Badge>
       </div>
+
+      <div className="chart-wrap" style={{ height: 96 }} aria-hidden>
+        <ResponsiveContainer>
+          <LineChart data={curve} margin={{ top: 6, right: 8, bottom: 0, left: -24 }}>
+            <XAxis dataKey="i" tick={{ fontSize: 10 }} stroke="var(--muted)" />
+            <YAxis width={30} tick={{ fontSize: 10 }} stroke="var(--muted)" domain={[0, "dataMax + 1"]} />
+            <Tooltip
+              contentStyle={{ background: "var(--panel)", border: "1px solid var(--line)", fontSize: 12 }}
+              formatter={(v: number) => [v, "difficulty"]}
+              labelFormatter={(l) => `step ${l}`}
+            />
+            <Line
+              type="monotone"
+              dataKey="difficulty"
+              stroke="var(--accent)"
+              strokeWidth={2}
+              dot={{ r: 2 }}
+              isAnimationActive={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+      <p className="hint">Difficulty across the plan — the smoothing heuristic keeps consecutive jumps small.</p>
+
       <ol className="steps">
-        {path.steps.map((s, i) => {
-          const r = res.get(s.resource_id);
+        {path.steps.map((s, i) => (
+          <Step key={`${s.resource_id}-${i}`} step={s} resource={byId.get(s.resource_id)} learnerId={learnerId} />
+        ))}
+      </ol>
+
+      <div className="objgrid">
+        {OBJECTIVE_KEYS.map((k) => {
+          const meta = OBJECTIVE_META[k];
           return (
-            <li key={i}>
-              <div className="step-title">
-                <span className="mono">{s.resource_id}</span>
-                {r && (
-                  <span className="tag">
-                    {r.kind} &middot; difficulty {r.difficulty}
-                  </span>
-                )}
+            <div className="cell" key={k}>
+              <div className="k">
+                {meta.label} {meta.better === "higher" ? "↑" : "↓"}
               </div>
-              <div className="reason">{s.reason}</div>
-            </li>
+              <div className="v">
+                {num(meta.transform(path.objective[k]))}
+                {meta.unit ? ` ${meta.unit}` : ""}
+              </div>
+            </div>
           );
         })}
-      </ol>
-      <div className="obj">
-        {Object.entries(path.objective).map(([k, v]) => (
-          <span key={k} className="obj-chip">
-            {OBJ_LABELS[k] ?? k}: {v >= 0 ? "+" : ""}
-            {v.toFixed(2)}
-          </span>
-        ))}
       </div>
     </div>
   );
+});
+
+function Step({
+  step,
+  resource,
+  learnerId,
+}: {
+  step: Path["steps"][number];
+  resource: Catalogue["resources"][number] | undefined;
+  learnerId: string;
+}) {
+  const explain = useExplain();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <li>
+      <div className="step-title">
+        <span className="mono">{step.resource_id}</span>
+        {resource && (
+          <Badge>
+            {resource.kind} · difficulty {resource.difficulty}
+          </Badge>
+        )}
+        <Button
+          variant="ghost"
+          style={{ marginLeft: "auto", padding: "2px 8px", fontSize: 12 }}
+          aria-expanded={open}
+          onClick={() => {
+            setOpen((v) => !v);
+            if (!open && !explain.data)
+              explain.mutate({ learnerId, resourceId: step.resource_id });
+          }}
+        >
+          why?
+        </Button>
+      </div>
+      <div className="step-reason" dangerouslySetInnerHTML={{ __html: mdBold(step.reason) }} />
+      {open && (
+        <div className="step-reason" style={{ marginTop: 6, fontStyle: "italic" }}>
+          {explain.isPending && "…"}
+          {explain.error && <span style={{ color: "var(--warn)" }}>could not load explanation</span>}
+          {explain.data && (
+            <span dangerouslySetInnerHTML={{ __html: mdBold(explain.data.reason) }} />
+          )}
+        </div>
+      )}
+    </li>
+  );
+}
+
+/** the API returns `**bold**` markers in reason strings - render just those. */
+function mdBold(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 }
