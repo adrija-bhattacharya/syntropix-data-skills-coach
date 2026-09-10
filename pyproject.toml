@@ -39,7 +39,7 @@ velpo-api = "api:run"
 
 # flat layout: the code lives directly at the repo root
 [tool.setuptools]
-py-modules = ["config", "curriculum", "assessment_bank", "engine", "explain", "api", "velpo"]
+py-modules = ["config", "curriculum", "domains", "dynamic", "assessment_bank", "engine", "explain", "api", "velpo"]
 
 [tool.setuptools.packages.find]
 include = ["algorithms*", "model*", "harvest*"]
@@ -53,12 +53,12 @@ select = ["E", "F", "I", "UP", "B", "SIM", "C4", "RUF"]
 ignore = ["B905"]  # zip() strict= - lengths are known-equal at every call site
 
 [tool.ruff.lint.isort]
-known-first-party = ["algorithms", "model", "benchmarks", "config", "curriculum", "assessment_bank", "engine", "explain", "api", "velpo"]
+known-first-party = ["algorithms", "model", "harvest", "benchmarks", "config", "curriculum", "domains", "dynamic", "assessment_bank", "engine", "explain", "api", "velpo"]
 
 [tool.mypy]
 python_version = "3.11"
 strict = true
-files = ["algorithms", "model", "harvest", "config.py", "curriculum.py", "assessment_bank.py", "engine.py", "explain.py", "api.py", "velpo.py"]
+files = ["algorithms", "model", "harvest", "config.py", "curriculum.py", "domains.py", "dynamic.py", "assessment_bank.py", "engine.py", "explain.py", "api.py", "velpo.py"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

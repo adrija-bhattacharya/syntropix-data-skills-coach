@@ -20,6 +20,7 @@ reinforcement learning.
 | study sessions | a partition DP splits the plan into sessions under time + load caps | none |
 | capability input | an **adaptive test** (2PL IRT + max-information item selection) *measures* the learner's level per skill; nothing is self-rated | the learner picks a level, or picks topics |
 | resources | **discovered live** from open sources (Wikipedia, Wikibooks, MIT, arXiv, YouTube) and **auto-level-estimated** (readability + jargon + source priors) | a fixed, hand-built catalogue |
+| any goal | a **router**: curated seed graph for known domains (algebra, DSA, Python), else a graph **built from Wikipedia** (lead-link asymmetry → prerequisites) | one hard-coded curriculum |
 | cold-start (N4) | the adaptive test seeds mastery at interaction #0; then DKT-lite refinement | usually unsolved |
 | re-plan (N6) | **anytime A\***: feasible plan instantly, proven-optimal in <1 ms, no retraining | policy retraining, instability |
 | evidence (N7) | one benchmark harness over synthetic **and the real Junyi graph** | "no standard benchmark" |
@@ -35,6 +36,7 @@ python velpo.py demo        # solve ONE path and print it in the terminal (no se
 python velpo.py assess      # take the adaptive diagnostic in the terminal, then plan from your measured level
 python velpo.py harvest     # discover real open resources (Wikipedia / Wikibooks / MIT / arXiv / YouTube)
 python velpo.py demo --catalogue discovered   # plan against the discovered open resources (with real links)
+python velpo.py plan --goal "binary search tree"   # free-text goal -> seed graph (DSA / Python / algebra) or built from Wikipedia
 python velpo.py test        # the whole test suite
 python velpo.py lint        # ruff + ruff format --check + mypy --strict
 python velpo.py serve       # build the React UI + serve it & the API at http://localhost:8000

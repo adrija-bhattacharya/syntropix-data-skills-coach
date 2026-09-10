@@ -37,7 +37,7 @@ def _cached_body(cache: Path) -> str:
     return str(json.loads(cache.read_text())["body"])
 
 
-def get(url: str, *, refresh: bool = False, timeout: float = 20.0) -> str:
+def get(url: str, *, refresh: bool = False, timeout: float = 20.0, delay: float = 0.1) -> str:
     cache = _path(url)
     if not refresh and cache.exists() and (time.time() - cache.stat().st_mtime) < _TTL_S:
         return _cached_body(cache)
@@ -48,23 +48,23 @@ def get(url: str, *, refresh: bool = False, timeout: float = 20.0) -> str:
     req = urllib.request.Request(url, headers={"User-Agent": _UA})
     body = ""
     last: Exception | None = None
-    for attempt in range(4):
+    for attempt in range(5):
         try:
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 body = resp.read().decode("utf-8", "replace")
             break
         except (urllib.error.URLError, TimeoutError) as exc:  # pragma: no cover - network
             last = exc
-            time.sleep(0.8 * 2**attempt)
+            time.sleep(1.0 * 2**attempt)  # 1, 2, 4, 8, 16s - ride out 429s
     else:
         if cache.exists():
             return _cached_body(cache)
         raise OfflineError(f"fetch failed for {url}: {last}")
-    time.sleep(0.1)  # be polite to the free APIs
+    time.sleep(delay)  # be polite to the free APIs
     _CACHE.mkdir(exist_ok=True)
     cache.write_text(json.dumps({"url": url, "body": body}))
     return body
 
 
-def get_json(url: str, *, refresh: bool = False) -> Any:
-    return json.loads(get(url, refresh=refresh))
+def get_json(url: str, *, refresh: bool = False, delay: float = 0.1) -> Any:
+    return json.loads(get(url, refresh=refresh, delay=delay))

@@ -2,6 +2,7 @@
 
     GET  /health
     GET  /catalogue        concepts, resources, sink (goal) concepts
+    POST /resolve          {goal}                           free-text goal -> knowledge graph
     POST /assess/start     {learner_id, goals[]}            begin the adaptive diagnostic
     POST /assess/answer    {learner_id, item_id, response}  grade + get the next item
     GET  /assess/{id}      current questions + ability estimates
@@ -175,6 +176,30 @@ def catalogue() -> dict[str, Any]:
         ],
         "goals": kg.sink_concepts(),
         "discovered": any(r.source for r in kg.resources.values()),
+    }
+
+
+class ResolveIn(BaseModel):
+    goal: str = Field(min_length=2)
+    allow_dynamic: bool = True
+
+
+@app.post("/resolve")
+def resolve_goal(body: ResolveIn) -> dict[str, Any]:
+    """Free-text goal -> a knowledge graph (curated seed, or built dynamically)."""
+    from domains import resolve
+
+    try:
+        r = resolve(body.goal, allow_dynamic=body.allow_dynamic)
+    except Exception as exc:  # dynamic construction hits the network
+        raise HTTPException(502, f"could not resolve {body.goal!r}: {exc}") from exc
+    return {
+        "goal": body.goal,
+        "domain": r.domain,
+        "source": r.source,
+        "goals": r.goals,
+        "concepts": [{"id": c.id, "name": c.name} for c in r.kg.concepts.values()],
+        "prerequisites": [[u, v] for u, v in r.kg.prereq.edges()],
     }
 
 

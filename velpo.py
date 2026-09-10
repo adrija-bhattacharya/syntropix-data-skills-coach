@@ -103,19 +103,36 @@ def cmd_harvest(args: argparse.Namespace) -> int:
 def cmd_demo(args: argparse.Namespace) -> int:
     from engine import Engine
 
-    if getattr(args, "catalogue", "curriculum") == "discovered":
+    catalogue = getattr(args, "catalogue", "curriculum")
+    kg = None
+    goal_hint = ""
+
+    if catalogue == "discovered":
         from harvest import algebra_catalogue
 
         kg = algebra_catalogue()
         goals = kg.sink_concepts()
+    elif args.goal and args.dataset == "synthetic" and " " in args.goal.strip():
+        from domains import resolve  # free-text goal -> seed graph or dynamic
+
+        r = resolve(args.goal)
+        kg, goals = r.kg, r.goals
+        goal_hint = f"  [{r.source}: {r.domain}]"
     else:
         from benchmarks.datasets import load
 
         kg, goals = load(args.dataset)
-    goal = args.goal or goals[0]
-    if goal not in kg.concepts:
-        print(f"unknown goal {goal!r}. choices: {', '.join(goals)}")
+
+    if args.goal and args.goal in kg.concepts:
+        goal = args.goal
+    elif args.goal and goal_hint:  # a free-text goal that was routed to a graph
+        goal = goals[0]
+    elif args.goal:
+        choices = ", ".join(list(kg.concepts)[:10])
+        print(f"unknown goal {args.goal!r}. try a phrase, or one of: {choices}")
         return 2
+    else:
+        goal = goals[0]
     speed = {"slow": 0.45, "normal": 1.0, "fast": 3.0}[args.speed]
     eng = Engine(kg)
     plans = eng.recommend(
@@ -123,7 +140,7 @@ def cmd_demo(args: argparse.Namespace) -> int:
     )
     plan = plans[0]
     print(
-        f"\ndataset={args.dataset}  goal={goal}  budget={args.minutes} min  "
+        f"\ngoal={goal}{goal_hint}  budget={args.minutes} min  "
         f"solver={args.mode}  speed={args.speed}\n"
     )
     if not plan.feasible:
