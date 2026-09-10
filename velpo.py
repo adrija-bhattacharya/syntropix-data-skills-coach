@@ -6,8 +6,9 @@ Commands
     setup        install Python deps (editable) + frontend npm packages
     doctor       check the environment is ready
     demo         solve one learning path and print it in the terminal (no server)
-    plan         demo with options (--goal / --minutes / --speed / --mode / --dataset)
+    plan         demo with options (--goal / --minutes / --speed / --mode / --catalogue)
     assess       run the adaptive capability diagnostic in the terminal, then plan from it
+    harvest      discover real open resources (Wikipedia / Wikibooks / MIT / arXiv / YouTube)
     test         run the test suite (pytest)
     lint         ruff check + ruff format --check + mypy --strict
     fmt          auto-format and auto-fix (ruff)
@@ -74,11 +75,43 @@ def cmd_doctor(_: argparse.Namespace) -> int:
     return 0 if ok else 1
 
 
+def cmd_harvest(args: argparse.Namespace) -> int:
+    """Discover real open resources for a concept (or the whole curriculum)."""
+    from curriculum import build_curriculum
+    from harvest.catalogue import CONCEPT_QUERY, discover_catalogue, discover_for_concept
+
+    kg = build_curriculum()
+    if args.concept:
+        name = CONCEPT_QUERY.get(args.concept, args.concept)
+        print(f"\ndiscovering open resources for: {name}\n")
+        for r, lvl in discover_for_concept(name, domain=args.domain, k=args.k):
+            print(f"  [{r.source:9}|{r.kind:7}] level {lvl.difficulty}  (FK grade {lvl.fk_grade})")
+            print(f"      {r.title}")
+            print(f"      {r.url}\n")
+        return 0
+    dkg = discover_catalogue(kg, snapshot="algebra", domain=args.domain, refresh=args.refresh)
+    from collections import Counter
+
+    by_src = Counter(r.source or "fallback" for r in dkg.resources.values())
+    print(f"\n{len(dkg.resources)} resources / {len(dkg.concepts)} concepts  |  {dict(by_src)}\n")
+    for cid in dkg.concept_ids:
+        rs = [dkg.resources[r] for r in dkg.resources_for(cid)]
+        print(f"  {cid:14} " + "  ".join(f"{r.source or 'synthetic'}:d{r.difficulty}" for r in rs))
+    return 0
+
+
 def cmd_demo(args: argparse.Namespace) -> int:
-    from benchmarks.datasets import load
     from engine import Engine
 
-    kg, goals = load(args.dataset)
+    if getattr(args, "catalogue", "curriculum") == "discovered":
+        from harvest import algebra_catalogue
+
+        kg = algebra_catalogue()
+        goals = kg.sink_concepts()
+    else:
+        from benchmarks.datasets import load
+
+        kg, goals = load(args.dataset)
     goal = args.goal or goals[0]
     if goal not in kg.concepts:
         print(f"unknown goal {goal!r}. choices: {', '.join(goals)}")
@@ -105,7 +138,12 @@ def cmd_demo(args: argparse.Namespace) -> int:
         if i in session_start:
             print(f"\n  -- session {session_start[i]} --")
         tag = "R" if plan.is_review(i) else " "
-        print(f" {tag}{i + 1:2}. {rid:<34} {reason}")
+        res = kg.resources[rid]
+        label = f"{res.source}: {res.title}" if res.title else rid
+        print(f" {tag}{i + 1:2}. {label}")
+        print(f"       {reason}")
+        if res.url:
+            print(f"       {res.url}")
 
     o = plan.objective
     n_rev = sum(plan.reviews) if plan.reviews else 0
@@ -265,6 +303,12 @@ def main(argv: list[str] | None = None) -> int:
     for name in ("demo", "plan"):
         d = sub.add_parser(name)
         d.add_argument("--dataset", default="synthetic", choices=("synthetic", "junyi"))
+        d.add_argument(
+            "--catalogue",
+            default="curriculum",
+            choices=("curriculum", "discovered"),
+            help="'discovered' plans against real harvested open resources",
+        )
         d.add_argument("--goal", default=None)
         d.add_argument("--minutes", type=float, default=120)
         d.add_argument(
@@ -274,6 +318,13 @@ def main(argv: list[str] | None = None) -> int:
         )
         d.add_argument("--speed", default="normal", choices=("slow", "normal", "fast"))
         d.set_defaults(fn=cmd_demo)
+
+    h = sub.add_parser("harvest")
+    h.add_argument("--concept", default=None, help="one concept id; omit for the whole curriculum")
+    h.add_argument("--domain", default="math", choices=("math", "science", "cs", "web", "general"))
+    h.add_argument("--k", type=int, default=8)
+    h.add_argument("--refresh", action="store_true", help="re-harvest instead of the snapshot")
+    h.set_defaults(fn=cmd_harvest)
 
     a = sub.add_parser("assess")
     a.add_argument("--goal", default=None)

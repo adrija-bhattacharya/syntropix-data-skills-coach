@@ -27,7 +27,10 @@ class Resource:
     concepts: tuple[str, ...]
     difficulty: float
     minutes: float
-    kind: str = "lesson"  # "lesson" | "practice" | ...
+    kind: str = "lesson"  # lesson | practice | article | book | video | course | paper
+    title: str = ""  # human title (discovered resources)
+    url: str = ""  # link out (discovered resources)
+    source: str = ""  # "wikipedia" | "mdn" | "mit_learn" | "youtube" | "arxiv" | ...
 
     @property
     def seconds(self) -> float:

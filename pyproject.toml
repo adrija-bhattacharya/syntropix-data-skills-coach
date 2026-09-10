@@ -42,7 +42,7 @@ velpo-api = "api:run"
 py-modules = ["config", "curriculum", "assessment_bank", "engine", "explain", "api", "velpo"]
 
 [tool.setuptools.packages.find]
-include = ["algorithms*", "model*"]
+include = ["algorithms*", "model*", "harvest*"]
 
 [tool.ruff]
 line-length = 100
@@ -58,7 +58,7 @@ known-first-party = ["algorithms", "model", "benchmarks", "config", "curriculum"
 [tool.mypy]
 python_version = "3.11"
 strict = true
-files = ["algorithms", "model", "config.py", "curriculum.py", "assessment_bank.py", "engine.py", "explain.py", "api.py", "velpo.py"]
+files = ["algorithms", "model", "harvest", "config.py", "curriculum.py", "assessment_bank.py", "engine.py", "explain.py", "api.py", "velpo.py"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

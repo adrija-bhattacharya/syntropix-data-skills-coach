@@ -6,6 +6,7 @@
     { "label": "doctor",  "type": "shell", "command": "python velpo.py doctor",  "problemMatcher": [] },
     { "label": "demo",    "type": "shell", "command": "python velpo.py demo",    "problemMatcher": [] },
     { "label": "assess",  "type": "shell", "command": "python velpo.py assess",  "problemMatcher": [] },
+    { "label": "harvest", "type": "shell", "command": "python velpo.py harvest", "problemMatcher": [] },
     {
       "label": "test",
       "type": "shell",

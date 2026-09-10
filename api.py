@@ -14,6 +14,7 @@ The built React SPA (``frontend/`` -> ``velpo/web``) is served at ``/`` when pre
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any, Literal
 
@@ -29,6 +30,7 @@ from config import __version__
 from curriculum import build_curriculum
 from engine import Engine
 from model.assessment import AdaptiveSession
+from model.knowledge_graph import KnowledgeGraph
 from model.learner import Attempt
 
 _OBJ_KEYS = ("neg_gain", "seconds", "load", "diff_jump", "neg_review")
@@ -42,7 +44,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-engine = Engine(build_curriculum(), item_bank=build_item_bank())
+
+
+def _build_kg() -> KnowledgeGraph:
+    """``VELPO_CATALOGUE=discovered`` serves the harvested open-resource catalogue
+    (bundled snapshot); anything else serves the synthetic algebra curriculum."""
+    if os.environ.get("VELPO_CATALOGUE") == "discovered":
+        from harvest import algebra_catalogue
+
+        return algebra_catalogue()
+    return build_curriculum()
+
+
+engine = Engine(_build_kg(), item_bank=build_item_bank())
 
 
 # --------------------------------------------------------------- schemas
@@ -153,10 +167,59 @@ def catalogue() -> dict[str, Any]:
                 "difficulty": r.difficulty,
                 "minutes": r.minutes,
                 "kind": r.kind,
+                "title": r.title,
+                "url": r.url,
+                "source": r.source,
             }
             for r in kg.resources.values()
         ],
         "goals": kg.sink_concepts(),
+        "discovered": any(r.source for r in kg.resources.values()),
+    }
+
+
+@app.get("/discover/{concept_id}")
+def discover(concept_id: str, refresh: bool = False) -> dict[str, Any]:
+    if concept_id not in engine.kg.concepts:
+        raise HTTPException(404, f"unknown concept {concept_id!r}")
+    from harvest.catalogue import CONCEPT_QUERY, discover_for_concept
+
+    name = CONCEPT_QUERY.get(concept_id, engine.kg.concepts[concept_id].name)
+    try:
+        scored = discover_for_concept(name, domain="math", k=8) if refresh else []
+    except Exception as exc:  # discovery hits the network - report, don't crash
+        raise HTTPException(502, f"discovery failed: {exc}") from exc
+    if not scored:  # default: read what the served catalogue already has
+        return {
+            "concept": concept_id,
+            "resources": [
+                {
+                    "title": r.title or r.id,
+                    "url": r.url,
+                    "source": r.source or "synthetic",
+                    "kind": r.kind,
+                    "difficulty": r.difficulty,
+                    "minutes": r.minutes,
+                }
+                for rid in engine.kg.resources_for(concept_id)
+                for r in [engine.kg.resources[rid]]
+            ],
+        }
+    return {
+        "concept": concept_id,
+        "resources": [
+            {
+                "title": raw.title,
+                "url": raw.url,
+                "source": raw.source,
+                "kind": raw.kind,
+                "difficulty": lvl.difficulty,
+                "minutes": raw.minutes,
+                "fk_grade": lvl.fk_grade,
+                "quality": lvl.quality,
+            }
+            for raw, lvl in scored
+        ],
     }
 
 

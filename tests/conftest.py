@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 
 os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+os.environ.setdefault("VELPO_HARVEST_OFFLINE", "1")  # the harvester never hits the network in tests
 
 import pytest
 

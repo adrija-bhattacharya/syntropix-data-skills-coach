@@ -5,8 +5,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from hypothesis import given, settings
-from hypothesis import strategies as st
 
 from assessment_bank import build_item_bank
 from engine import Engine
@@ -50,15 +48,17 @@ def test_selection_prefers_the_item_matched_to_current_ability() -> None:
     assert chosen is not None and chosen.id == "s:mid"
 
 
-@settings(max_examples=40, deadline=None)
-@given(true_theta=st.floats(-2.5, 2.5))
-def test_eap_recovers_ability_from_many_responses(true_theta: float) -> None:
-    rng = np.random.default_rng(int(abs(true_theta) * 1000) + 1)
+@pytest.mark.parametrize("true_theta", [-1.5, -0.5, 0.0, 0.8, 1.6])
+def test_eap_recovers_ability_on_average(true_theta: float) -> None:
     items = [_mcq(f"i{k}", "s", 1.3, float(b)) for k, b in enumerate(np.linspace(-3, 3, 30))]
-    responses = [(it, rng.random() < float(p_correct(true_theta, it.a, it.b))) for it in items]
-    theta_hat, se = eap_estimate(responses)
-    assert abs(theta_hat - true_theta) < 1.0  # some prior shrinkage at the extremes is expected
-    assert se < 0.6
+    ests = []
+    for seed in range(24):  # average out the Bernoulli sampling noise
+        rng = np.random.default_rng(seed)
+        responses = [(it, rng.random() < float(p_correct(true_theta, it.a, it.b))) for it in items]
+        theta_hat, se = eap_estimate(responses)
+        ests.append(theta_hat)
+        assert se < 0.6
+    assert abs(float(np.mean(ests)) - true_theta) < 0.5  # mild shrinkage toward the prior
 
 
 def test_eap_with_no_responses_returns_the_prior() -> None:

@@ -23,6 +23,7 @@ worst-case complexity; each has a test that proves the property it must have.
 | topic | file · function | note |
 |---|---|---|
 | **Adaptive capability test** (2PL IRT + max-information CAT) - the cold-start mastery is *measured*, not self-reported | [`model/assessment.py`](model/assessment.py), [`assessment_bank.py`](assessment_bank.py) | `python velpo.py assess` · `/assess/*` |
+| **Open-resource discovery + auto level-estimation** - real resources (Wikipedia/Wikibooks/MIT/arXiv/YouTube), difficulty from Flesch-Kincaid readability + jargon density + title cues + source priors | [`harvest/`](harvest/) · `discover_catalogue`, `estimate_level` | `python velpo.py harvest` · `/discover/{id}` |
 | **Bayesian Knowledge Tracing** (2-state HMM), difficulty-scaled cold-start priors (used when no assessment was taken) | [`model/learner.py`](model/learner.py) · `bkt_update`, `LearnerState.cold_start` | valid plan at interaction 0 (N4) |
 | **Learning velocity** - mastery gain per study hour, online EW estimate, feeds the edge cost | `learner.py` · `velocity_update`; [`model/cost.py`](model/cost.py) · `expected_mastery_gain` | N2 - `tests/test_velocity_ablation.py` |
 | **DKT-lite refinement** - per-concept online PFA logistic model, blended into the mastery estimate as evidence accumulates | [`model/refine.py`](model/refine.py) · `MasteryRefiner` | N4 - refines, does not replace, the cold-start estimate |

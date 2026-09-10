@@ -24,7 +24,9 @@ frontend/dist/
 # local dev
 velpo.db
 *.local
-benchmarks/data/cache/   # downloaded dataset files (the offline sample IS committed)
+# downloaded dataset files / raw HTTP cache (the offline samples + snapshot ARE committed)
+benchmarks/data/cache/
+harvest/.cache/
 
 # OS / editor
 .DS_Store

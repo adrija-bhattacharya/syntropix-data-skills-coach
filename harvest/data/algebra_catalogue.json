@@ -1,0 +1,605 @@
+{
+ "domain": "math",
+ "concepts": {
+  "decimals": [
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Decimal",
+    "url": "https://en.wikipedia.org/wiki/Decimal",
+    "minutes": 12.0,
+    "difficulty": 2.7,
+    "quality": 0.7,
+    "fk_grade": 12.6,
+    "summary": "A decimal system is a numeral system that uses ten as its radix (base). Decimal systems are the global standard for denoting integer and non-integer numbers. The way of denoting numbers in a decimal system is often referred to as decimal notation. Presently, the most common decim"
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Decimal separator",
+    "url": "https://en.wikipedia.org/wiki/Decimal_separator",
+    "minutes": 35.1,
+    "difficulty": 2.3,
+    "quality": 0.7,
+    "fk_grade": 12.5,
+    "summary": "A decimal separator is a symbol that separates the integer part from the fractional part of a number written in decimal form. Different countries officially designate different symbols for use as the separator. The choice of symbol can also affect the choice of symbol for the tho"
+   },
+   {
+    "source": "wikibooks",
+    "kind": "book",
+    "title": "Programmed Math/Decimals",
+    "url": "https://en.wikibooks.org/wiki/Programmed_Math/Decimals",
+    "minutes": 4.6,
+    "difficulty": 2.1,
+    "quality": 0.6,
+    "fk_grade": 12.5,
+    "summary": "Decimals (or floating point numbers) are the opposite of fractions, where fractions take the form of a number over a number eg: 1 2 {\\displaystyle {\\frac"
+   }
+  ],
+  "exponents": [
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Exponentiation",
+    "url": "https://en.wikipedia.org/wiki/Exponentiation",
+    "minutes": 12.0,
+    "difficulty": 3.1,
+    "quality": 0.7,
+    "fk_grade": 14.9,
+    "summary": "In mathematics, exponentiation, denoted bn, is an operation involving two numbers: the base, b, and the exponent, n. When n is a positive integer, exponentiation corresponds to repeated multiplication of the base: that is, bn is the product of multiplying b by itself n times:\n"
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Exponentiation by squaring",
+    "url": "https://en.wikipedia.org/wiki/Exponentiation_by_squaring",
+    "minutes": 21.9,
+    "difficulty": 3.9,
+    "quality": 0.7,
+    "fk_grade": 16.7,
+    "summary": "In mathematics and computer programming, exponentiating by squaring is a general method for fast computation of large positive integer powers of a number, or more generally of an element of a semigroup, like a polynomial or a square matrix. Some variants are commonly referred to "
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Modular exponentiation",
+    "url": "https://en.wikipedia.org/wiki/Modular_exponentiation",
+    "minutes": 18.4,
+    "difficulty": 2.8,
+    "quality": 0.7,
+    "fk_grade": 13.7,
+    "summary": "Modular exponentiation is exponentiation performed over a modulus. It is useful in computer science, especially in the field of public-key cryptography, where it is used in both Diffie\u2013Hellman key exchange and RSA public/private keys."
+   }
+  ],
+  "expressions": [
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Algebraic expression",
+    "url": "https://en.wikipedia.org/wiki/Algebraic_expression",
+    "minutes": 12.0,
+    "difficulty": 3.1,
+    "quality": 0.7,
+    "fk_grade": 14.2,
+    "summary": "In mathematics, an algebraic expression is an expression built up from constants, variables, and the basic algebraic operations: \naddition (+), subtraction (\u2212), multiplication (\u00d7), division (\u00f7), whole number powers, and roots, without any relational signs such as = or <.. For exa"
+   },
+   {
+    "source": "wikibooks",
+    "kind": "book",
+    "title": "A-level Mathematics/Edexcel/Core 1/Algebra/Expressions, Terms and Simplifying Equations",
+    "url": "https://en.wikibooks.org/wiki/A-level_Mathematics/Edexcel/Core_1/Algebra/Expressions,_Terms_and_Simplifying_Equations",
+    "minutes": 6.4,
+    "difficulty": 1.7,
+    "quality": 0.6,
+    "fk_grade": 6.5,
+    "summary": "combined. All algebraic equations can be considered as a series of expressions. On each side of the equals '=' sign there will be an expression. For example:"
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Algebra",
+    "url": "https://en.wikipedia.org/wiki/Algebra",
+    "minutes": 45.0,
+    "difficulty": 3.9,
+    "quality": 0.7,
+    "fk_grade": 18.3,
+    "summary": "Algebra is a branch of mathematics that deals with abstract systems, known as algebraic structures, and the manipulation of expressions within those systems. It is a generalization of arithmetic that introduces variables and algebraic operations other than the standard arithmetic"
+   },
+   {
+    "source": "wikibooks",
+    "kind": "book",
+    "title": "Basic Algebra/Working with Numbers/Distributive Property",
+    "url": "https://en.wikibooks.org/wiki/Basic_Algebra/Working_with_Numbers/Distributive_Property",
+    "minutes": 12.5,
+    "difficulty": 3.9,
+    "quality": 0.6,
+    "fk_grade": 12.4,
+    "summary": "Monomial An algebraic expression consisting of one term. Binomial An algebraic expression consisting of two terms. Trinomial An algebraic expression consisting"
+   }
+  ],
+  "fractions": [
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Fraction",
+    "url": "https://en.wikipedia.org/wiki/Fraction",
+    "minutes": 12.0,
+    "difficulty": 2.3,
+    "quality": 0.7,
+    "fk_grade": 13.1,
+    "summary": "A fraction represents a part of a whole or, more generally, any number of equal parts. When spoken in everyday English, a fraction describes how many parts of a certain size there are, for example, one-half, eight-fifths, three-quarters. A simple fraction consists of an integer n"
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Continued fraction",
+    "url": "https://en.wikipedia.org/wiki/Continued_fraction",
+    "minutes": 45.0,
+    "difficulty": 3.5,
+    "quality": 0.7,
+    "fk_grade": 17.6,
+    "summary": "A continued fraction is a mathematical expression written as a fraction whose denominator contains a sum involving another fraction, which may itself be a simple or a continued fraction. If this iteration terminates with a simple fraction, the result is a finite continued fractio"
+   },
+   {
+    "source": "wikibooks",
+    "kind": "book",
+    "title": "Abstract Algebra/Fraction Fields",
+    "url": "https://en.wikibooks.org/wiki/Abstract_Algebra/Fraction_Fields",
+    "minutes": 10.9,
+    "difficulty": 1.8,
+    "quality": 0.6,
+    "fk_grade": 9.4,
+    "summary": "We know from experience that we arrive at the idea of fractions by merely considering the idea of the quotient of two integers. The motivation behind"
+   }
+  ],
+  "functions": [
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Function (mathematics)",
+    "url": "https://en.wikipedia.org/wiki/Function_(mathematics)",
+    "minutes": 45.0,
+    "difficulty": 1.0,
+    "quality": 0.7,
+    "fk_grade": 9.6,
+    "summary": "In mathematics, a function from a set X to a set Y assigns to each element of X exactly one element of Y. The set X is called the domain of the function and the set Y is called the codomain of the function."
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Lyapunov function",
+    "url": "https://en.wikipedia.org/wiki/Lyapunov_function",
+    "minutes": 9.2,
+    "difficulty": 3.2,
+    "quality": 0.7,
+    "fk_grade": 15.6,
+    "summary": "In the theory of ordinary differential equations (ODEs), Lyapunov functions, named after Aleksandr Lyapunov, are scalar functions that may be used to prove the stability of an equilibrium of an ODE. Lyapunov functions are important to stability theory of dynamical systems and con"
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Function",
+    "url": "https://en.wikipedia.org/wiki/Function",
+    "minutes": 4.3,
+    "difficulty": 1.2,
+    "quality": 0.55,
+    "fk_grade": 9.0,
+    "summary": "Function or functionality may refer to:"
+   }
+  ],
+  "graphing": [
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Graph of a function",
+    "url": "https://en.wikipedia.org/wiki/Graph_of_a_function",
+    "minutes": 12.0,
+    "difficulty": 1.4,
+    "quality": 0.7,
+    "fk_grade": 11.4,
+    "summary": "In mathematics, the graph of a function  is the set of ordered pairs , where  In the common case where  and  are real numbers, these pairs are Cartesian coordinates of points in a plane and often form a curve.\nThe graphical representation of the graph of a function is also known "
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Implicit function theorem",
+    "url": "https://en.wikipedia.org/wiki/Implicit_function_theorem",
+    "minutes": 25.0,
+    "difficulty": 3.1,
+    "quality": 0.7,
+    "fk_grade": 18.4,
+    "summary": "In multivariable calculus, the implicit function theorem is a theorem that provides sufficient conditions under which a planar curve specified by  can also be specified as the graph of a function , so that for each point  on part of the curve, one has . An example is the unit cir"
+   },
+   {
+    "source": "wikibooks",
+    "kind": "book",
+    "title": "Calculus/Graphing functions",
+    "url": "https://en.wikibooks.org/wiki/Calculus/Graphing_functions",
+    "minutes": 19.0,
+    "difficulty": 1.7,
+    "quality": 0.6,
+    "fk_grade": 9.6,
+    "summary": "understand the behavior of a function given only its definition; a visual representation or graph can be very helpful. A graph is a set of points in the Cartesian"
+   },
+   {
+    "source": "wikibooks",
+    "kind": "book",
+    "title": "A-level Mathematics/OCR/C3/Special Functions and Transformations",
+    "url": "https://en.wikibooks.org/wiki/A-level_Mathematics/OCR/C3/Special_Functions_and_Transformations",
+    "minutes": 11.9,
+    "difficulty": 1.0,
+    "quality": 0.6,
+    "fk_grade": 5.3,
+    "summary": "graph of e x {\\displaystyle e^{x}\\,} . The natural log is a logarithmic function with the base e: log e \u2061 x {\\displaystyle \\log _{e}x\\,} . It has a special"
+   }
+  ],
+  "inequalities": [
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Inequality",
+    "url": "https://en.wikipedia.org/wiki/Inequality",
+    "minutes": 4.3,
+    "difficulty": 4.4,
+    "quality": 0.7,
+    "fk_grade": 35.2,
+    "summary": "Inequality may refer to:Inequality (mathematics), a relation between two quantities when they are different.\nEconomic inequality, difference in economic well-being between population groups\nIncome inequality, an unequal distribution of income\nWealth inequality, an unequal distrib"
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Triangle inequality",
+    "url": "https://en.wikipedia.org/wiki/Triangle_inequality",
+    "minutes": 33.4,
+    "difficulty": 2.5,
+    "quality": 0.7,
+    "fk_grade": 15.3,
+    "summary": "In mathematics, the triangle inequality states that for any triangle, the sum of the lengths of any two sides must be greater than or equal to the length of the remaining side. This statement permits the inclusion of degenerate triangles, but some authors, especially those writin"
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Young's inequality",
+    "url": "https://en.wikipedia.org/wiki/Young's_inequality",
+    "minutes": 3.4,
+    "difficulty": 3.6,
+    "quality": 0.7,
+    "fk_grade": 22.1,
+    "summary": "Young's inequality may refer to:Young's inequality for products, bounding the product of two quantities\nYoung's convolution inequality, bounding the convolution product of two functions\nYoung's inequality for integral operators"
+   },
+   {
+    "source": "wikibooks",
+    "kind": "book",
+    "title": "Algebra/Chapter 4/Inequalities",
+    "url": "https://en.wikibooks.org/wiki/Algebra/Chapter_4/Inequalities",
+    "minutes": 23.1,
+    "difficulty": 2.6,
+    "quality": 0.6,
+    "fk_grade": 10.8,
+    "summary": "an inequality is an expression that states that two quantities are unequal or not equivalent to one another. In real life we often use inequalities more"
+   }
+  ],
+  "integers": [
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Integer",
+    "url": "https://en.wikipedia.org/wiki/Integer",
+    "minutes": 12.0,
+    "difficulty": 2.8,
+    "quality": 0.7,
+    "fk_grade": 12.2,
+    "summary": "An integer is the number zero (0), a positive natural number, or the negation of a positive natural number. The negations or additive inverses of the positive natural numbers are referred to as negative integers. The set of all integers is often denoted by the boldface Z or black"
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Integer factorization",
+    "url": "https://en.wikipedia.org/wiki/Integer_factorization",
+    "minutes": 19.7,
+    "difficulty": 2.2,
+    "quality": 0.7,
+    "fk_grade": 13.6,
+    "summary": "In mathematics, integer factorization is the decomposition of a positive integer into a product of integers. Every positive integer greater than 1 is either the product of two or more integer factors greater than 1, in which case it is a composite number, or it is not, in which c"
+   },
+   {
+    "source": "wikibooks",
+    "kind": "book",
+    "title": "Arithmetic/Types of Numbers/Integer Number",
+    "url": "https://en.wikibooks.org/wiki/Arithmetic/Types_of_Numbers/Integer_Number",
+    "minutes": 3.9,
+    "difficulty": 3.4,
+    "quality": 0.6,
+    "fk_grade": 12.6,
+    "summary": "An integer number is any of: a positive whole number (a positive integer), a negative whole number (a negative integer), or zero. A Positive Integer is"
+   }
+  ],
+  "linear_eq": [
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Linear equation",
+    "url": "https://en.wikipedia.org/wiki/Linear_equation",
+    "minutes": 12.0,
+    "difficulty": 2.5,
+    "quality": 0.7,
+    "fk_grade": 12.7,
+    "summary": "In mathematics, a linear equation is an equation that may be put in the form\n where  are the variables, and  are the coefficients, which are often real numbers. The coefficients may be considered as parameters of the equation and may be arbitrary expressions, provided they do not"
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Linear differential equation",
+    "url": "https://en.wikipedia.org/wiki/Linear_differential_equation",
+    "minutes": 30.8,
+    "difficulty": 1.9,
+    "quality": 0.7,
+    "fk_grade": 12.1,
+    "summary": "In mathematics, a linear differential equation is a differential equation that is linear in the unknown function and its derivatives, so it can be written in the form \n\nwhere a0(x), ..., an(x) and b(x) are arbitrary differentiable functions that do not need to be linear, and y\u2032, "
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "System of linear equations",
+    "url": "https://en.wikipedia.org/wiki/System_of_linear_equations",
+    "minutes": 34.4,
+    "difficulty": 2.3,
+    "quality": 0.7,
+    "fk_grade": 11.8,
+    "summary": "In mathematics, a system of linear equations is a collection of two or more linear equations involving the same variables.\nFor example,\n\nis a system of three equations in the three variables x, y, z. A solution to a linear system is an assignment of values to the variables such t"
+   },
+   {
+    "source": "wikibooks",
+    "kind": "book",
+    "title": "Linear Algebra/Systems of linear equations",
+    "url": "https://en.wikibooks.org/wiki/Linear_Algebra/Systems_of_linear_equations",
+    "minutes": 10.1,
+    "difficulty": 3.2,
+    "quality": 0.6,
+    "fk_grade": 13.0,
+    "summary": "Our study of linear algebra will begin with examining systems of linear equations. Such linear equations appear frequently in applied mathematics in modelling"
+   }
+  ],
+  "order_ops": [
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Order of operations",
+    "url": "https://en.wikipedia.org/wiki/Order_of_operations",
+    "minutes": 12.0,
+    "difficulty": 4.1,
+    "quality": 0.7,
+    "fk_grade": 20.9,
+    "summary": "\n\nIn mathematics and computer programming, the order of operations is a collection of conventions about which arithmetic operations to perform first in order to evaluate a given mathematical expression."
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Operations order",
+    "url": "https://en.wikipedia.org/wiki/Operations_order",
+    "minutes": 8.0,
+    "difficulty": 3.3,
+    "quality": 0.7,
+    "fk_grade": 17.5,
+    "summary": "An Operation Order, often abbreviated to OPORD, is a plan format meant to assist subordinate units with the conduct of military operations. An OPORD describes the situation the unit faces, the mission of the unit, and what supporting activities the unit will conduct in order to a"
+   },
+   {
+    "source": "wikibooks",
+    "kind": "book",
+    "title": "Algebra/Chapter 1/Order of Operations",
+    "url": "https://en.wikibooks.org/wiki/Algebra/Chapter_1/Order_of_Operations",
+    "minutes": 5.0,
+    "difficulty": 1.0,
+    "quality": 0.6,
+    "fk_grade": 5.7,
+    "summary": "1.9: Order of Operations The Order of Operations is used when doing expressions with more than one operation (e.g., \u00d7, +, -). These are rules so you only"
+   },
+   {
+    "source": "wikibooks",
+    "kind": "book",
+    "title": "Programmed Math/Order of operations",
+    "url": "https://en.wikibooks.org/wiki/Programmed_Math/Order_of_operations",
+    "minutes": 4.2,
+    "difficulty": 1.0,
+    "quality": 0.6,
+    "fk_grade": 6.7,
+    "summary": "Order of Operations in math is dealing with the order in which you work out an equation, which can solve many problems. For example: 2 x 3 + 5 = x In"
+   }
+  ],
+  "quadratics": [
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Quadratic equation",
+    "url": "https://en.wikipedia.org/wiki/Quadratic_equation",
+    "minutes": 12.0,
+    "difficulty": 3.3,
+    "quality": 0.7,
+    "fk_grade": 16.9,
+    "summary": "In mathematics, a quadratic equation is an equation that can be rearranged in standard form as\n\nwhere the variable \u2060\u2060 represents an unknown number, and a, b, and c represent known numbers, where a \u2260 0. The numbers a, b, and c are the coefficients of the equation and may be distin"
+   },
+   {
+    "source": "wikibooks",
+    "kind": "book",
+    "title": "Algebra/Chapter 9/Quadratic Equation",
+    "url": "https://en.wikibooks.org/wiki/Algebra/Chapter_9/Quadratic_Equation",
+    "minutes": 5.5,
+    "difficulty": 2.1,
+    "quality": 0.6,
+    "fk_grade": 9.6,
+    "summary": "general-form quadratic function a x 2 + b x + c = 0 {\\displaystyle ax^{2}+bx+c=0} can be given by a simple equation called the quadratic equation. To solve"
+   },
+   {
+    "source": "wikibooks",
+    "kind": "book",
+    "title": "Basic Algebra/Solving Quadratic Equations/Quadratic Equation Word Problems",
+    "url": "https://en.wikibooks.org/wiki/Basic_Algebra/Solving_Quadratic_Equations/Quadratic_Equation_Word_Problems",
+    "minutes": 3.6,
+    "difficulty": 1.0,
+    "quality": 0.6,
+    "fk_grade": 5.8,
+    "summary": "needs until the tickets sell out. You provide the manager with a quadratic equation that models the expected number of sales for each day x. (x-1 is the"
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Quadratic formula",
+    "url": "https://en.wikipedia.org/wiki/Quadratic_formula",
+    "minutes": 35.3,
+    "difficulty": 3.8,
+    "quality": 0.7,
+    "fk_grade": 14.3,
+    "summary": "In elementary algebra, the quadratic formula is a closed-form expression describing the solutions of a quadratic equation. Other ways of solving quadratic equations, such as completing the square, yield the same solutions."
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Quadratic function",
+    "url": "https://en.wikipedia.org/wiki/Quadratic_function",
+    "minutes": 19.2,
+    "difficulty": 3.6,
+    "quality": 0.7,
+    "fk_grade": 17.4,
+    "summary": "In mathematics, a quadratic function of a single variable is a function of the form\n\nwith \u2060\u2060,\nwhere \u2060\u2060 is its variable, and \u2060\u2060, \u2060\u2060, and \u2060\u2060 are coefficients. The expression \u2060\u2060, especially when treated as an object in itself rather than as a function, is a quadratic polynomial, a p"
+   }
+  ],
+  "roots": [
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Nth root",
+    "url": "https://en.wikipedia.org/wiki/Nth_root",
+    "minutes": 12.0,
+    "difficulty": 1.0,
+    "quality": 0.7,
+    "fk_grade": 9.8,
+    "summary": "In mathematics, an nth root of a number x is the number r which, when multiplied by itself n times, yields\u00a0x:  The positive integer n is called the index or degree, and the number x of which the root is taken is the radicand. A root of degree 2 is called a square root and a root "
+   },
+   {
+    "source": "wikibooks",
+    "kind": "book",
+    "title": "Arithmetic Course/Types of Number/Complex Number",
+    "url": "https://en.wikibooks.org/wiki/Arithmetic_Course/Types_of_Number/Complex_Number",
+    "minutes": 13.9,
+    "difficulty": 1.1,
+    "quality": 0.6,
+    "fk_grade": 7.6,
+    "summary": "{\\displaystyle {\\sqrt[{n}]{r}}} is the usual (positive) nth root of the positive real number r. While the nth root of a positive real number r is chosen to be the"
+   }
+  ],
+  "systems": [
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "System of linear equations",
+    "url": "https://en.wikipedia.org/wiki/System_of_linear_equations",
+    "minutes": 12.0,
+    "difficulty": 2.3,
+    "quality": 0.7,
+    "fk_grade": 11.8,
+    "summary": "In mathematics, a system of linear equations is a collection of two or more linear equations involving the same variables.\nFor example,\n\nis a system of three equations in the three variables x, y, z. A solution to a linear system is an assignment of values to the variables such t"
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "System of equations",
+    "url": "https://en.wikipedia.org/wiki/System_of_equations",
+    "minutes": 3.8,
+    "difficulty": 3.8,
+    "quality": 0.7,
+    "fk_grade": 21.3,
+    "summary": "In mathematics, a system of equations, also known as a set of simultaneous equations or an equation system, is a finite set of equations for which common solutions are sought. An equation system is usually classified in the same manner as single equations, namely as one of the fo"
+   },
+   {
+    "source": "wikibooks",
+    "kind": "book",
+    "title": "Introductory Linear Algebra/System of linear equations",
+    "url": "https://en.wikibooks.org/wiki/Introductory_Linear_Algebra/System_of_linear_equations",
+    "minutes": 44.6,
+    "difficulty": 1.8,
+    "quality": 0.6,
+    "fk_grade": 8.7,
+    "summary": "what is system of linear equations before expressing it in matrix form. Definition. (System of linear equations) A system of linear equations (SLE) in"
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Nonlinear system",
+    "url": "https://en.wikipedia.org/wiki/Nonlinear_system",
+    "minutes": 18.0,
+    "difficulty": 3.2,
+    "quality": 0.7,
+    "fk_grade": 16.1,
+    "summary": "In mathematics and science, a nonlinear system is a system in which the change of the output is not proportional to the change of the input. Nonlinear problems are of interest to engineers, biologists, physicists, mathematicians, and many other scientists since most systems are i"
+   },
+   {
+    "source": "mit_learn",
+    "kind": "course",
+    "title": "Model-Based Systems Engineering: Documentation and Analysis",
+    "url": "https://xpro.mit.edu/courses/course-v1:xPRO+SysEngx3/",
+    "minutes": 40.0,
+    "difficulty": 3.0,
+    "quality": 0.8,
+    "fk_grade": 11.8,
+    "summary": "Course 3 of 4 in Architecture and Systems Engineering: Models and Methods to Manage Complex Systems"
+   },
+   {
+    "source": "mit_learn",
+    "kind": "course",
+    "title": "Models in Engineering",
+    "url": "https://xpro.mit.edu/courses/course-v1:xPRO+SysEngx2/",
+    "minutes": 40.0,
+    "difficulty": 3.0,
+    "quality": 0.8,
+    "fk_grade": 11.8,
+    "summary": "Course 2 of 4 in Architecture and Systems Engineering: Models and Methods to Manage Complex Systems"
+   }
+  ],
+  "word_problems": [
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Word problem",
+    "url": "https://en.wikipedia.org/wiki/Word_problem",
+    "minutes": 3.8,
+    "difficulty": 3.1,
+    "quality": 0.7,
+    "fk_grade": 40.6,
+    "summary": "Word problem may refer to:Word problem, a type of textbook exercise or exam question to have students apply abstract mathematical concepts to real-world situations\nWord problem (mathematics), a decision problem for algebraic identities in mathematics and computer science\nWord pro"
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Word problem for groups",
+    "url": "https://en.wikipedia.org/wiki/Word_problem_for_groups",
+    "minutes": 30.9,
+    "difficulty": 3.4,
+    "quality": 0.7,
+    "fk_grade": 17.0,
+    "summary": "\nIn mathematics, especially in the area of abstract algebra known as combinatorial group theory, the word problem for a finitely generated group  is the algorithmic problem of deciding whether two words in the generators represent the same element of . The word problems for certa"
+   },
+   {
+    "source": "wikipedia",
+    "kind": "article",
+    "title": "Word problem (mathematics)",
+    "url": "https://en.wikipedia.org/wiki/Word_problem_(mathematics)",
+    "minutes": 21.1,
+    "difficulty": 2.7,
+    "quality": 0.7,
+    "fk_grade": 14.5,
+    "summary": "In computational mathematics, a word problem is the problem of deciding whether two given expressions are equivalent with respect to a set of rewriting identities. A prototypical example is the word problem for groups, but there are many other instances as well. Some deep results"
+   },
+   {
+    "source": "wikibooks",
+    "kind": "book",
+    "title": "SAT Study Guide/Part 2 - The Math Section/Word Problems",
+    "url": "https://en.wikibooks.org/wiki/SAT_Study_Guide/Part_2_-_The_Math_Section/Word_Problems",
+    "minutes": 9.2,
+    "difficulty": 2.2,
+    "quality": 0.6,
+    "fk_grade": 9.9,
+    "summary": "typical SAT has several word problems, covering almost every math topic for which you are responsible. Expect to encounter word problems on all sorts of topics"
+   }
+  ]
+ }
+}
