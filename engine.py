@@ -89,14 +89,23 @@ class Engine:
 
     # ------------------------------------------------------- assessment (capability)
     def start_assessment(
-        self, learner_id: str, goals: Sequence[str], *, time_budget_s: float = 3600.0
+        self,
+        learner_id: str,
+        goals: Sequence[str],
+        *,
+        time_budget_s: float = 3600.0,
+        band: str = "intermediate",
     ) -> AdaptiveSession:
-        """Begin an adaptive diagnostic over the goals' prerequisite closure."""
+        """Begin an adaptive diagnostic over the goals' prerequisite closure.
+
+        ``band`` is the learner's self-reported starting level; it sets the prior
+        the adaptive test starts from.  A beginner mostly keeps what they said.
+        """
         if self.item_bank is None:
             raise RuntimeError("this engine has no item bank")
         relevant = set(ancestors_subgraph(self.kg.prereq, list(goals)).nodes) or set(goals)
         skills = [s for s in self.item_bank.skills if s in relevant]
-        session = AdaptiveSession(self.item_bank, skills=skills or self.item_bank.skills)
+        session = AdaptiveSession(self.item_bank, skills=skills or self.item_bank.skills, band=band)
         self._assessments[learner_id] = session
         self.ensure(learner_id, time_budget_s=time_budget_s)  # placeholder state
         return session

@@ -113,6 +113,9 @@ class AssessStartIn(BaseModel):
     learner_id: str = Field(min_length=1)
     goals: list[str] = Field(min_length=1)
     goal: str | None = None
+    band: Literal["beginner", "intermediate", "advanced"] = "intermediate"
+    """The learner's self-reported starting level - sets the prior the adaptive
+    test starts from.  A beginner mostly keeps what they said."""
 
 
 class AssessAnswerIn(BaseModel):
@@ -125,8 +128,10 @@ def _assess_out(session: AdaptiveSession) -> dict[str, Any]:
     q = session.next_question()
     return {
         "done": session.done,
+        "band": session.band,
         "answered": session.n_answered,
         "progress": round(session.progress(), 3),
+        "style": session.style_signal() if session.done else None,
         "question": None
         if q is None
         else {
@@ -342,7 +347,7 @@ def assess_start(body: AssessStartIn) -> dict[str, Any]:
     unknown = [c for c in body.goals if c not in eng.kg.concepts]
     if unknown:
         raise HTTPException(422, f"unknown concepts: {unknown}")
-    session = eng.start_assessment(body.learner_id, body.goals)
+    session = eng.start_assessment(body.learner_id, body.goals, band=body.band)
     _LEARNER_ENGINE[body.learner_id] = eng
     return _assess_out(session)
 

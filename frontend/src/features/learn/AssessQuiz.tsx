@@ -2,16 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Button, Callout, Spinner } from "../../components/ui";
 import { useLearner } from "../../context/LearnerContext";
-import type { AssessState } from "../../lib/api";
+import type { AssessState, Band } from "../../lib/api";
 import { useAssessment } from "../../lib/queries";
 
 /** One-question-at-a-time adaptive diagnostic with a live per-skill ability meter. */
 export function AssessQuiz({
+  goalText,
   goals,
+  band,
   skillNames,
   onDone,
 }: {
+  goalText: string;
   goals: string[];
+  band: Band;
   skillNames: Record<string, string>;
   onDone: () => void;
 }) {
@@ -20,10 +24,10 @@ export function AssessQuiz({
   const [state, setState] = useState<AssessState | null>(null);
   const [text, setText] = useState("");
 
-  const goalKey = useMemo(() => goals.join(","), [goals]);
+  const goalKey = useMemo(() => `${goals.join(",")}|${band}`, [goals, band]);
   useEffect(() => {
     setState(null);
-    start.mutate(goals, { onSuccess: setState });
+    start.mutate({ goals, band, goal: goalText }, { onSuccess: setState });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [goalKey]);
 
@@ -32,12 +36,18 @@ export function AssessQuiz({
   if (!state) return null;
 
   if (state.done) {
+    const beginner = state.band === "beginner";
     return (
       <div className="quiz">
         <div className="quiz-card">
-          <h2 style={{ fontSize: 22, marginBottom: 8 }}>Your level, measured.</h2>
+          <h2 style={{ fontSize: 22, marginBottom: 8 }}>
+            {beginner ? "Starting from the basics." : "Your level, measured."}
+          </h2>
           <p className="hint" style={{ marginBottom: 4 }}>
-            {state.answered} adaptive questions — no self-rating.
+            {beginner
+              ? `${state.answered} quick checks — mostly going by what you told us.`
+              : `${state.answered} adaptive questions confirmed and refined your "${state.band}" self-assessment.`}
+            {state.style && state.style.note !== "balanced" && ` You're ${state.style.note}.`}
           </p>
           <Meters state={state} skillNames={skillNames} />
           <Button variant="primary" className="big" style={{ marginTop: 22 }} onClick={onDone}>

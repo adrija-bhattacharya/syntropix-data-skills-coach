@@ -16,11 +16,14 @@ describe("LearnPage — goal → assess → plan", () => {
     expect(screen.getByText("Fractions")).toBeInTheDocument();
   });
 
-  it("runs the adaptive quiz then shows the plan", async () => {
+  it("asks the level band, then runs the adaptive quiz, then shows the plan", async () => {
     const user = userEvent.setup();
     renderApp(<LearnPage />, at("quadratic equations"));
 
-    await user.click(await screen.findByRole("button", { name: /2-minute assessment/i }));
+    await user.click(await screen.findByRole("button", { name: /^Continue/i }));
+    expect(await screen.findByText(/How much do you already know/i)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Intermediate/ }));
+
     expect(await screen.findByText(/Which is smallest/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /-5/ }));
     await user.click(await screen.findByRole("button", { name: /see my plan/i }));
@@ -28,6 +31,16 @@ describe("LearnPage — goal → assess → plan", () => {
     expect(await screen.findByText("3 steps")).toBeInTheDocument();
     expect(screen.getByText(/quadratics — an open article/)).toBeInTheDocument();
     expect(screen.getAllByText(/wikipedia/).length).toBeGreaterThan(0);
+  });
+
+  it("a beginner mostly keeps their self-assessment", async () => {
+    const user = userEvent.setup();
+    renderApp(<LearnPage />, at("quadratic equations"));
+    await user.click(await screen.findByRole("button", { name: /^Continue/i }));
+    await user.click(await screen.findByRole("button", { name: /Beginner/ }));
+    await user.click(screen.getByRole("button", { name: /-5/ }));
+    expect(await screen.findByText(/Starting from the basics/i)).toBeInTheDocument();
+    expect(screen.getByText(/mostly going by what you told us/i)).toBeInTheDocument();
   });
 
   it("skips assessment for a non-assessable domain", async () => {
@@ -60,7 +73,8 @@ describe("LearnPage — goal → assess → plan", () => {
   it("each plan step links out to a real resource", async () => {
     const user = userEvent.setup();
     renderApp(<LearnPage />, at("quadratic equations"));
-    await user.click(await screen.findByRole("button", { name: /2-minute assessment/i }));
+    await user.click(await screen.findByRole("button", { name: /^Continue/i }));
+    await user.click(await screen.findByRole("button", { name: /Intermediate/ }));
     await user.click(await screen.findByText("-5"));
     await user.click(await screen.findByRole("button", { name: /see my plan/i }));
 

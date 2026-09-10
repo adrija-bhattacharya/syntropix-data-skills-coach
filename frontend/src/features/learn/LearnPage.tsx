@@ -2,17 +2,25 @@ import { useMemo, useState } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 
 import { Button, Callout, Select, Spinner } from "../../components/ui";
+import type { Band } from "../../lib/api";
 import { useResolve } from "../../lib/queries";
 import { AssessQuiz } from "./AssessQuiz";
 import { PlanView } from "./PlanView";
 
-type Step = "resolve" | "assess" | "plan";
+type Step = "resolve" | "band" | "assess" | "plan";
+
+const BANDS: { value: Band; title: string; blurb: string }[] = [
+  { value: "beginner", title: "Beginner", blurb: "New to this. The plan starts from the basics — we'll mostly go by what you told us." },
+  { value: "intermediate", title: "Intermediate", blurb: "You know some of it. A short adaptive test confirms and refines where you are." },
+  { value: "advanced", title: "Advanced", blurb: "Strong already. The test starts high and checks for the gaps." },
+];
 
 export function LearnPage() {
   const [params] = useSearchParams();
   const goal = (params.get("goal") ?? "").trim();
   const resolved = useResolve(goal);
   const [step, setStep] = useState<Step>("resolve");
+  const [band, setBand] = useState<Band>("intermediate");
   const [minutes, setMinutes] = useState(150);
   const [speed, setSpeed] = useState<"slow" | "normal" | "fast">("normal");
 
@@ -32,7 +40,8 @@ export function LearnPage() {
     );
 
   const r = resolved.data;
-  const active: Step = step === "assess" && !r.assessable ? "plan" : step;
+  const active: Step = (step === "band" || step === "assess") && !r.assessable ? "plan" : step;
+  const stepNo = (s: Step) => (r.assessable ? { resolve: 1, band: 2, assess: 2, plan: 3 }[s] : { resolve: 1, band: 2, assess: 2, plan: 2 }[s]);
 
   return (
     <div>
@@ -40,13 +49,13 @@ export function LearnPage() {
         <span className={active !== "resolve" ? "done" : "b"}>1 · Goal</span> ›{" "}
         {r.assessable && (
           <>
-            <span className={active === "plan" ? "done" : active === "assess" ? "b" : ""}>
+            <span className={active === "plan" ? "done" : active !== "resolve" ? "b" : ""}>
               2 · Assess
             </span>{" "}
             ›{" "}
           </>
         )}
-        <span className={active === "plan" ? "b" : ""}>{r.assessable ? "3" : "2"} · Plan</span>
+        <span className={active === "plan" ? "b" : ""}>{stepNo("plan")} · Plan</span>
       </div>
 
       {active === "resolve" && (
@@ -54,12 +63,17 @@ export function LearnPage() {
           <h2>
             {r.goals.map((g) => skillNames[g] ?? g).join(", ")}{" "}
             <span className="sub">
-              — {r.source === "seed" ? `curated ${r.domain}` : "built from Wikipedia"} graph,{" "}
-              {r.concepts.length} concepts
+              —{" "}
+              {r.source === "role"
+                ? `${r.domain} role`
+                : r.source === "seed"
+                  ? `curated ${r.domain}`
+                  : "built from Wikipedia"}{" "}
+              graph, {r.concepts.length} concepts
             </span>
           </h2>
           <div className="chips" style={{ marginBottom: 18 }}>
-            {r.concepts.slice(0, 18).map((c) => (
+            {r.concepts.slice(0, 22).map((c) => (
               <span key={c.id} className="chip" style={{ cursor: "default" }}>
                 {c.name}
               </span>
@@ -72,7 +86,7 @@ export function LearnPage() {
               <input
                 type="range"
                 min={30}
-                max={480}
+                max={600}
                 step={10}
                 value={minutes}
                 onChange={(e) => setMinutes(Number(e.target.value))}
@@ -99,9 +113,9 @@ export function LearnPage() {
             variant="primary"
             className="big"
             style={{ marginTop: 20 }}
-            onClick={() => setStep(r.assessable ? "assess" : "plan")}
+            onClick={() => setStep(r.assessable ? "band" : "plan")}
           >
-            {r.assessable ? "Take the 2-minute assessment →" : "Build my plan →"}
+            {r.assessable ? "Continue →" : "Build my plan →"}
           </Button>
           {!r.assessable && (
             <p className="hint">
@@ -112,8 +126,42 @@ export function LearnPage() {
         </div>
       )}
 
+      {active === "band" && (
+        <div className="quiz">
+          <h2 style={{ marginBottom: 6 }}>How much do you already know?</h2>
+          <p className="hint" style={{ marginBottom: 18 }}>
+            Pick where you think you are. It sets where the adaptive test starts — and for a
+            beginner, it does most of the work.
+          </p>
+          <div className="choices">
+            {BANDS.map((b) => (
+              <button
+                key={b.value}
+                className="choice"
+                aria-pressed={band === b.value}
+                onClick={() => {
+                  setBand(b.value);
+                  setStep("assess");
+                }}
+              >
+                <strong>{b.title}</strong>
+                <div className="hint" style={{ margin: "4px 0 0" }}>
+                  {b.blurb}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {active === "assess" && (
-        <AssessQuiz goals={r.goals} skillNames={skillNames} onDone={() => setStep("plan")} />
+        <AssessQuiz
+          goalText={goal}
+          goals={r.goals}
+          band={band}
+          skillNames={skillNames}
+          onDone={() => setStep("plan")}
+        />
       )}
 
       {active === "plan" && (

@@ -69,12 +69,16 @@ const RESOLVE = {
   ],
 };
 
-function assessState(answered: number) {
+let lastBand = "intermediate";
+
+function assessState(answered: number, band = "intermediate") {
   const done = answered >= 2;
   return {
     done,
+    band,
     answered,
     progress: Math.min(1, answered / 2),
+    style: done ? { hands_on: 0.6, recall: 0.5, note: "balanced" } : null,
     question: done
       ? null
       : {
@@ -101,8 +105,12 @@ export const handlers = [
     return HttpResponse.json({ ...RESOLVE, goal: b.goal });
   }),
 
-  http.post("/assess/start", () => HttpResponse.json(assessState(0))),
-  http.post("/assess/answer", () => HttpResponse.json(assessState(2))),
+  http.post("/assess/start", async ({ request }) => {
+    const b = (await request.json()) as { band?: string };
+    lastBand = b.band ?? "intermediate";
+    return HttpResponse.json(assessState(0, lastBand));
+  }),
+  http.post("/assess/answer", () => HttpResponse.json(assessState(2, lastBand))),
 
   http.post("/recommend", async ({ request }) => {
     const body = (await request.json()) as { mode?: string; speed?: string; goals: string[] };

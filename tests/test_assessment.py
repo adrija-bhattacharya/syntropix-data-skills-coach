@@ -151,6 +151,70 @@ def test_grade_is_forgiving_of_a_bad_mcq_response() -> None:
     assert item.grade("not-a-number") is False
 
 
+def test_self_reported_band_sets_the_prior() -> None:
+    from model.assessment import BANDS
+
+    bank = build_item_bank("sql")
+    assert bank is not None
+    skills = ["select_from", "group_by", "window_functions"]
+
+    # no answers yet -> the estimate IS the band prior
+    beg = AdaptiveSession(bank, skills=skills, band="beginner")
+    adv = AdaptiveSession(bank, skills=skills, band="advanced")
+    assert beg.estimate("group_by").theta == pytest.approx(BANDS["beginner"][0])
+    assert adv.estimate("group_by").theta == pytest.approx(BANDS["advanced"][0])
+    assert beg.to_mastery()["group_by"] < 0.25 < adv.to_mastery()["group_by"]
+
+
+def test_a_beginner_answers_only_a_few_confirmation_questions() -> None:
+    bank = build_item_bank("python")
+    assert bank is not None
+    skills = ["variables", "loops", "functions", "dicts"]
+    sess = AdaptiveSession(bank, skills=skills, band="beginner")
+    n = 0
+    while not sess.done and n < 40:
+        q = sess.next_question()
+        assert q is not None
+        sess.submit(q.id, correct=False)
+        n += 1
+    assert n <= 4  # "majorly depends on what they say"
+    assert all(m < 0.3 for m in sess.to_mastery().values())
+
+
+def test_advanced_test_can_still_find_a_gap() -> None:
+    import numpy as np
+
+    from model.assessment import p_correct
+
+    bank = build_item_bank("sql")
+    assert bank is not None
+    sess = AdaptiveSession(bank, skills=["select_from", "window_functions"], band="advanced")
+    rng = np.random.default_rng(0)
+    truth = {"select_from": 2.0, "window_functions": -1.0}  # strong on one, weak on the other
+    guard = 0
+    while not sess.done and guard < 40:
+        q = sess.next_question()
+        assert q is not None
+        sess.submit(q.id, rng.random() < float(p_correct(truth[q.skill], q.a, q.b)))
+        guard += 1
+    est = sess.estimates()
+    assert est["window_functions"].theta < est["select_from"].theta  # the gap was found
+
+
+def test_style_signal_reads_hands_on_vs_recall() -> None:
+    bank = build_item_bank("sql")
+    assert bank is not None
+    sess = AdaptiveSession(bank, skills=list(bank.skills), band="intermediate")
+    for _ in range(30):
+        q = sess.next_question()
+        if q is None:
+            break
+        sess.submit(q.id, correct=(q.kind == "task"))  # aces tasks, fails MCQs
+    style = sess.style_signal()
+    assert style["hands_on"] > style["recall"]
+    assert "hands-on" in str(style["note"])
+
+
 def test_answering_an_item_twice_is_rejected() -> None:
     bank = build_item_bank()
     sess = AdaptiveSession(bank, skills=["integers"])

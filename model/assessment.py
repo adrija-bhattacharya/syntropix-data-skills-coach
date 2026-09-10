@@ -15,9 +15,12 @@ Fisher information of an item at ``theta``:
 
     I(theta) = a^2 * P * (1 - P)
 
-Ability is estimated by **expected a posteriori** (EAP) over a grid with a
-standard-normal prior - stable for the 4-8 items a CAT actually administers,
-where maximum likelihood can diverge.
+Ability is estimated by **expected a posteriori** (EAP) over a grid.  The prior
+mean is set from the learner's self-reported band (beginner / intermediate /
+advanced): a beginner keeps a tight low prior and answers only a couple of
+confirmation questions, while intermediate / advanced learners get a full
+adaptive test that confirms or revises the level from what they answer.  The
+prior also keeps the estimate finite where maximum likelihood would diverge.
 
 Item selection is the greedy **maximum-information** rule: administer
 ``argmax_i I_i(theta_hat)``.  Stop a skill when the posterior SE drops below a
@@ -148,17 +151,30 @@ class ItemBank:
 
 
 # --------------------------------------------------------------------------- #
-def eap_estimate(
-    responses: Sequence[tuple[Item, bool]], *, prior_sd: float = 1.5
-) -> tuple[float, float]:
-    """Posterior mean and SD of ``theta`` under a ``N(0, prior_sd)`` prior.
+# self-reported starting band -> (prior mean, prior sd, items per skill)
+# beginner: the plan "majorly depends on what they say" - a tight low prior and
+#           at most one confirmation item per skill.
+# intermediate / advanced: the prior is a *starting point* the adaptive test
+#           confirms or revises from what they actually answer.
+BANDS: dict[str, tuple[float, float, int]] = {
+    "beginner": (-1.7, 0.8, 1),
+    "intermediate": (0.0, 1.4, 6),
+    "advanced": (1.4, 1.2, 5),
+}
 
-    A mildly informative prior keeps the estimate finite when a learner answers
-    a short block all-right or all-wrong (where MLE would run off to +/-inf).
+
+def eap_estimate(
+    responses: Sequence[tuple[Item, bool]], *, prior_mean: float = 0.0, prior_sd: float = 1.5
+) -> tuple[float, float]:
+    """Posterior mean and SD of ``theta`` under a ``N(prior_mean, prior_sd)`` prior.
+
+    The prior mean is set from the learner's self-reported band; a mildly
+    informative prior also keeps the estimate finite when a learner answers a
+    short block all-right or all-wrong (where MLE would run off to +/-inf).
     """
     if not responses:
-        return 0.0, prior_sd
-    log_post = -0.5 * (_GRID / prior_sd) ** 2
+        return prior_mean, prior_sd
+    log_post = -0.5 * ((_GRID - prior_mean) / prior_sd) ** 2
     for item, correct in responses:
         p = np.clip(p_correct(_GRID, item.a, item.b), 1e-9, 1 - 1e-9)
         log_post = log_post + np.log(p if correct else 1.0 - p)
@@ -188,22 +204,30 @@ class AdaptiveSession:
 
     bank: ItemBank
     skills: list[str]
-    max_items_per_skill: int = field(default_factory=lambda: settings.assess_max_items_per_skill)
+    band: str = "intermediate"  # self-reported: beginner | intermediate | advanced
     se_target: float = field(default_factory=lambda: settings.assess_se_target)
     responses: dict[str, list[Response]] = field(default_factory=dict)
+    max_items_per_skill: int = 0
+    _prior_mean: float = 0.0
+    _prior_sd: float = 1.5
     _asked: set[str] = field(default_factory=set)
     _pending: Item | None = None
 
     def __post_init__(self) -> None:
         for s in self.skills:
             self.responses.setdefault(s, [])
+        mean, sd, cap = BANDS.get(self.band, BANDS["intermediate"])
+        self._prior_mean, self._prior_sd = mean, sd
+        self.max_items_per_skill = cap
 
     # -- estimation ------------------------------------------------------
     def _pairs(self, skill: str) -> list[tuple[Item, bool]]:
         return [(self.bank.items[r.item_id], r.correct) for r in self.responses[skill]]
 
     def estimate(self, skill: str) -> SkillEstimate:
-        theta, se = eap_estimate(self._pairs(skill))
+        theta, se = eap_estimate(
+            self._pairs(skill), prior_mean=self._prior_mean, prior_sd=self._prior_sd
+        )
         return SkillEstimate(skill, theta, se, len(self.responses[skill]))
 
     def estimates(self) -> dict[str, SkillEstimate]:
@@ -212,8 +236,34 @@ class AdaptiveSession:
     def to_mastery(self) -> dict[str, float]:
         return {s: e.mastery for s, e in self.estimates().items()}
 
+    def style_signal(self) -> dict[str, float | str]:
+        """A light 'learning style' read from *how* they answered: hands-on
+        (free-response task items) vs recall (multiple choice)."""
+        task = [
+            r.correct
+            for rs in self.responses.values()
+            for r in rs
+            if self.bank.items[r.item_id].kind == "task"
+        ]
+        mcq = [
+            r.correct
+            for rs in self.responses.values()
+            for r in rs
+            if self.bank.items[r.item_id].kind == "mcq"
+        ]
+        hands_on = sum(task) / len(task) if task else 0.0
+        recall = sum(mcq) / len(mcq) if mcq else 0.0
+        note = "balanced"
+        if task and mcq and abs(hands_on - recall) >= 0.34:
+            note = "stronger on hands-on tasks" if hands_on > recall else "stronger on recall"
+        return {"hands_on": round(hands_on, 2), "recall": round(recall, 2), "note": note}
+
     # -- flow ----------------------------------------------------------
     def _needs_more(self, skill: str) -> bool:
+        # a self-declared beginner answers only a few confirmation questions -
+        # the plan mostly trusts what they told us.
+        if self.band == "beginner" and self.n_answered >= min(len(self.skills), 4):
+            return False
         est = self.estimate(skill)
         if est.n_items >= self.max_items_per_skill:
             return False

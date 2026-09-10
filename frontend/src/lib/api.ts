@@ -62,7 +62,7 @@ export const ExplainResponse = z.object({ resource_id: z.string(), reason: z.str
 export const ResolveResponse = z.object({
   goal: z.string(),
   domain: z.string(),
-  source: z.enum(["seed", "dynamic"]),
+  source: z.enum(["seed", "role", "dynamic"]),
   assessable: z.boolean().default(true),
   goals: z.array(z.string()),
   concepts: z.array(Concept),
@@ -86,11 +86,18 @@ export const SkillEstimate = z.object({
 });
 export const AssessState = z.object({
   done: z.boolean(),
+  band: z.string().default("intermediate"),
   answered: z.number(),
   progress: z.number(),
+  style: z
+    .object({ hands_on: z.number(), recall: z.number(), note: z.string() })
+    .nullable()
+    .default(null),
   question: AssessQuestion.nullable(),
   estimates: z.array(SkillEstimate),
 });
+
+export type Band = "beginner" | "intermediate" | "advanced";
 
 export const DiscoverResource = z.object({
   title: z.string(),
@@ -201,10 +208,10 @@ export const api = {
   resolve: (goal: string) =>
     request(ResolveResponse, "/resolve", { method: "POST", body: JSON.stringify({ goal }) }),
 
-  assessStart: (learner_id: string, goals: string[]) =>
+  assessStart: (learner_id: string, goals: string[], band: Band = "intermediate", goal?: string) =>
     request(AssessState, "/assess/start", {
       method: "POST",
-      body: JSON.stringify({ learner_id, goals }),
+      body: JSON.stringify({ learner_id, goals, band, goal }),
     }),
 
   assessAnswer: (learner_id: string, item_id: string, response: string) =>

@@ -1,7 +1,13 @@
 /** TanStack Query hooks - the only place components touch the network. */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api, type AssessState, type ObserveInput, type RecommendInput } from "./api";
+import {
+  api,
+  type AssessState,
+  type Band,
+  type ObserveInput,
+  type RecommendInput,
+} from "./api";
 
 export const keys = {
   catalogue: ["catalogue"] as const,
@@ -74,7 +80,8 @@ export function useDiscover(conceptId: string, enabled: boolean) {
 export function useAssessment(learnerId: string) {
   const qc = useQueryClient();
   const start = useMutation({
-    mutationFn: (goals: string[]) => api.assessStart(learnerId, goals),
+    mutationFn: ({ goals, band, goal }: { goals: string[]; band: Band; goal?: string }) =>
+      api.assessStart(learnerId, goals, band, goal),
   });
   const answer = useMutation({
     mutationFn: ({ itemId, response }: { itemId: string; response: string }) =>
