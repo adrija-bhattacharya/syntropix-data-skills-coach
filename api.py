@@ -1,10 +1,13 @@
 """FastAPI service.  Endpoints:
 
     GET  /health
-    GET  /catalogue     concepts, resources, sink (goal) concepts
-    POST /recommend     {learner_id, goals[], time_budget_min, mode, n_paths, ban[], lock[], ...}
-    POST /observe       {learner_id, resource_id, correct, minutes, hints}
-    POST /explain       {learner_id, resource_id}
+    GET  /catalogue        concepts, resources, sink (goal) concepts
+    POST /assess/start     {learner_id, goals[]}            begin the adaptive diagnostic
+    POST /assess/answer    {learner_id, item_id, response}  grade + get the next item
+    GET  /assess/{id}      current questions + ability estimates
+    POST /recommend        {learner_id, goals[], time_budget_min, mode, n_paths, ban[], lock[], ...}
+    POST /observe          {learner_id, resource_id, correct, minutes, hints}
+    POST /explain          {learner_id, resource_id}
 
 The built React SPA (``frontend/`` -> ``velpo/web``) is served at ``/`` when present.
 """
@@ -21,9 +24,11 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from algorithms.dynamic_programming import Plan, TeacherConstraints
+from assessment_bank import build_item_bank
 from config import __version__
 from curriculum import build_curriculum
 from engine import Engine
+from model.assessment import AdaptiveSession
 from model.learner import Attempt
 
 _OBJ_KEYS = ("neg_gain", "seconds", "load", "diff_jump", "neg_review")
@@ -37,7 +42,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-engine = Engine(build_curriculum())
+engine = Engine(build_curriculum(), item_bank=build_item_bank())
 
 
 # --------------------------------------------------------------- schemas
@@ -66,6 +71,46 @@ class ObserveIn(BaseModel):
 class ExplainIn(BaseModel):
     learner_id: str = Field(min_length=1)
     resource_id: str = Field(min_length=1)
+
+
+class AssessStartIn(BaseModel):
+    learner_id: str = Field(min_length=1)
+    goals: list[str] = Field(min_length=1)
+
+
+class AssessAnswerIn(BaseModel):
+    learner_id: str = Field(min_length=1)
+    item_id: str = Field(min_length=1)
+    response: str  # MCQ: the chosen index as a string; task: the typed answer
+
+
+def _assess_out(session: AdaptiveSession) -> dict[str, Any]:
+    q = session.next_question()
+    return {
+        "done": session.done,
+        "answered": session.n_answered,
+        "progress": round(session.progress(), 3),
+        "question": None
+        if q is None
+        else {
+            "item_id": q.id,
+            "skill": q.skill,
+            "kind": q.kind,
+            "stem": q.stem,
+            "choices": list(q.choices),
+        },
+        "estimates": [
+            {
+                "skill": e.skill,
+                "theta": round(e.theta, 3),
+                "se": round(e.se, 3),
+                "mastery": round(e.mastery, 3),
+                "n_items": e.n_items,
+                "confident": e.confident,
+            }
+            for e in session.estimates().values()
+        ],
+    }
 
 
 def _plan_out(p: Plan) -> dict[str, Any]:
@@ -155,6 +200,34 @@ def observe(body: ObserveIn) -> dict[str, Any]:
     }
 
 
+@app.post("/assess/start")
+def assess_start(body: AssessStartIn) -> dict[str, Any]:
+    unknown = [c for c in body.goals if c not in engine.kg.concepts]
+    if unknown:
+        raise HTTPException(422, f"unknown concepts: {unknown}")
+    session = engine.start_assessment(body.learner_id, body.goals)
+    return _assess_out(session)
+
+
+@app.post("/assess/answer")
+def assess_answer(body: AssessAnswerIn) -> dict[str, Any]:
+    try:
+        session = engine.answer_assessment(body.learner_id, body.item_id, body.response)
+    except KeyError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    return _assess_out(session)
+
+
+@app.get("/assess/{learner_id}")
+def assess_state(learner_id: str) -> dict[str, Any]:
+    try:
+        return _assess_out(engine.assessment(learner_id))
+    except KeyError as exc:
+        raise HTTPException(404, str(exc)) from exc
+
+
 @app.post("/explain")
 def explain(body: ExplainIn) -> dict[str, str]:
     if body.resource_id not in engine.kg.resources:
@@ -190,4 +263,4 @@ else:  # pragma: no cover
 def run() -> None:  # pragma: no cover
     import uvicorn
 
-    uvicorn.run("velpo.api:app", host="127.0.0.1", port=8000)
+    uvicorn.run("api:app", host="127.0.0.1", port=8000)

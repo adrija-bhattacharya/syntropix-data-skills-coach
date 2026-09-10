@@ -18,7 +18,8 @@ reinforcement learning.
 | learning speed (N2) | **first-class per-concept velocity** in the step cost - changes the order and the review count | implicit at best |
 | spaced review | the sequence **re-inserts** a concept when it will decay before the goal | none |
 | study sessions | a partition DP splits the plan into sessions under time + load caps | none |
-| cold-start (N4) | valid path at interaction #0 (graph + Bayesian priors), then DKT-lite refinement | usually unsolved |
+| capability input | an **adaptive test** (2PL IRT + max-information item selection) *measures* the learner's level per skill; nothing is self-rated | the learner picks a level, or picks topics |
+| cold-start (N4) | the adaptive test seeds mastery at interaction #0; then DKT-lite refinement | usually unsolved |
 | re-plan (N6) | **anytime A\***: feasible plan instantly, proven-optimal in <1 ms, no retraining | policy retraining, instability |
 | evidence (N7) | one benchmark harness over synthetic **and the real Junyi graph** | "no standard benchmark" |
 
@@ -30,6 +31,7 @@ No `make` needed; works the same in Windows PowerShell, macOS and Linux.
 python velpo.py setup       # install Python deps (editable) + frontend npm packages
 python velpo.py doctor      # check the environment is ready
 python velpo.py demo        # solve ONE path and print it in the terminal (no server)
+python velpo.py assess      # take the adaptive diagnostic in the terminal, then plan from your measured level
 python velpo.py test        # the whole test suite
 python velpo.py lint        # ruff + ruff format --check + mypy --strict
 python velpo.py serve       # build the React UI + serve it & the API at http://localhost:8000

@@ -5,6 +5,7 @@
     { "label": "setup",   "type": "shell", "command": "python velpo.py setup",   "problemMatcher": [] },
     { "label": "doctor",  "type": "shell", "command": "python velpo.py doctor",  "problemMatcher": [] },
     { "label": "demo",    "type": "shell", "command": "python velpo.py demo",    "problemMatcher": [] },
+    { "label": "assess",  "type": "shell", "command": "python velpo.py assess",  "problemMatcher": [] },
     {
       "label": "test",
       "type": "shell",

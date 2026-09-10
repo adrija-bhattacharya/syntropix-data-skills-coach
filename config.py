@@ -49,6 +49,13 @@ class Settings:
     session_max_load: float = 3.2
     """Per study-session caps the session-packing DP respects."""
 
+    # --- adaptive assessment (model.assessment) ----------------------
+    assess_max_items_per_skill: int = 6
+    """Hard cap on adaptive items administered per target skill."""
+
+    assess_se_target: float = 0.55
+    """Stop testing a skill once the posterior SE of theta drops to this."""
+
     # --- learner model -------------------------------------------------
     velocity_alpha: float = 0.3
     velocity_min: float = 1e-3

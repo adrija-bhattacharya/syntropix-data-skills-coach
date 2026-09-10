@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
+from assessment_bank import build_item_bank
 from curriculum import build_curriculum
 from engine import Engine, MemoryStore
 
@@ -11,7 +12,7 @@ from engine import Engine, MemoryStore
 def client():
     import api
 
-    api.engine = Engine(build_curriculum(), store=MemoryStore())
+    api.engine = Engine(build_curriculum(), store=MemoryStore(), item_bank=build_item_bank())
     return TestClient(api.app)
 
 
@@ -45,6 +46,36 @@ def test_speed_knob_changes_the_plan(client: TestClient) -> None:
     fast_res = [s["resource_id"] for s in fast["paths"][0]["steps"]]
     slow_res = [s["resource_id"] for s in slow["paths"][0]["steps"]]
     assert fast_res != slow_res
+
+
+def test_adaptive_assessment_drives_the_cold_start(client: TestClient) -> None:
+    start = client.post("/assess/start", json={"learner_id": "a", "goals": ["linear_eq"]}).json()
+    assert start["question"] is not None and not start["done"]
+    assert {"skill", "kind", "stem"} <= start["question"].keys()
+
+    data = start
+    guard = 0
+    while not data["done"] and guard < 40:
+        q = data["question"]
+        # always answer wrong: bad MCQ index, nonsense task text
+        resp = "-1" if q["kind"] == "mcq" else "xxx"
+        data = client.post(
+            "/assess/answer", json={"learner_id": "a", "item_id": q["item_id"], "response": resp}
+        ).json()
+        guard += 1
+
+    assert data["done"] and data["answered"] > 0
+    low = {e["skill"]: e["mastery"] for e in data["estimates"]}
+    assert low["integers"] < 0.45  # measured as weak, not a fixed prior
+
+    plan = client.post(
+        "/recommend", json={"learner_id": "a", "goals": ["linear_eq"], "time_budget_min": 120}
+    ).json()
+    assert plan["paths"][0]["feasible"]
+
+
+def test_assess_state_404_without_a_session(client: TestClient) -> None:
+    assert client.get("/assess/nobody").status_code == 404
 
 
 def test_unknown_goal_is_422(client: TestClient) -> None:

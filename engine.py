@@ -16,9 +16,11 @@ from algorithms.dynamic_programming import (
     solve_optimal,
     solve_pareto,
 )
+from algorithms.graph_traversal import ancestors_subgraph
 from algorithms.sequencing import SequencePlan, plan_sequence
 from config import settings
 from explain import explain_plan, explain_step
+from model.assessment import AdaptiveSession, ItemBank
 from model.cost import build_cost_vectors
 from model.knowledge_graph import KnowledgeGraph
 from model.learner import Attempt, LearnerState, bkt_update, decay, velocity_update
@@ -57,9 +59,17 @@ class MemoryStore:
 
 
 class Engine:
-    def __init__(self, kg: KnowledgeGraph, store: LearnerStore | None = None) -> None:
+    def __init__(
+        self,
+        kg: KnowledgeGraph,
+        store: LearnerStore | None = None,
+        *,
+        item_bank: ItemBank | None = None,
+    ) -> None:
         self.kg = kg
         self.store = store or MemoryStore()
+        self.item_bank = item_bank
+        self._assessments: dict[str, AdaptiveSession] = {}
 
     # ------------------------------------------------------------- learner
     def ensure(self, learner_id: str, *, time_budget_s: float) -> LearnerState:
@@ -76,6 +86,49 @@ class Engine:
             )
             self.store.put(learner_id, state)
         return state
+
+    # ------------------------------------------------------- assessment (capability)
+    def start_assessment(
+        self, learner_id: str, goals: Sequence[str], *, time_budget_s: float = 3600.0
+    ) -> AdaptiveSession:
+        """Begin an adaptive diagnostic over the goals' prerequisite closure."""
+        if self.item_bank is None:
+            raise RuntimeError("this engine has no item bank")
+        relevant = set(ancestors_subgraph(self.kg.prereq, list(goals)).nodes) or set(goals)
+        skills = [s for s in self.item_bank.skills if s in relevant]
+        session = AdaptiveSession(self.item_bank, skills=skills or self.item_bank.skills)
+        self._assessments[learner_id] = session
+        self.ensure(learner_id, time_budget_s=time_budget_s)  # placeholder state
+        return session
+
+    def assessment(self, learner_id: str) -> AdaptiveSession:
+        try:
+            return self._assessments[learner_id]
+        except KeyError:
+            raise KeyError(f"no active assessment for {learner_id!r}") from None
+
+    def answer_assessment(
+        self, learner_id: str, item_id: str, response: str | int
+    ) -> AdaptiveSession:
+        session = self.assessment(learner_id)
+        item = session.bank.items.get(item_id)
+        if item is None:
+            raise KeyError(f"unknown item {item_id!r}")
+        session.submit(item_id, item.grade(response))
+        if session.done:
+            self._apply_assessment(learner_id, session)
+        return session
+
+    def _apply_assessment(self, learner_id: str, session: AdaptiveSession) -> None:
+        """Replace the cold-start priors with the CAT-estimated mastery."""
+        current = self.store.get(learner_id)
+        budget = current.time_budget_s if current else 3600.0
+        assessed = session.to_mastery()
+        state = LearnerState.cold_start(self.kg.concept_ids, time_budget_s=budget)
+        for c in self.kg.concept_ids:
+            if c in assessed:
+                state.mastery[c] = assessed[c]
+        self.store.put(learner_id, state)
 
     # ------------------------------------------------------------- recommend
     def recommend(

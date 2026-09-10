@@ -7,6 +7,7 @@ Commands
     doctor       check the environment is ready
     demo         solve one learning path and print it in the terminal (no server)
     plan         demo with options (--goal / --minutes / --speed / --mode / --dataset)
+    assess       run the adaptive capability diagnostic in the terminal, then plan from it
     test         run the test suite (pytest)
     lint         ruff check + ruff format --check + mypy --strict
     fmt          auto-format and auto-fix (ruff)
@@ -114,6 +115,50 @@ def cmd_demo(args: argparse.Namespace) -> int:
         f"over {len(plan.sessions) or 1} session(s) | "
         f"mastery gain {-o.neg_gain:.2f}  load {o.load:.2f}  diff-jumps {o.diff_jump:.2f}"
     )
+    return 0
+
+
+def cmd_assess(args: argparse.Namespace) -> int:
+    """Run the adaptive capability diagnostic in the terminal, then plan from it."""
+    from assessment_bank import build_item_bank
+    from curriculum import build_curriculum
+    from engine import Engine
+
+    kg = build_curriculum()
+    goal = args.goal or kg.sink_concepts()[0]
+    if goal not in kg.concepts:
+        print(f"unknown goal {goal!r}")
+        return 2
+    eng = Engine(kg, item_bank=build_item_bank())
+    session = eng.start_assessment("me", [goal], time_budget_s=args.minutes * 60)
+    print(f"\nAdaptive diagnostic for goal: {kg.concepts[goal].name}")
+    print("Each question is chosen to be maximally informative at your current estimate.\n")
+
+    while not session.done:
+        q = session.next_question()
+        if q is None:
+            break
+        print(f"[{q.skill}]  {q.stem}")
+        if q.kind == "mcq":
+            for i, ch in enumerate(q.choices):
+                print(f"   {i}) {ch}")
+            ans = input("   answer # > ").strip()
+        else:
+            ans = input("   your answer > ").strip()
+        eng.answer_assessment("me", q.id, ans)
+        e = session.estimate(q.skill)
+        print(f"   -> {q.skill}: theta={e.theta:+.2f} se={e.se:.2f} mastery~{e.mastery:.0%}\n")
+
+    print("estimated level per skill:")
+    for e in session.estimates().values():
+        bar = "#" * round(e.mastery * 20)
+        print(f"  {e.skill:<14} {bar:<20} {e.mastery:.0%}  (se {e.se:.2f}, {e.n_items} items)")
+
+    plan = eng.recommend("me", [goal], time_budget_s=args.minutes * 60, mode="sequence")[0]
+    mins = plan.total_seconds / 60
+    print(f"\nplan from your measured level - {len(plan.steps)} steps, {mins:.0f} min:")
+    for i, (rid, reason) in enumerate(zip(plan.steps, plan.reasons or [""] * len(plan.steps))):
+        print(f"  {i + 1:2}. {rid:<32} {reason}")
     return 0
 
 
@@ -229,6 +274,11 @@ def main(argv: list[str] | None = None) -> int:
         )
         d.add_argument("--speed", default="normal", choices=("slow", "normal", "fast"))
         d.set_defaults(fn=cmd_demo)
+
+    a = sub.add_parser("assess")
+    a.add_argument("--goal", default=None)
+    a.add_argument("--minutes", type=float, default=120)
+    a.set_defaults(fn=cmd_assess)
 
     t = sub.add_parser("test")
     t.add_argument("rest", nargs=argparse.REMAINDER)

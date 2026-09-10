@@ -16,12 +16,14 @@ worst-case complexity; each has a test that proves the property it must have.
 | **Dynamic programming** - Pareto version (non-dominated set per state) | `dynamic_programming.py` · `solve_pareto` | `O(V·R·B·F²·d)` | `tests/test_dp_feasibility.py` |
 | **A\* search (anytime)** - feasible incumbent instantly, then branch-and-bound to the same proven optimum; admissible suffix-min heuristic; optional wall-clock `deadline_s` | [`astar.py`](algorithms/astar.py) · `solve_astar` | anytime; ≤ DP worst case | `tests/test_astar.py` |
 | **Pareto / multi-objective** - dominance, non-dominated filter, ε-prune | [`pareto.py`](algorithms/pareto.py) | `O(n²·d)` | `tests/test_pareto.py` |
+| **Adaptive testing** - greedy **maximum-Fisher-information** item selection + EAP ability estimation (2PL IRT); measures the learner's level instead of asking | [`model/assessment.py`](model/assessment.py) · `select_next_item`, `eap_estimate`, `AdaptiveSession` | `O(items · grid)` per estimate | `tests/test_assessment.py` |
 
 ## The learner model (what the costs condition on)
 
 | topic | file · function | note |
 |---|---|---|
-| **Bayesian Knowledge Tracing** (2-state HMM), difficulty-scaled cold-start priors | [`model/learner.py`](model/learner.py) · `bkt_update`, `LearnerState.cold_start` | valid plan at interaction 0 (N4) |
+| **Adaptive capability test** (2PL IRT + max-information CAT) - the cold-start mastery is *measured*, not self-reported | [`model/assessment.py`](model/assessment.py), [`assessment_bank.py`](assessment_bank.py) | `python velpo.py assess` · `/assess/*` |
+| **Bayesian Knowledge Tracing** (2-state HMM), difficulty-scaled cold-start priors (used when no assessment was taken) | [`model/learner.py`](model/learner.py) · `bkt_update`, `LearnerState.cold_start` | valid plan at interaction 0 (N4) |
 | **Learning velocity** - mastery gain per study hour, online EW estimate, feeds the edge cost | `learner.py` · `velocity_update`; [`model/cost.py`](model/cost.py) · `expected_mastery_gain` | N2 - `tests/test_velocity_ablation.py` |
 | **DKT-lite refinement** - per-concept online PFA logistic model, blended into the mastery estimate as evidence accumulates | [`model/refine.py`](model/refine.py) · `MasteryRefiner` | N4 - refines, does not replace, the cold-start estimate |
 | **Forgetting** - Ebbinghaus exponential decay | `learner.py` · `decay` | |
