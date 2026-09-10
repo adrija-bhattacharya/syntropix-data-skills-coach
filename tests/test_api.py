@@ -154,3 +154,35 @@ def test_infeasible_budget_reported(client: TestClient) -> None:
 def test_explain_endpoint(client: TestClient) -> None:
     r = client.post("/explain", json={"learner_id": "u6", "resource_id": "quadratics:lesson"})
     assert "Quadratic" in r.json()["reason"]
+
+
+def test_schedule_endpoint_meets_the_deadline(client: TestClient) -> None:
+    from datetime import date, timedelta
+
+    body = {
+        "learner_id": "cal1",
+        "goals": ["quadratics"],
+        "deadline": (date.today() + timedelta(days=49)).isoformat(),
+        "weekly_minutes": 240,
+    }
+    cal = client.post("/schedule", json=body).json()["calendar"]
+    assert cal["feasible"], cal["note"]
+    assert cal["finish"] <= cal["deadline"]
+    assert cal["slack_days"] >= 0
+    assert all(m >= 0.75 for m in cal["goal_mastery"].values())
+    kinds = {s["kind"] for s in cal["steps"]}
+    assert "teach" in kinds and "retention" in kinds
+
+
+def test_schedule_infeasible_reports_hours_gap(client: TestClient) -> None:
+    from datetime import date, timedelta
+
+    body = {
+        "learner_id": "cal2",
+        "goals": ["quadratics"],
+        "deadline": (date.today() + timedelta(days=3)).isoformat(),
+        "weekday_minutes": [10, 10, 10, 10, 10, 0, 0],
+    }
+    cal = client.post("/schedule", json=body).json()["calendar"]
+    assert not cal["feasible"]
+    assert cal["hours_per_week_needed"] > cal["hours_per_week"]

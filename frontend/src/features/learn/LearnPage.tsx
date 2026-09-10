@@ -23,6 +23,8 @@ export function LearnPage() {
   const [band, setBand] = useState<Band>("intermediate");
   const [minutes, setMinutes] = useState(150);
   const [speed, setSpeed] = useState<"slow" | "normal" | "fast">("normal");
+  const [deadline, setDeadline] = useState("");
+  const [hoursPerWeek, setHoursPerWeek] = useState(5);
 
   const skillNames = useMemo(() => {
     const m: Record<string, string> = {};
@@ -109,6 +111,38 @@ export function LearnPage() {
             </label>
           </div>
 
+          <details className="deadline-box" style={{ marginTop: 16 }}>
+            <summary>Have a deadline?</summary>
+            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 10 }}>
+              <label style={{ fontSize: 12, color: "var(--ink-2)" }}>
+                Target date
+                <input
+                  type="date"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                  style={{ display: "block", marginTop: 4 }}
+                />
+              </label>
+              <label style={{ fontSize: 12, color: "var(--ink-2)" }}>
+                Hours per week
+                <input
+                  type="range"
+                  min={1}
+                  max={30}
+                  step={1}
+                  value={hoursPerWeek}
+                  onChange={(e) => setHoursPerWeek(Number(e.target.value))}
+                  style={{ display: "block", width: 180 }}
+                />
+                <span style={{ fontFamily: "var(--mono)" }}>{hoursPerWeek} h/week</span>
+              </label>
+            </div>
+            <p className="hint">
+              We’ll place every step — and spaced reinforcements — on real dates so each goal skill
+              is above the mastery threshold on your date, or tell you exactly what it would take.
+            </p>
+          </details>
+
           <Button
             variant="primary"
             className="big"
@@ -166,7 +200,14 @@ export function LearnPage() {
 
       {active === "plan" && (
         <div className="panel">
-          <PlanView goalText={goal} goals={r.goals} minutes={minutes} speed={speed} />
+          <PlanView
+            goalText={goal}
+            goals={r.goals}
+            minutes={minutes}
+            speed={speed}
+            deadline={deadline}
+            hoursPerWeek={hoursPerWeek}
+          />
         </div>
       )}
     </div>

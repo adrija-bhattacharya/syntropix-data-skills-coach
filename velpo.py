@@ -8,6 +8,7 @@ Commands
     demo         solve one learning path and print it in the terminal (no server)
     plan         demo with options (--goal / --minutes / --speed / --mode / --catalogue)
     assess       run the adaptive capability diagnostic in the terminal, then plan from it
+    schedule     place the plan on a real calendar for a deadline (--goal / --by / --hours-per-week)
     harvest      discover real open resources (Wikipedia / Wikibooks / MIT / arXiv / YouTube)
     test         run the test suite (pytest)
     lint         ruff check + ruff format --check + mypy --strict
@@ -246,6 +247,56 @@ def cmd_assess(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_schedule(args: argparse.Namespace) -> int:
+    """Sequence the goal, then embed it on a real calendar for a deadline."""
+    from datetime import date, datetime, timedelta
+
+    from algorithms.scheduling import Availability
+    from domains import resolve
+    from engine import Engine
+
+    goal_text = args.goal or "learn sql"
+    r = resolve(goal_text)
+    kg = r.kg
+    if args.by:
+        deadline = datetime.strptime(args.by, "%Y-%m-%d").date()
+    else:
+        deadline = date.today() + timedelta(days=args.days)
+    avail = Availability.weekdays(args.hours_per_week * 60.0 / 5.0)
+    eng = Engine(kg)
+    cp = eng.calendar_plan("me", r.goals, deadline=deadline, availability=avail, start=date.today())
+    print(f"\ngoal: {', '.join(kg.concepts[g].name for g in r.goals if g in kg.concepts)}")
+    print(
+        f"deadline {deadline.isoformat()}  |  {args.hours_per_week:.0f} h/week weekdays  "
+        f"|  {cp.weeks:.0f} weeks\n"
+    )
+    if not cp.feasible:
+        print(f"NOT ON TRACK: {cp.note}")
+        if cp.hours_per_week_needed > cp.hours_per_week:
+            print(
+                f"  -> you offered {cp.hours_per_week:.1f} h/week; "
+                f"about {cp.hours_per_week_needed:.1f} h/week is needed for this date."
+            )
+        return 0
+    from algorithms.scheduling import CalendarStep
+
+    by_week: dict[int, list[CalendarStep]] = {}
+    for s in cp.steps:
+        wk = (s.day - cp.start).days // 7 + 1
+        by_week.setdefault(wk, []).append(s)
+    for wk, steps in sorted(by_week.items()):
+        print(f"  week {wk}")
+        for s in steps:
+            tag = {"teach": " ", "review": "R", "check": "C", "retention": "*"}[s.kind]
+            nm = kg.concepts[s.concept].name
+            print(f"   {tag} {s.day.isoformat()}  {nm}  ({s.minutes:.0f}m)")
+    finish = cp.finish.isoformat() if cp.finish else "?"
+    print(f"\nON TRACK: last study day {finish}, {cp.slack_days} day(s) to spare.")
+    for g, m in sorted(cp.goal_mastery.items(), key=lambda kv: kv[1]):
+        print(f"  {kg.concepts[g].name}: predicted {m:.0%} on the deadline")
+    return 0
+
+
 def cmd_test(args: argparse.Namespace) -> int:
     return _run([*PY, "-m", "pytest", *args.rest])
 
@@ -376,6 +427,13 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--goal", default=None)
     a.add_argument("--minutes", type=float, default=120)
     a.set_defaults(fn=cmd_assess)
+
+    sc = sub.add_parser("schedule")
+    sc.add_argument("--goal", default=None)
+    sc.add_argument("--by", default=None, help="deadline date YYYY-MM-DD (overrides --days)")
+    sc.add_argument("--days", type=int, default=28, help="days from today to the deadline")
+    sc.add_argument("--hours-per-week", type=float, default=5.0, dest="hours_per_week")
+    sc.set_defaults(fn=cmd_schedule)
 
     t = sub.add_parser("test")
     t.add_argument("rest", nargs=argparse.REMAINDER)

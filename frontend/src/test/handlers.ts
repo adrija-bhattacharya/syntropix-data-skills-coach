@@ -127,6 +127,57 @@ export const handlers = [
     });
   }),
 
+  http.post("/schedule", async ({ request }) => {
+    const b = (await request.json()) as { deadline: string; goals: string[] };
+    if (b.goals.includes("__boom__"))
+      return HttpResponse.json({ detail: "unknown concepts" }, { status: 422 });
+    return HttpResponse.json({
+      calendar: {
+        feasible: true,
+        note: "",
+        start: "2026-01-05",
+        deadline: b.deadline,
+        finish: "2026-01-28",
+        slack_days: 3,
+        weeks: 4.5,
+        hours_per_week: 5,
+        hours_per_week_needed: 0,
+        n_retention: 2,
+        goal_mastery: { "Quadratic equations": 0.86 },
+        reasons: ["On the deadline every goal skill is at or above the 75% mastery threshold."],
+        steps: [
+          {
+            day: "2026-01-05",
+            weekday: 0,
+            slot_index: 0,
+            concept_id: "integers",
+            concept: "Integers & number line",
+            resource_id: "integers::wikipedia:0",
+            title: "Integers",
+            url: "https://en.wikipedia.org/wiki/Integer",
+            source: "wikipedia",
+            kind: "teach",
+            minutes: 12,
+          },
+          {
+            day: "2026-01-12",
+            weekday: 0,
+            slot_index: 5,
+            concept_id: "quadratics",
+            concept: "Quadratic equations",
+            resource_id: "quadratics::wikipedia:0",
+            title: "Quadratic equation",
+            url: "https://en.wikipedia.org/wiki/Quadratic_equation",
+            source: "wikipedia",
+            kind: "retention",
+            minutes: 11,
+          },
+        ],
+      },
+      meta: { domain: "algebra" },
+    });
+  }),
+
   http.post("/observe", () =>
     HttpResponse.json({
       n_interactions: 1,

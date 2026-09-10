@@ -61,6 +61,26 @@ class Settings:
     risk_max_checks: int = 3
     """Cap on risk-driven confidence-check steps a single plan may insert."""
 
+    # --- deadline calendar scheduling (claim C) --------------------
+    calendar_base_retention_days: float = 3.0
+    """Days a freshly-taught concept stays above the mastery threshold before it
+    needs its first reinforcement (scaled per-learner by the estimated
+    forgetting half-life)."""
+
+    calendar_spacing_factor: float = 1.9
+    """After each successful review a concept's retention window is multiplied by
+    this (the spacing effect) - so review gaps expand geometrically."""
+
+    calendar_max_reviews_per_goal: int = 8
+    """If a goal skill needs more retention reviews than this to hold until the
+    deadline, the calendar is reported infeasible (deadline too far, or slots
+    too sparse)."""
+
+    calendar_weekly_minutes_default: float = 300.0
+    """Assumed weekly study availability (5 h) when the learner gives none."""
+
+    calendar_deadline_days_default: int = 28
+
     # --- role-gap sequencing (algorithms.roleplan) -------------------
     role_max_ideals: int = 60_000
     """Above this many order ideals in the role's relevant poset, the

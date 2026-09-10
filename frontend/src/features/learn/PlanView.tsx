@@ -7,17 +7,22 @@ import type { Path, RecommendInput, RoleMeta } from "../../lib/api";
 import { roleMeta } from "../../lib/api";
 import { OBJECTIVE_KEYS, OBJECTIVE_META, num } from "../../lib/format";
 import { useRecommend } from "../../lib/queries";
+import { CalendarView } from "./CalendarView";
 
 export function PlanView({
   goalText,
   goals,
   minutes,
   speed,
+  deadline = "",
+  hoursPerWeek = 5,
 }: {
   goalText: string;
   goals: string[];
   minutes: number;
   speed: "slow" | "normal" | "fast";
+  deadline?: string;
+  hoursPerWeek?: number;
 }) {
   const { learnerId } = useLearner();
   const input = useMemo<RecommendInput>(
@@ -45,6 +50,15 @@ export function PlanView({
   return (
     <div>
       {role && <RoleReadiness role={role} />}
+      {deadline && (
+        <CalendarView
+          goalText={goalText}
+          goals={goals}
+          deadline={deadline}
+          weeklyMinutes={Math.round(hoursPerWeek * 60)}
+          speed={speed}
+        />
+      )}
       <PlanBody plan={plan} learnerId={learnerId} />
     </div>
   );

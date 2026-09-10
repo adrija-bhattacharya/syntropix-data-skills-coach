@@ -7,6 +7,7 @@
     POST /assess/answer    {learner_id, item_id, response}  grade + get the next item
     GET  /assess/{id}      current questions + ability estimates
     POST /recommend        {learner_id, goals[], time_budget_min, mode, n_paths, ban[], lock[], ...}
+    POST /schedule         {learner_id, goals[], deadline, weekly_minutes}  deadline calendar (C)
     POST /observe          {learner_id, resource_id, correct, minutes, hints}
     POST /explain          {learner_id, resource_id}
 
@@ -16,6 +17,7 @@ The built React SPA (``frontend/`` -> ``velpo/web``) is served at ``/`` when pre
 from __future__ import annotations
 
 import os
+from datetime import date
 from pathlib import Path
 from typing import Any, Literal
 
@@ -26,8 +28,9 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from algorithms.dynamic_programming import Plan, TeacherConstraints
+from algorithms.scheduling import Availability, CalendarPlan
 from assessment_bank import build_item_bank
-from config import __version__
+from config import __version__, settings
 from curriculum import build_curriculum
 from engine import Engine
 from model.assessment import AdaptiveSession
@@ -94,6 +97,18 @@ class RecommendIn(BaseModel):
     goal: str | None = None
     """Free-text goal - resolved to a knowledge graph; the concept ids in
     ``goals`` must come from that graph (see POST /resolve)."""
+
+
+class ScheduleIn(BaseModel):
+    learner_id: str = Field(min_length=1)
+    goals: list[str] = Field(min_length=1)
+    goal: str | None = None
+    deadline: date
+    weekly_minutes: float | None = Field(None, gt=0)
+    """Total study minutes per week; spread evenly across the 7 days."""
+    weekday_minutes: list[float] | None = None
+    """7 entries (Mon..Sun); overrides ``weekly_minutes`` when given."""
+    speed: Literal["slow", "normal", "fast"] = "normal"
 
 
 class ObserveIn(BaseModel):
@@ -371,6 +386,70 @@ def recommend(body: RecommendIn) -> dict[str, Any]:
             meta["goal_confidence"] = goal_conf
             meta["plan_confidence"] = min(goal_conf.values())
     return {"paths": paths, "meta": meta}
+
+
+def _calendar_out(cp: CalendarPlan, kg: KnowledgeGraph) -> dict[str, Any]:
+    def nm(cid: str) -> str:
+        c = kg.concepts.get(cid)
+        return c.name if c else cid
+
+    steps = []
+    for s in cp.steps:
+        res = kg.resources.get(s.resource_id)
+        steps.append(
+            {
+                "day": s.day.isoformat(),
+                "weekday": s.day.weekday(),
+                "slot_index": s.slot_index,
+                "concept_id": s.concept,
+                "concept": nm(s.concept),
+                "resource_id": s.resource_id,
+                "title": (res.title if res else "") or s.resource_id,
+                "url": res.url if res else "",
+                "source": res.source if res else "",
+                "kind": s.kind,
+                "minutes": round(s.minutes, 1),
+            }
+        )
+    return {
+        "feasible": cp.feasible,
+        "note": cp.note,
+        "start": cp.start.isoformat(),
+        "deadline": cp.deadline.isoformat(),
+        "finish": cp.finish.isoformat() if cp.finish else None,
+        "slack_days": cp.slack_days,
+        "weeks": cp.weeks,
+        "hours_per_week": cp.hours_per_week,
+        "hours_per_week_needed": cp.hours_per_week_needed,
+        "n_retention": cp.n_retention,
+        "goal_mastery": {nm(k): v for k, v in cp.goal_mastery.items()},
+        "reasons": list(cp.reasons),
+        "steps": steps,
+    }
+
+
+@app.post("/schedule")
+def schedule(body: ScheduleIn) -> dict[str, Any]:
+    eng, domain, _a = _engine_for(body.goal)
+    unknown = [c for c in body.goals if c not in eng.kg.concepts]
+    if unknown:
+        raise HTTPException(422, f"unknown concepts for {domain!r}: {unknown}")
+    if body.weekday_minutes is not None:
+        if len(body.weekday_minutes) != 7 or any(m < 0 for m in body.weekday_minutes):
+            raise HTTPException(422, "weekday_minutes must be 7 non-negative numbers (Mon..Sun)")
+        avail = Availability(tuple(body.weekday_minutes))  # type: ignore[arg-type]
+    else:
+        weekly = body.weekly_minutes or settings.calendar_weekly_minutes_default
+        avail = Availability.uniform(weekly)
+    cp = eng.calendar_plan(
+        body.learner_id,
+        body.goals,
+        deadline=body.deadline,
+        availability=avail,
+        start=date.today(),
+        speed=_SPEED_MULT[body.speed],
+    )
+    return {"calendar": _calendar_out(cp, eng.kg), "meta": {"domain": domain}}
 
 
 @app.post("/observe")

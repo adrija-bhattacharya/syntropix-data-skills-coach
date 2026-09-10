@@ -7,6 +7,7 @@ import {
   type Band,
   type ObserveInput,
   type RecommendInput,
+  type ScheduleInput,
 } from "./api";
 
 export const keys = {
@@ -33,6 +34,16 @@ export function useRecommend(input: RecommendInput, enabled: boolean) {
     queryKey: keys.recommend(input),
     queryFn: () => api.recommend(input),
     enabled: enabled && input.goals.length > 0,
+    placeholderData: (prev) => prev,
+  });
+}
+
+/** Deadline calendar (claim C): a query keyed by its input, like `recommend`. */
+export function useSchedule(input: ScheduleInput, enabled: boolean) {
+  return useQuery({
+    queryKey: ["schedule", input] as const,
+    queryFn: () => api.schedule(input),
+    enabled: enabled && input.goals.length > 0 && input.deadline.length === 10,
     placeholderData: (prev) => prev,
   });
 }

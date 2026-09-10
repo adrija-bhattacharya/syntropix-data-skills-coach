@@ -30,6 +30,7 @@ Wikipedia**.
 | any goal | a **router**: 9 curated seed graphs (SQL / Python / pandas / stats / viz / DSA / …) + **target roles** that union the domains a job needs, else a graph **built from Wikipedia** | one hard-coded curriculum |
 | a job role (claim A) | picks the **prerequisite-closed concept set of maximum hiring-readiness inside the budget** — a knapsack over the order-ideal lattice of a weighted poset — and reports a readiness curve | not addressed |
 | measurement risk (claim B) | the adaptive test returns mastery **± a standard error**; the planner acts on the **pessimistic lower confidence bound**, reports `P(ready)` per goal skill, and **splices a confidence check** before the concepts that build on a pivotal prerequisite the test left uncertain — two learners with the *same* point mastery get *different* plans | point estimate only; uncertainty discarded |
+| a deadline (claim C) | give a **target date** + **weekly availability** and VELPO embeds the plan on a **real calendar** — precedence list-scheduling of the steps plus **expanding-interval reinforcements** — with a guarantee that every goal skill is **≥ threshold on the date** (forgetting between slots modelled), or a precise diagnostic (*"needs ≈ 6.5 h/week for this date"*) | a flat list, no dates, no retention math |
 | cold-start (N4) | the adaptive test seeds mastery at interaction #0; then DKT-lite refinement | usually unsolved |
 | re-plan (N6) | **anytime A\***: feasible plan instantly, proven-optimal in <1 ms, no retraining | policy retraining, instability |
 | evidence (N7) | one benchmark harness over synthetic **and the real Junyi graph** | "no standard benchmark" |
@@ -47,6 +48,7 @@ python velpo.py harvest     # discover real open resources (Wikipedia / Wikibook
 python velpo.py demo --catalogue discovered   # plan against the discovered open resources (with real links)
 python velpo.py plan --goal "become a data analyst"   # a role -> the union of the skills it needs
 python velpo.py plan --goal "SQL window functions"    # free-text goal -> seed graph, or built from Wikipedia
+python velpo.py schedule --goal "learn sql" --by 2026-11-01 --hours-per-week 5   # plan on a real calendar for a deadline
 python velpo.py test        # the whole test suite
 python velpo.py lint        # ruff + ruff format --check + mypy --strict
 python velpo.py serve       # build the React UI + serve it & the API at http://localhost:8000

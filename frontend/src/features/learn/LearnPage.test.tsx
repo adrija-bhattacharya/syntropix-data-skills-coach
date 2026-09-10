@@ -70,6 +70,25 @@ describe("LearnPage — goal → assess → plan", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(/could not resolve/i);
   });
 
+  it("places the plan on a calendar when a deadline is given", async () => {
+    const user = userEvent.setup();
+    renderApp(<LearnPage />, at("quadratic equations"));
+
+    await user.click(await screen.findByText(/Have a deadline\?/i));
+    const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+    await user.type(dateInput, "2026-03-01");
+
+    await user.click(screen.getByRole("button", { name: /^Continue/i }));
+    await user.click(await screen.findByRole("button", { name: /Intermediate/ }));
+    await user.click(await screen.findByText("-5"));
+    await user.click(await screen.findByRole("button", { name: /see my plan/i }));
+
+    expect(await screen.findByText(/on track/i)).toBeInTheDocument();
+    expect(screen.getByText(/every goal skill ≥ 75%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/reinforce/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/3 d slack/i)).toBeInTheDocument();
+  });
+
   it("shows the hiring-readiness meter for a role goal", async () => {
     server.use(
       http.post("/resolve", () =>

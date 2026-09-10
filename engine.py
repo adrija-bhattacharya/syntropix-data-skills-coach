@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import replace
+from datetime import date
 from typing import TYPE_CHECKING, Literal, Protocol
 
 if TYPE_CHECKING:
@@ -20,6 +21,7 @@ from algorithms.dynamic_programming import (
     solve_pareto,
 )
 from algorithms.graph_traversal import ancestors_subgraph
+from algorithms.scheduling import Availability, CalendarPlan, schedule_on_calendar
 from algorithms.sequencing import SequencePlan, plan_sequence
 from config import settings
 from explain import explain_plan, explain_step
@@ -220,6 +222,41 @@ class Engine:
 
         explained = [explain_plan(self.kg, p, state) for p in plans if p.feasible]
         return explained or plans
+
+    # ------------------------------------------------------- deadline calendar (claim C)
+    def calendar_plan(
+        self,
+        learner_id: str,
+        goals: Sequence[str],
+        *,
+        deadline: date,
+        availability: Availability,
+        start: date | None = None,
+        time_budget_s: float | None = None,
+        speed: float = 1.0,
+    ) -> CalendarPlan:
+        """Sequence the goals, then embed that plan on a real calendar so every
+        goal skill is predicted at/above threshold on ``deadline`` - or report
+        exactly why the date cannot be met."""
+        start = start or date.today()
+        if time_budget_s is None:
+            weeks = max(1.0, (deadline - start).days / 7.0)
+            time_budget_s = availability.weekly_minutes * 60.0 * weeks
+        budget = time_budget_s
+        plans = self.recommend(
+            learner_id, goals, time_budget_s=budget, mode="sequence", speed=speed
+        )
+        plan = plans[0] if plans else Plan.infeasible("no plan")
+        state = replace(self.ensure(learner_id, time_budget_s=budget), time_budget_s=budget)
+        return schedule_on_calendar(
+            self.kg,
+            plan,
+            state,
+            list(goals),
+            start=start,
+            deadline=deadline,
+            availability=availability,
+        )
 
     # ------------------------------------------------------------- observe
     def observe(self, learner_id: str, attempt: Attempt) -> LearnerState:

@@ -606,6 +606,66 @@ textarea {
   border-color: color-mix(in srgb, var(--warn) 45%, transparent);
   background: color-mix(in srgb, var(--warn) 6%, var(--bg-1));
 }
+
+/* --- deadline calendar (claim C) --- */
+.deadline-box {
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  background: var(--bg-1);
+}
+.deadline-box summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.cal {
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+  border-radius: var(--r-sm);
+  padding: 14px;
+  background: var(--bg-1);
+  margin-bottom: 18px;
+}
+.cal-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 14px;
+}
+.cal-week {
+  margin-top: 12px;
+}
+.cal-week-label {
+  font: 700 11px/1 var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-2);
+  margin-bottom: 6px;
+}
+.cal-row {
+  display: grid;
+  grid-template-columns: 84px 92px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.cal-date {
+  font-family: var(--mono);
+  color: var(--ink-2);
+}
+.cal-concept {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cal-min {
+  font-family: var(--mono);
+  color: var(--ink-2);
+}
 .ring {
   --p: 0;
   flex: none;

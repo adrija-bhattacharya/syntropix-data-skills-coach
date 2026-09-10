@@ -55,6 +55,39 @@ export const RecommendResponse = z.object({
   meta: z.record(z.unknown()),
 });
 
+export const CalendarStep = z.object({
+  day: z.string(),
+  weekday: z.number(),
+  slot_index: z.number(),
+  concept_id: z.string(),
+  concept: z.string(),
+  resource_id: z.string(),
+  title: z.string().default(""),
+  url: z.string().default(""),
+  source: z.string().default(""),
+  kind: z.enum(["teach", "review", "check", "retention"]),
+  minutes: z.number(),
+});
+export const CalendarPlan = z.object({
+  feasible: z.boolean(),
+  note: z.string().default(""),
+  start: z.string(),
+  deadline: z.string(),
+  finish: z.string().nullable(),
+  slack_days: z.number(),
+  weeks: z.number(),
+  hours_per_week: z.number(),
+  hours_per_week_needed: z.number(),
+  n_retention: z.number(),
+  goal_mastery: z.record(z.number()).default({}),
+  reasons: z.array(z.string()).default([]),
+  steps: z.array(CalendarStep).default([]),
+});
+export const ScheduleResponse = z.object({
+  calendar: CalendarPlan,
+  meta: z.record(z.unknown()),
+});
+
 /** Role-gap meta on a /recommend response when the goal was a job role. */
 export interface RoleMeta {
   role: true;
@@ -135,6 +168,8 @@ export type Step = z.infer<typeof Step>;
 export type Objective = z.infer<typeof Objective>;
 export type Path = z.infer<typeof Path>;
 export type RecommendResponse = z.infer<typeof RecommendResponse>;
+export type CalendarStep = z.infer<typeof CalendarStep>;
+export type CalendarPlan = z.infer<typeof CalendarPlan>;
 export type ObserveResponse = z.infer<typeof ObserveResponse>;
 
 export type Session = z.infer<typeof Session>;
@@ -157,6 +192,15 @@ export interface RecommendInput {
   lock?: string[];
   force_order?: [string, string][];
   goal?: string; // free-text goal -> resolved to a knowledge graph server-side
+}
+
+export interface ScheduleInput {
+  learner_id: string;
+  goals: string[];
+  goal?: string;
+  deadline: string; // YYYY-MM-DD
+  weekly_minutes?: number;
+  speed?: Speed;
 }
 
 export interface ObserveInput {
@@ -238,4 +282,7 @@ export const api = {
 
   discover: (concept_id: string) =>
     request(DiscoverResponse, `/discover/${encodeURIComponent(concept_id)}`),
+
+  schedule: (input: ScheduleInput) =>
+    request(ScheduleResponse, "/schedule", { method: "POST", body: JSON.stringify(input) }),
 };
