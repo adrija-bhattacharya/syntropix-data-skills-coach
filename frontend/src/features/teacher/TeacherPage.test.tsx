@@ -17,7 +17,7 @@ describe("TeacherPage", () => {
 
     expect(await screen.findByText("2 non-dominated")).toBeInTheDocument();
     // the selected path is inspected below the chart
-    expect(await screen.findByText(/2 steps/)).toBeInTheDocument();
+    expect(await screen.findByText(/3 steps/)).toBeInTheDocument();
   });
 
   it("passes ban / force-order through to the request", async () => {

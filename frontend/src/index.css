@@ -416,6 +416,26 @@ select {
   display: grid;
   place-items: center;
 }
+.steps li.is-review::before {
+  background: var(--good-soft);
+  color: var(--good);
+}
+.steps li.session-divider {
+  counter-increment: none;
+  padding: 14px 0 4px;
+  border-top: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.steps li.session-divider::before {
+  content: none;
+}
+.steps li:first-child.session-divider + li {
+  border-top: 0;
+}
 @keyframes fade-in {
   from {
     opacity: 0;

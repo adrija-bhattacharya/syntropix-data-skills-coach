@@ -23,7 +23,9 @@ export const Step = z.object({
   resource_id: z.string(),
   concept_id: z.string(),
   reason: z.string(),
+  review: z.boolean().default(false),
 });
+export const Session = z.object({ start: z.number(), end: z.number() });
 export const Objective = z.object({
   neg_gain: z.number(),
   seconds: z.number(),
@@ -37,6 +39,7 @@ export const Path = z.object({
   total_minutes: z.number(),
   objective: Objective,
   steps: z.array(Step),
+  sessions: z.array(Session).default([]),
 });
 export const RecommendResponse = z.object({
   paths: z.array(Path),
@@ -59,8 +62,9 @@ export type Path = z.infer<typeof Path>;
 export type RecommendResponse = z.infer<typeof RecommendResponse>;
 export type ObserveResponse = z.infer<typeof ObserveResponse>;
 
+export type Session = z.infer<typeof Session>;
 export type Speed = "slow" | "normal" | "fast";
-export type SolverMode = "optimal" | "interactive" | "pareto";
+export type SolverMode = "sequence" | "optimal" | "interactive" | "pareto";
 
 export interface RecommendInput {
   learner_id: string;
@@ -92,7 +96,11 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(schema: z.ZodType<T>, path: string, init?: RequestInit): Promise<T> {
+async function request<T>(
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>,
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
   let res: Response;
   try {
     res = await fetch(path, {

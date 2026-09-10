@@ -16,9 +16,13 @@ describe("LearnerPage", () => {
     expect(screen.getByText(/Pick goal concepts/i)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Recommend" }));
 
-    const plan = (await screen.findByText("2 steps")).closest("section")!;
+    const plan = (await screen.findByText("3 steps")).closest("section")!;
     expect(within(plan).getByText("quadratics:lesson")).toBeInTheDocument();
     expect(within(plan).getByText("Mastery gain ↑")).toBeInTheDocument();
+    // the sequencing plan carries sessions and a spaced review
+    expect(within(plan).getByText("2 sessions")).toBeInTheDocument();
+    expect(within(plan).getByText("1 spaced review")).toBeInTheDocument();
+    expect(within(plan).getByText("Session 1")).toBeInTheDocument();
   });
 
   it("sends the selected learning speed and reflects it in the header", async () => {
@@ -67,7 +71,7 @@ describe("LearnerPage", () => {
     const user = userEvent.setup();
     renderApp(<LearnerPage catalogue={catalogueFixture} />);
     await user.click(screen.getByRole("button", { name: "Recommend" }));
-    await screen.findByText("2 steps");
+    await screen.findByText("3 steps");
 
     await user.click(screen.getByRole("button", { name: /Submit attempt/i }));
     expect(await screen.findByText(/interaction\(s\)/i)).toBeInTheDocument();
@@ -77,7 +81,7 @@ describe("LearnerPage", () => {
     const user = userEvent.setup();
     renderApp(<LearnerPage catalogue={catalogueFixture} />);
     await user.click(screen.getByRole("button", { name: "Recommend" }));
-    await screen.findByText("2 steps");
+    await screen.findByText("3 steps");
 
     const firstStep = screen.getAllByRole("button", { name: "why?" })[0]!;
     await user.click(firstStep);

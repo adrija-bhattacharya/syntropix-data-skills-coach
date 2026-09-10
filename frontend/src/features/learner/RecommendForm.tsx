@@ -74,7 +74,8 @@ export function RecommendForm({
           value={state.mode}
           onChange={(mode) => onChange({ mode })}
           options={[
-            { value: "optimal", label: "optimal — dynamic programming" },
+            { value: "sequence", label: "sequence — order-ideal DP (+ review + sessions)" },
+            { value: "optimal", label: "selection — multiple-choice knapsack" },
             { value: "interactive", label: "interactive — anytime A*" },
           ]}
         />

@@ -37,12 +37,24 @@ function planFor(speed: string) {
         resource_id: `integers:${kind}`,
         concept_id: "integers",
         reason: "Builds **Integers & number line**; no prerequisites; difficulty 1.",
+        review: false,
+      },
+      {
+        resource_id: "fractions:lesson",
+        concept_id: "fractions",
+        reason: "Spaced review of **Fractions** - predicted to have decayed.",
+        review: true,
       },
       {
         resource_id: "quadratics:lesson",
         concept_id: "quadratics",
         reason: "Builds **Quadratic equations**; prerequisites covered by earlier steps.",
+        review: false,
       },
+    ],
+    sessions: [
+      { start: 0, end: 2 },
+      { start: 2, end: 3 },
     ],
   };
 }

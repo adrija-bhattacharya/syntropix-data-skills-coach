@@ -13,7 +13,7 @@ export function LearnerPage({ catalogue }: { catalogue: Catalogue }) {
   const [form, setForm] = useState<RecommendFormState>(() => ({
     goals: catalogue.goals.slice(0, 1),
     budgetMin: 120,
-    mode: "optimal",
+    mode: "sequence",
     speed: "normal",
   }));
   const [submitted, setSubmitted] = useState(false);
