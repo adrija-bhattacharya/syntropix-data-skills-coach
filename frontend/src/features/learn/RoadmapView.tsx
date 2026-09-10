@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { Badge, Callout, Spinner } from "../../components/ui";
 import { useLearner } from "../../context/LearnerContext";
@@ -175,21 +175,59 @@ function PhaseRow({ p }: { p: RoadmapPhase }) {
 }
 
 function ResourceRow({ v }: { v: LearnResource }) {
+  const [playing, setPlaying] = useState(false);
+  const canPlay = v.embed_url.length > 0;
+
   return (
     <div className="rm-res">
       <span className="rm-res-icon">{KIND_ICON[v.kind] ?? "•"}</span>
       <div style={{ minWidth: 0 }}>
-        <a href={v.url} target="_blank" rel="noreferrer">
-          {v.title}
-        </a>{" "}
-        <span className="hint">
-          — {v.channel}
-          {v.minutes ? ` · ${Math.round(v.minutes / 60) || 1}h` : ""}
+        <span className="rm-res-title">
+          {canPlay ? (
+            <button
+              type="button"
+              className="linklike"
+              onClick={() => setPlaying((p) => !p)}
+              aria-expanded={playing}
+            >
+              {v.title}
+            </button>
+          ) : (
+            <a href={v.url} target="_blank" rel="noreferrer">
+              {v.title}
+            </a>
+          )}{" "}
+          <span className="hint">
+            — {v.channel}
+            {v.minutes ? ` · ${Math.round(v.minutes / 60) || 1}h` : ""}
+          </span>
         </span>
-        {v.note && (
+        {v.note && !playing && (
           <p className="hint" style={{ margin: "1px 0 0" }}>
             {v.note}
           </p>
+        )}
+        {canPlay && !playing && (
+          <button type="button" className="rm-play" onClick={() => setPlaying(true)}>
+            ▶ Watch here
+          </button>
+        )}
+        {playing && (
+          <div className="rm-embed">
+            <iframe
+              src={`${v.embed_url}${v.embed_url.includes("?") ? "&" : "?"}autoplay=1&rel=0`}
+              title={v.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              loading="lazy"
+            />
+            <button type="button" className="linklike rm-embed-close" onClick={() => setPlaying(false)}>
+              close
+            </button>{" "}
+            <a href={v.url} target="_blank" rel="noreferrer" className="hint">
+              open on YouTube ↗
+            </a>
+          </div>
         )}
       </div>
     </div>

@@ -17,10 +17,33 @@ scoped YouTube search link so the learner is never left without one.
 
 from __future__ import annotations
 
+import re
 import urllib.parse
 from dataclasses import dataclass
 
 Band = str  # "beginner" | "intermediate" | "advanced"
+
+_YT_VIDEO = re.compile(r"[?&]v=([\w-]{11})")
+_YT_LIST = re.compile(r"[?&]list=([\w-]+)")
+
+
+def _youtube_embed(url: str) -> tuple[str, str]:
+    """(embed_url, thumbnail_url) for a YouTube ``watch?v=`` or ``playlist?list=``
+    link, using the privacy-preserving ``youtube-nocookie.com`` host.  ``("", "")``
+    for anything not embeddable as a player (channels, docs, search)."""
+    v = _YT_VIDEO.search(url)
+    if v:
+        vid = v.group(1)
+        lst = _YT_LIST.search(url)
+        tail = f"?list={lst.group(1)}" if lst else ""
+        return (
+            f"https://www.youtube-nocookie.com/embed/{vid}{tail}",
+            f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg",
+        )
+    lst = _YT_LIST.search(url)
+    if lst and "/playlist" in url:
+        return (f"https://www.youtube-nocookie.com/embed/videoseries?list={lst.group(1)}", "")
+    return ("", "")
 
 
 @dataclass(frozen=True, slots=True)
@@ -40,6 +63,16 @@ class LearnResource:
     @property
     def free(self) -> bool:
         return True  # everything in this file is free
+
+    @property
+    def embed_url(self) -> str:
+        """A ``youtube-nocookie.com`` player URL when this resource can play
+        in-app (video / playlist), else ``""`` (channels, docs, practice)."""
+        return _youtube_embed(self.url)[0]
+
+    @property
+    def thumbnail(self) -> str:
+        return _youtube_embed(self.url)[1]
 
 
 # --------------------------------------------------------------------------- #

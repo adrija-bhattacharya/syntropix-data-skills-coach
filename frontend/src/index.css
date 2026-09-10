@@ -746,6 +746,51 @@ textarea {
 .rm-res a {
   word-break: break-word;
 }
+.rm-res-title {
+  display: inline;
+}
+.linklike {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+  text-align: left;
+}
+.linklike:hover {
+  text-decoration: underline;
+}
+.rm-play {
+  appearance: none;
+  margin-top: 4px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font: 600 12px/1.4 var(--sans, inherit);
+  cursor: pointer;
+}
+.rm-play:hover {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.rm-embed {
+  margin-top: 8px;
+  max-width: 640px;
+}
+.rm-embed iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: #000;
+  display: block;
+}
+.rm-embed-close {
+  margin-top: 4px;
+}
 
 /* --- deadline calendar (claim C) --- */
 .deadline-box {

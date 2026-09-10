@@ -109,6 +109,8 @@ export const LearnResource = z.object({
   level: z.number().default(3),
   note: z.string().default(""),
   free: z.boolean().default(true),
+  embed_url: z.string().default(""),
+  thumbnail: z.string().default(""),
 });
 export const RoadmapPhase = z.object({
   index: z.number(),

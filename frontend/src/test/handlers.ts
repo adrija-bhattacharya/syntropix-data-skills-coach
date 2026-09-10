@@ -143,6 +143,8 @@ export const handlers = [
       level: 1,
       note: "The standard first SQL course.",
       free: true,
+      embed_url: "https://www.youtube-nocookie.com/embed/HXV3zeQKqGY",
+      thumbnail: "https://i.ytimg.com/vi/HXV3zeQKqGY/hqdefault.jpg",
     };
     return HttpResponse.json({
       roadmap: {

@@ -256,6 +256,8 @@ def _res_dict(r: LearnResource) -> dict[str, object]:
         "level": r.level,
         "note": r.note,
         "free": r.free,
+        "embed_url": r.embed_url,
+        "thumbnail": r.thumbnail,
     }
 
 

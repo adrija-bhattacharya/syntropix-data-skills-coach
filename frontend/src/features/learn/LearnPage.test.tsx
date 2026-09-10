@@ -114,12 +114,13 @@ describe("LearnPage — goal → assess → plan", () => {
     expect(screen.getAllByText(/pace/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Intro to SQL \+ Advanced SQL/).length).toBeGreaterThan(0);
     expect(screen.getByText(/Ready to sit:/i)).toBeInTheDocument();
-    // profile-matched resource recommendations
+    // profile-matched resource recommendations, playable in-app
     expect(screen.getByText(/Start here — matched to your profile/i)).toBeInTheDocument();
-    const yt = screen
-      .getAllByRole("link")
-      .filter((a) => a.getAttribute("href")?.includes("youtube.com/watch"));
-    expect(yt.length).toBeGreaterThan(0);
+    const watch = screen.getAllByRole("button", { name: /watch here/i });
+    expect(watch.length).toBeGreaterThan(0);
+    await user.click(watch[0]!);
+    const frame = document.querySelector("iframe") as HTMLIFrameElement;
+    expect(frame.src).toContain("youtube-nocookie.com/embed/");
   });
 
   it("shows the hiring-readiness meter for a role goal", async () => {
