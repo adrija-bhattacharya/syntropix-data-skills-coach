@@ -75,7 +75,10 @@ class Item:
 
     def grade(self, response: str | int) -> bool:
         if self.kind == "mcq":
-            return int(response) == self.answer_index
+            try:
+                return int(response) == self.answer_index
+            except (ValueError, TypeError):
+                return False
         return _match(str(response), self.answer_text, self.tolerance)
 
 

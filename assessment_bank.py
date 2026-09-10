@@ -110,43 +110,346 @@ _TASKS: dict[str, tuple[str, str, float]] = {
 }
 
 
-def _concept_depth() -> dict[str, int]:
-    """Transitive prerequisite count - a proxy for how advanced a concept is."""
+# --------------------------------------------------------------------------- #
+# SQL - the assessable core (concept ids match domain_data.SQL)
+# --------------------------------------------------------------------------- #
+_SQL_MCQ: dict[str, list[tuple[str, tuple[str, ...], int]]] = {
+    "select_from": [
+        (
+            "Which returns every column of `orders`?",
+            ("SELECT * FROM orders", "GET orders", "SELECT orders", "FROM orders *"),
+            0,
+        ),
+        (
+            "Pick just `name` and `city`:",
+            (
+                "SELECT name, city FROM customers",
+                "SELECT (name, city)",
+                "GET name city",
+                "SELECT name+city",
+            ),
+            0,
+        ),
+    ],
+    "where": [
+        (
+            "Rows where price is over 100:",
+            (
+                "... WHERE price > 100",
+                "... IF price > 100",
+                "... HAVING price > 100",
+                "... WHERE price => 100",
+            ),
+            0,
+        ),
+        (
+            "Match names starting with 'A':",
+            (
+                "WHERE name LIKE 'A%'",
+                "WHERE name = 'A*'",
+                "WHERE name STARTS 'A'",
+                "WHERE name IN 'A%'",
+            ),
+            0,
+        ),
+    ],
+    "order_limit": [
+        (
+            "Top 5 most expensive products:",
+            (
+                "ORDER BY price DESC LIMIT 5",
+                "LIMIT 5 ORDER BY price",
+                "TOP 5 ORDER price",
+                "ORDER price MAX 5",
+            ),
+            0,
+        ),
+    ],
+    "aggregates": [
+        (
+            "Count the rows in `sales`:",
+            (
+                "SELECT COUNT(*) FROM sales",
+                "SELECT ROWS(sales)",
+                "SELECT SUM(*) FROM sales",
+                "COUNT sales",
+            ),
+            0,
+        ),
+        (
+            "Average order value:",
+            (
+                "SELECT AVG(total) FROM orders",
+                "SELECT MEAN(total)",
+                "SELECT total/COUNT(*)",
+                "AVG orders total",
+            ),
+            0,
+        ),
+    ],
+    "group_by": [
+        (
+            "Revenue per region:",
+            (
+                "SELECT region, SUM(rev) FROM t GROUP BY region",
+                "SELECT SUM(rev) FROM t",
+                "GROUP region SUM rev",
+                "SELECT region SUM(rev)",
+            ),
+            0,
+        ),
+    ],
+    "having": [
+        (
+            "Regions with more than 10 orders:",
+            (
+                "... GROUP BY region HAVING COUNT(*) > 10",
+                "... WHERE COUNT(*) > 10",
+                "... GROUP BY region WHERE COUNT > 10",
+                "... HAVING region > 10",
+            ),
+            0,
+        ),
+    ],
+    "inner_join": [
+        (
+            "Combine `orders` with `customers` on `customer_id`:",
+            (
+                "orders o JOIN customers c ON o.customer_id = c.id",
+                "orders JOIN customers",
+                "orders + customers",
+                "JOIN orders customers customer_id",
+            ),
+            0,
+        ),
+    ],
+    "outer_join": [
+        (
+            "Keep all customers even with no orders:",
+            (
+                "customers c LEFT JOIN orders o ON ...",
+                "customers c INNER JOIN orders o",
+                "customers c JOIN orders o",
+                "customers c CROSS JOIN orders o",
+            ),
+            0,
+        ),
+    ],
+    "ctes": [
+        (
+            "A named temporary result set uses:",
+            (
+                "WITH cte AS (SELECT ...)",
+                "TEMP cte = SELECT ...",
+                "DEFINE cte SELECT ...",
+                "LET cte SELECT ...",
+            ),
+            0,
+        ),
+    ],
+    "window_functions": [
+        (
+            "Running total by date without collapsing rows:",
+            (
+                "SUM(x) OVER (ORDER BY date)",
+                "SUM(x) GROUP BY date",
+                "SUM(x) PARTITION date",
+                "RUNNING SUM(x)",
+            ),
+            0,
+        ),
+        (
+            "Rank rows within each group:",
+            (
+                "RANK() OVER (PARTITION BY g ORDER BY v)",
+                "RANK(g, v)",
+                "ORDER BY v RANK g",
+                "GROUP BY g RANK(v)",
+            ),
+            0,
+        ),
+    ],
+}
+_SQL_TASK: dict[str, tuple[str, str]] = {
+    "select_from": (
+        "Write the query that returns every column from a table called `users`.",
+        "select*fromusers",
+    ),
+    "where": ("Complete: SELECT * FROM t WHERE status ___ 'active'   (the operator)", "="),
+    "aggregates": ("Function name that returns the number of rows:", "count"),
+    "group_by": ("Keyword pair used to aggregate per category:", "groupby"),
+    "inner_join": ("Keyword that combines rows from two tables on a matching key:", "join"),
+    "window_functions": ("Keyword that follows an aggregate to make it a window function:", "over"),
+    "outer_join": ("JOIN type that keeps unmatched rows from the left table:", "left"),
+    "ctes": ("Keyword that starts a common table expression:", "with"),
+    "having": ("Clause that filters *after* GROUP BY:", "having"),
+    "order_limit": ("Keyword that sorts results:", "orderby"),
+}
+
+# --------------------------------------------------------------------------- #
+# Python (concept ids match domain_data.PYTHON)
+# --------------------------------------------------------------------------- #
+_PY_MCQ: dict[str, list[tuple[str, tuple[str, ...], int]]] = {
+    "variables": [
+        ("`type(3 / 2)` is:", ("float", "int", "str", "error"), 0),
+        ("Which is a valid variable name?", ("total_2", "2total", "total-2", "class"), 0),
+    ],
+    "strings": [
+        ("`'ab' * 3` gives:", ("'ababab'", "'ab3'", "error", "'aaabbb'"), 0),
+        ("`'Hello'[1:3]` gives:", ("'el'", "'ell'", "'He'", "'l'"), 0),
+    ],
+    "fstrings": [
+        (
+            "Insert `name` into a string:",
+            ('f"hi {name}"', '"hi {name}"', '"hi " + name()', 'f"hi name"'),
+            0,
+        ),
+    ],
+    "conditionals": [
+        (
+            "`elif` is used to:",
+            (
+                "test another condition if the first was False",
+                "loop while true",
+                "end an if block",
+                "define a function",
+            ),
+            0,
+        ),
+    ],
+    "loops": [
+        ("`for i in range(3)` iterates i over:", ("0, 1, 2", "1, 2, 3", "0, 1, 2, 3", "3"), 0),
+    ],
+    "lists": [
+        (
+            "Add `x` to the end of list `xs`:",
+            ("xs.append(x)", "xs.add(x)", "xs + x", "xs.push(x)"),
+            0,
+        ),
+        ("`len([[1,2],[3]])` is:", ("2", "3", "1", "error"), 0),
+    ],
+    "dicts": [
+        ("Get the value for key 'a' in dict d:", ("d['a']", "d.a", "d(a)", "d->a"), 0),
+        ("`d.get('missing', 0)` returns:", ("0", "None", "KeyError", "'missing'"), 0),
+    ],
+    "comprehensions": [
+        (
+            "Squares of 0..4 as a list:",
+            (
+                "[i*i for i in range(5)]",
+                "{i*i for i in range(5)}",
+                "(i*i for i in range(5))",
+                "list(i*i, range(5))",
+            ),
+            0,
+        ),
+    ],
+    "functions": [
+        ("A function returns nothing explicitly. It returns:", ("None", "0", "''", "error"), 0),
+        (
+            "Default argument syntax:",
+            ("def f(x, n=1):", "def f(x, n:1):", "def f(x, n==1):", "def f(x, default n):"),
+            0,
+        ),
+    ],
+    "exceptions": [
+        (
+            "Catch a possible error around risky code:",
+            (
+                "try: ... except ValueError: ...",
+                "if error: ...",
+                "catch ValueError { }",
+                "on error resume",
+            ),
+            0,
+        ),
+    ],
+}
+_PY_TASK: dict[str, tuple[str, str]] = {
+    "variables": ("What does `len('data')` evaluate to?", "4"),
+    "strings": ("`'a,b,c'.split(',')` has how many elements?", "3"),
+    "loops": ("Sum 1..10 with a loop — what is the total?", "55"),
+    "lists": ("`[1,2,3][-1]` is:", "3"),
+    "dicts": ("`len({'a':1,'b':2})` is:", "2"),
+    "comprehensions": ("How many items in `[x for x in range(10) if x % 2 == 0]`?", "5"),
+    "functions": ("`def f(x): return x*x` — what is `f(4)`?", "16"),
+    "conditionals": ("`1 if 3 > 2 else 0` evaluates to:", "1"),
+    "fstrings": ("Result of `f'{2+3}'`:", "5"),
+    "exceptions": ("Keyword that always runs after try/except:", "finally"),
+}
+
+
+def _mk_bank(
+    concept_ids: list[str],
+    mcq: dict[str, list[tuple[str, tuple[str, ...], int]]],
+    task: dict[str, tuple[str, str]],
+    depth: dict[str, int],
+) -> ItemBank:
+    dmax = max(depth.values(), default=1) or 1
+    items: list[Item] = []
+    for cid in concept_ids:
+        base = -1.4 + 3.0 * depth.get(cid, 0) / dmax
+        for k, (stem, choices, ans) in enumerate(mcq.get(cid, [])):
+            off = (-0.9, 0.9)[k] if k < 2 else 1.4
+            items.append(
+                Item(
+                    f"{cid}:q{k + 1}",
+                    cid,
+                    1.1,
+                    round(base + off, 2),
+                    stem,
+                    "mcq",
+                    tuple(choices),
+                    ans,
+                )
+            )
+        if cid in task:
+            stem, ans_text = task[cid]
+            items.append(
+                Item(
+                    f"{cid}:task",
+                    cid,
+                    1.9,
+                    round(base + 0.3, 2),
+                    stem,
+                    "task",
+                    answer_text=ans_text,
+                )
+            )
+    return ItemBank(items)
+
+
+def _algebra_depth() -> dict[str, int]:
     kg = build_curriculum()
     return {c: len(kg.all_prerequisites(c)) for c in kg.concept_ids}
 
 
-def build_item_bank() -> ItemBank:
-    depth = _concept_depth()
-    dmax = max(depth.values()) or 1
-    items: list[Item] = []
-    for cid, mcqs in _MCQ.items():
-        base = -1.4 + 3.0 * depth[cid] / dmax  # concept anchor on the logit scale
-        offsets = (-0.9, 0.9)
-        for k, (stem, choices, ans) in enumerate(mcqs):
-            items.append(
-                Item(
-                    id=f"{cid}:q{k + 1}",
-                    skill=cid,
-                    a=1.1,
-                    b=round(base + offsets[k], 2),
-                    stem=stem,
-                    kind="mcq",
-                    choices=tuple(choices),
-                    answer_index=ans,
-                )
-            )
-        stem, ans_text, tol = _TASKS[cid]
-        items.append(
-            Item(
-                id=f"{cid}:task",
-                skill=cid,
-                a=1.9,  # a worked answer is more discriminating than a guess-prone MCQ
-                b=round(base + 0.3, 2),
-                stem=stem,
-                kind="task",
-                answer_text=ans_text,
-                tolerance=tol,
-            )
-        )
-    return ItemBank(items)
+def _seed_depth(name: str) -> dict[str, int]:
+    from domains import seed_graph
+
+    kg = seed_graph(name)
+    return {c: len(kg.all_prerequisites(c)) for c in kg.concept_ids}
+
+
+def build_item_bank(domain: str = "algebra") -> ItemBank | None:
+    """Calibrated item bank for a domain, or ``None`` where none exists yet
+    (the plan then starts from Bayesian cold-start priors)."""
+    if domain == "algebra":
+        return _mk_bank(list(_MCQ), _MCQ, _mk_algebra_tasks(), _algebra_depth())
+    if domain == "sql":
+        return _mk_bank(list(_SQL_MCQ), _SQL_MCQ, _sql_tasks(), _seed_depth("sql"))
+    if domain == "python":
+        return _mk_bank(list(_PY_MCQ), _PY_MCQ, _py_tasks(), _seed_depth("python"))
+    return None
+
+
+def _mk_algebra_tasks() -> dict[str, tuple[str, str]]:
+    return {cid: (stem, ans) for cid, (stem, ans, _tol) in _TASKS.items()}
+
+
+def _sql_tasks() -> dict[str, tuple[str, str]]:
+    return dict(_SQL_TASK)
+
+
+def _py_tasks() -> dict[str, tuple[str, str]]:
+    return dict(_PY_TASK)

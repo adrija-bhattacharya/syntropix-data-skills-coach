@@ -111,6 +111,46 @@ def test_engine_uses_the_assessment_for_cold_start() -> None:
     assert eng.recommend("u", ["quadratics"], time_budget_s=9000, mode="sequence")[0].feasible
 
 
+@pytest.mark.parametrize("domain", ["sql", "python", "algebra"])
+def test_item_banks_exist_and_span_a_difficulty_band(domain: str) -> None:
+    bank = build_item_bank(domain)
+    assert bank is not None and len(bank.skills) >= 8
+    for skill in bank.skills:
+        items = bank.for_skill(skill)
+        assert items
+        assert any(it.kind == "task" for it in items)  # a hands-on item per concept
+
+
+def test_no_item_bank_for_an_uncalibrated_domain() -> None:
+    assert build_item_bank("dataviz") is None
+
+
+def test_sql_adaptive_session_recovers_rank_order() -> None:
+    import numpy as np
+
+    bank = build_item_bank("sql")
+    assert bank is not None
+    rng = np.random.default_rng(3)
+    skills = ["select_from", "group_by", "window_functions"]
+    truth = {"select_from": 1.8, "group_by": 0.0, "window_functions": -1.6}
+    sess = AdaptiveSession(bank, skills=skills)
+    guard = 0
+    while not sess.done and guard < 40:
+        q = sess.next_question()
+        assert q is not None
+        sess.submit(q.id, rng.random() < float(p_correct(truth[q.skill], q.a, q.b)))
+        guard += 1
+    est = sess.estimates()
+    assert est["select_from"].theta > est["window_functions"].theta
+
+
+def test_grade_is_forgiving_of_a_bad_mcq_response() -> None:
+    bank = build_item_bank("sql")
+    assert bank is not None
+    item = next(it for it in bank.items.values() if it.kind == "mcq")
+    assert item.grade("not-a-number") is False
+
+
 def test_answering_an_item_twice_is_rejected() -> None:
     bank = build_item_bank()
     sess = AdaptiveSession(bank, skills=["integers"])

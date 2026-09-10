@@ -57,25 +57,25 @@ def _build_kg() -> KnowledgeGraph:
     return build_curriculum()
 
 
+_ITEM_BANK_DOMAINS = ("algebra", "sql", "python")  # the calibrated item banks so far
 engine = Engine(_build_kg(), item_bank=build_item_bank())  # the default (algebra) engine
-_ENGINES: dict[str, Engine] = {}
+_ENGINES: dict[str, Engine] = {"seed:algebra": engine}
+_LEARNER_ENGINE: dict[str, Engine] = {}  # which engine holds a learner's assessment
 
 
 def _engine_for(goal: str | None) -> tuple[Engine, str, bool]:
-    """(engine, domain, assessable) for a free-text goal.  Algebra goals reuse
-    the default engine (which has the calibrated item bank); other domains get a
-    cached engine on their resolved graph, with no diagnostic yet."""
+    """(engine, domain, assessable) for a free-text goal.  Each resolved graph
+    gets a cached engine, with the calibrated item bank when one exists."""
     if not goal or not goal.strip():
         return engine, "algebra", True
     from domains import resolve
 
     r = resolve(goal)
-    if r.domain == "algebra":
-        return engine, "algebra", True
     key = f"{r.source}:{r.domain}"
     if key not in _ENGINES:
-        _ENGINES[key] = Engine(r.kg)
-    return _ENGINES[key], r.domain, False
+        bank = build_item_bank(r.domain) if r.domain in _ITEM_BANK_DOMAINS else None
+        _ENGINES[key] = Engine(r.kg, item_bank=bank)
+    return _ENGINES[key], r.domain, r.domain in _ITEM_BANK_DOMAINS
 
 
 # --------------------------------------------------------------- schemas
@@ -232,7 +232,7 @@ def resolve_goal(body: ResolveIn) -> dict[str, Any]:
         "goal": body.goal,
         "domain": r.domain,
         "source": r.source,
-        "assessable": r.domain == "algebra",  # the only calibrated item bank so far
+        "assessable": r.domain in _ITEM_BANK_DOMAINS,
         "goals": r.goals,
         "concepts": [{"id": c.id, "name": c.name} for c in r.kg.concepts.values()],
         "prerequisites": [[u, v] for u, v in r.kg.prereq.edges()],
@@ -314,10 +314,11 @@ def recommend(body: RecommendIn) -> dict[str, Any]:
 
 @app.post("/observe")
 def observe(body: ObserveIn) -> dict[str, Any]:
-    if body.resource_id not in engine.kg.resources:
+    eng = _LEARNER_ENGINE.get(body.learner_id, engine)
+    if body.resource_id not in eng.kg.resources:
         raise HTTPException(404, f"unknown resource {body.resource_id!r}")
     try:
-        state = engine.observe(
+        state = eng.observe(
             body.learner_id, Attempt(body.resource_id, body.correct, body.minutes * 60, body.hints)
         )
     except KeyError as exc:
@@ -342,13 +343,15 @@ def assess_start(body: AssessStartIn) -> dict[str, Any]:
     if unknown:
         raise HTTPException(422, f"unknown concepts: {unknown}")
     session = eng.start_assessment(body.learner_id, body.goals)
+    _LEARNER_ENGINE[body.learner_id] = eng
     return _assess_out(session)
 
 
 @app.post("/assess/answer")
 def assess_answer(body: AssessAnswerIn) -> dict[str, Any]:
+    eng = _LEARNER_ENGINE.get(body.learner_id, engine)
     try:
-        session = engine.answer_assessment(body.learner_id, body.item_id, body.response)
+        session = eng.answer_assessment(body.learner_id, body.item_id, body.response)
     except KeyError as exc:
         raise HTTPException(404, str(exc)) from exc
     except ValueError as exc:
@@ -359,7 +362,7 @@ def assess_answer(body: AssessAnswerIn) -> dict[str, Any]:
 @app.get("/assess/{learner_id}")
 def assess_state(learner_id: str) -> dict[str, Any]:
     try:
-        return _assess_out(engine.assessment(learner_id))
+        return _assess_out(_LEARNER_ENGINE.get(learner_id, engine).assessment(learner_id))
     except KeyError as exc:
         raise HTTPException(404, str(exc)) from exc
 

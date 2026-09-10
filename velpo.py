@@ -106,16 +106,17 @@ def cmd_demo(args: argparse.Namespace) -> int:
     catalogue = getattr(args, "catalogue", "curriculum")
     kg = None
     goal_hint = ""
+    goal_text = args.goal or ("" if args.dataset != "synthetic" else "SQL joins and aggregates")
 
     if catalogue == "discovered":
         from harvest import algebra_catalogue
 
         kg = algebra_catalogue()
         goals = kg.sink_concepts()
-    elif args.goal and args.dataset == "synthetic" and " " in args.goal.strip():
-        from domains import resolve  # free-text goal -> seed graph or dynamic
+    elif goal_text and args.dataset == "synthetic" and (" " in goal_text or not args.goal):
+        from domains import resolve  # free-text goal -> seed graph, role, or dynamic
 
-        r = resolve(args.goal)
+        r = resolve(goal_text)
         kg, goals = r.kg, r.goals
         goal_hint = f"  [{r.source}: {r.domain}]"
     else:
@@ -176,17 +177,19 @@ def cmd_demo(args: argparse.Namespace) -> int:
 def cmd_assess(args: argparse.Namespace) -> int:
     """Run the adaptive capability diagnostic in the terminal, then plan from it."""
     from assessment_bank import build_item_bank
-    from curriculum import build_curriculum
+    from domains import resolve
     from engine import Engine
 
-    kg = build_curriculum()
-    goal = args.goal or kg.sink_concepts()[0]
-    if goal not in kg.concepts:
-        print(f"unknown goal {goal!r}")
+    r = resolve(args.goal or "learn sql")
+    bank = build_item_bank(r.domain)
+    if bank is None:
+        print(f"no calibrated diagnostic for {r.domain!r} yet - try: sql, python, algebra")
         return 2
-    eng = Engine(kg, item_bank=build_item_bank())
+    kg = r.kg
+    goal = r.goals[0]
+    eng = Engine(kg, item_bank=bank)
     session = eng.start_assessment("me", [goal], time_budget_s=args.minutes * 60)
-    print(f"\nAdaptive diagnostic for goal: {kg.concepts[goal].name}")
+    print(f"\nAdaptive diagnostic - goal: {kg.concepts[goal].name}  ({r.domain})")
     print("Each question is chosen to be maximally informative at your current estimate.\n")
 
     while not session.done:

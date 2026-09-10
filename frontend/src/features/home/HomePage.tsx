@@ -4,12 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui";
 
 const EXAMPLES = [
-  "binary search tree",
-  "learn python decorators",
-  "quadratic equations",
-  "dynamic programming",
-  "graph traversal",
-  "photosynthesis",
+  "become a data analyst",
+  "SQL window functions",
+  "pandas groupby & joins",
+  "A/B testing & hypothesis testing",
+  "DSA with Python — dynamic programming",
+  "I'm a complete beginner",
 ];
 
 export function HomePage() {
@@ -29,8 +29,9 @@ export function HomePage() {
         <span className="grad">in the right order.</span>
       </h1>
       <p>
-        Tell VELPO a goal. It measures where you are with a short adaptive test, finds the best
-        open resources, and sequences them with a provably-optimal plan.
+        Tell VELPO a data-analytics goal or a target role. It measures where you are with a short
+        adaptive test, finds the best open resources, and sequences them into a provably-optimal
+        plan — from zero if that's where you are.
       </p>
 
       <form

@@ -1,9 +1,16 @@
 # VELPO - Personalised Learning-Path Optimiser
 
-Generate the **optimal ordered sequence of learning resources** for a learner, from
-their performance and learning speed, using classic **Design-and-Analysis-of-Algorithms**
-machinery (graph traversal + dynamic programming + A\*) instead of black-box
-reinforcement learning.
+Give it a **data-analytics goal or a target role** ("become a data analyst",
+"SQL window functions", "A/B testing", *"I'm a complete beginner"*).  It measures
+where you are with a short **adaptive test**, discovers the best **open**
+resources, and produces the **provably-optimal ordered sequence** to your goal -
+using classic **Design-and-Analysis-of-Algorithms** machinery (graph traversal +
+dynamic programming + A\*) instead of black-box reinforcement learning.
+
+Domains: `sql`, `python`, `python_data` (pandas/NumPy), `stats`, `dataviz`,
+`dsa_python`, `spreadsheets`, `git`, `foundations` (zero-knowledge on-ramp), plus
+the legacy `algebra` curriculum.  Unknown goals get a graph **built from
+Wikipedia**.
 
 > **DAA course project.**  The algorithm map is [`ALGORITHMS.md`](ALGORITHMS.md);
 > the research design notes are in [`docs/DESIGN.md`](docs/DESIGN.md).
@@ -20,7 +27,7 @@ reinforcement learning.
 | study sessions | a partition DP splits the plan into sessions under time + load caps | none |
 | capability input | an **adaptive test** (2PL IRT + max-information item selection) *measures* the learner's level per skill; nothing is self-rated | the learner picks a level, or picks topics |
 | resources | **discovered live** from open sources (Wikipedia, Wikibooks, MIT, arXiv, YouTube) and **auto-level-estimated** (readability + jargon + source priors) | a fixed, hand-built catalogue |
-| any goal | a **router**: curated seed graph for known domains (algebra, DSA, Python), else a graph **built from Wikipedia** (lead-link asymmetry → prerequisites) | one hard-coded curriculum |
+| any goal | a **router**: 9 curated seed graphs (SQL / Python / pandas / stats / viz / DSA / …) + **target roles** that union the domains a job needs, else a graph **built from Wikipedia** | one hard-coded curriculum |
 | cold-start (N4) | the adaptive test seeds mastery at interaction #0; then DKT-lite refinement | usually unsolved |
 | re-plan (N6) | **anytime A\***: feasible plan instantly, proven-optimal in <1 ms, no retraining | policy retraining, instability |
 | evidence (N7) | one benchmark harness over synthetic **and the real Junyi graph** | "no standard benchmark" |
@@ -36,7 +43,8 @@ python velpo.py demo        # solve ONE path and print it in the terminal (no se
 python velpo.py assess      # take the adaptive diagnostic in the terminal, then plan from your measured level
 python velpo.py harvest     # discover real open resources (Wikipedia / Wikibooks / MIT / arXiv / YouTube)
 python velpo.py demo --catalogue discovered   # plan against the discovered open resources (with real links)
-python velpo.py plan --goal "binary search tree"   # free-text goal -> seed graph (DSA / Python / algebra) or built from Wikipedia
+python velpo.py plan --goal "become a data analyst"   # a role -> the union of the skills it needs
+python velpo.py plan --goal "SQL window functions"    # free-text goal -> seed graph, or built from Wikipedia
 python velpo.py test        # the whole test suite
 python velpo.py lint        # ruff + ruff format --check + mypy --strict
 python velpo.py serve       # build the React UI + serve it & the API at http://localhost:8000
@@ -51,9 +59,9 @@ python velpo.py datasets    # list / download the benchmark datasets  (--full = 
 See the whole pipeline in one command:
 
 ```bash
-python velpo.py demo --goal quadratics --minutes 90 --speed fast
-python velpo.py demo --goal quadratics --minutes 90 --speed slow   # different plan - that's N2
-python velpo.py demo --dataset junyi --goal multiplication_word_problems --minutes 400   # real graph, sessions + reviews
+python velpo.py assess --goal "SQL window functions"              # adaptive test -> plan
+python velpo.py demo --goal "pandas groupby" --speed fast
+python velpo.py demo --goal "pandas groupby" --speed slow          # different plan - that's N2
 python velpo.py seqbench                                           # does optimising the order pay off?
 ```
 
@@ -77,7 +85,9 @@ algorithms/     poset.py (Dilworth + order ideals) · sequencing.py (the core: o
 model/          knowledge_graph.py · learner.py (BKT + velocity + forgetting) · refine.py (DKT-lite) · cost.py
 engine.py       orchestration
 explain.py      knowledge-graph-grounded reason strings
-curriculum.py   labelled synthetic algebra curriculum (demo / API / tests)
+domain_data.py  9 curated seed graphs (SQL, Python, pandas, stats, ...) + target roles
+domains.py      goal router;  dynamic.py = Wikipedia-built graphs
+curriculum.py   legacy algebra curriculum
 api.py          FastAPI  (+ serves the built SPA at /)
 config.py       tunable constants + weights
 frontend/       React 18 + TS + Vite · TanStack Query · Router · Zod · Recharts · Vitest · dark-first, ⌘K
@@ -89,12 +99,13 @@ tests/          the guarantees
 
 Dark-first, keyboard-first (⌘K command palette), built around one flow:
 
-1. **Home** — type a goal ("binary search tree", "learn python decorators",
-   "photosynthesis").
-2. **Resolve** — `POST /resolve` picks a curated seed graph or builds one from
-   Wikipedia; the concept graph is shown.
+1. **Home** — type a goal ("become a data analyst", "SQL window functions",
+   "I'm a complete beginner").
+2. **Resolve** — `POST /resolve` picks a curated seed graph (or a role that
+   unions several), or builds one from Wikipedia; the concept graph is shown.
 3. **Assess** — a one-question-at-a-time adaptive quiz with a live per-skill
-   ability meter (algebra goals; other domains skip to cold-start priors).
+   ability meter (SQL / Python / algebra have calibrated banks; other domains
+   skip to cold-start priors).
 4. **Plan** — the sequencing DP output as resource cards: source badge, a
    difficulty ring, the spaced-review markers, session groups, a link to the
    real open resource, and "why this?" per step.
