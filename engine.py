@@ -29,7 +29,7 @@ from explain import explain_plan, explain_step
 from model.assessment import AdaptiveSession, ItemBank
 from model.cost import build_cost_vectors
 from model.knowledge_graph import KnowledgeGraph
-from model.learner import Attempt, LearnerState, bkt_update, decay, velocity_update
+from model.learner import Attempt, LearnerState, bkt_update, decay, scale_velocity, velocity_update
 
 Mode = Literal["sequence", "optimal", "interactive", "pareto"]
 _HOUR = 3600.0
@@ -194,12 +194,7 @@ class Engine:
         state = replace(
             self.ensure(learner_id, time_budget_s=time_budget_s), time_budget_s=time_budget_s
         )
-        if speed != 1.0:
-            lo, hi = settings.velocity_min, settings.velocity_max
-            state = replace(
-                state,
-                velocity={c: min(hi, max(lo, v * speed)) for c, v in state.velocity.items()},
-            )
+        state = scale_velocity(state, speed)
         costs = build_cost_vectors(self.kg, state)
         goal_list = list(goals)
 

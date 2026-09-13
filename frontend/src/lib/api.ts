@@ -310,6 +310,7 @@ export interface RoadmapInput {
   weekly_hours?: number;
   deadline?: string; // YYYY-MM-DD
   band?: Band;
+  speed?: Speed;
 }
 
 export interface ObserveInput {

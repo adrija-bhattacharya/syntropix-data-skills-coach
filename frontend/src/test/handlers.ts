@@ -132,7 +132,11 @@ export const handlers = [
       goal: string;
       weekly_hours?: number;
       band?: string;
+      speed?: "slow" | "normal" | "fast";
     };
+    const speed = b.speed ?? "normal";
+    const pace = { slow: "deliberate", normal: "steady", fast: "fast" }[speed];
+    const hoursMult = { slow: 1.3, normal: 1.0, fast: 0.78 }[speed];
     const vid = {
       id: "fcc_sql_full",
       title: "SQL Tutorial - Full Database Course for Beginners",
@@ -151,19 +155,19 @@ export const handlers = [
         goal: "quadratics",
         domain: "algebra",
         role: null,
-        pace: "steady",
+        pace,
         weekly_hours: b.weekly_hours ?? 5,
         band: b.band ?? "intermediate",
         starting_readiness: 0.1,
         target_readiness: 1,
         already_have: [],
         you_are_here: {},
-        total_hours: 40,
-        total_weeks: 8,
+        total_hours: Math.round(40 * hoursMult),
+        total_weeks: Math.round(8 * hoursMult),
         finish_estimate: "2026-05-01",
         deadline: null,
         on_track: null,
-        notes: ["Pace: steady - estimates assume an average learning speed."],
+        notes: [`Pace: ${pace} - estimates assume an average learning speed.`],
         recommended: [vid],
         phases: [
           {

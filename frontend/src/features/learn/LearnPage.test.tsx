@@ -123,6 +123,19 @@ describe("LearnPage — goal → assess → plan", () => {
     expect(frame.src).toContain("youtube-nocookie.com/embed/");
   });
 
+  it("moves the roadmap's pace and estimates with the learning-speed selector", async () => {
+    const user = userEvent.setup();
+    renderApp(<LearnPage />, at("quadratic equations"));
+
+    await user.selectOptions(await screen.findByLabelText(/learning speed/i), "fast");
+    await user.click(await screen.findByRole("button", { name: /^Continue/i }));
+    await user.click(await screen.findByRole("button", { name: /Intermediate/ }));
+    await user.click(await screen.findByText("-5"));
+    await user.click(await screen.findByRole("button", { name: /see my plan/i }));
+
+    expect(await screen.findByText("pace: fast")).toBeInTheDocument();
+  });
+
   it("shows the hiring-readiness meter for a role goal", async () => {
     server.use(
       http.post("/resolve", () =>

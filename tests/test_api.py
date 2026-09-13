@@ -212,3 +212,13 @@ def test_roadmap_endpoint(client: TestClient) -> None:
     assert len(rm["phases"]) >= 3
     assert any(p["certifications"] for p in rm["phases"])
     assert rm["certifications"][0]["url"].startswith("https://")
+
+
+def test_roadmap_speed_knob_changes_the_estimate(client: TestClient) -> None:
+    base = {"learner_id": "rm-speed", "goal": "learn sql", "weekly_hours": 5}
+    slow = client.post("/roadmap", json={**base, "speed": "slow"}).json()["roadmap"]
+    normal = client.post("/roadmap", json={**base, "speed": "normal"}).json()["roadmap"]
+    fast = client.post("/roadmap", json={**base, "speed": "fast"}).json()["roadmap"]
+    assert slow["total_hours"] > normal["total_hours"] > fast["total_hours"]
+    assert slow["pace"] == "deliberate"
+    assert fast["pace"] == "fast"

@@ -309,13 +309,21 @@ def cmd_roadmap(args: argparse.Namespace) -> int:
     r = resolve(args.goal or "become a data analyst")
     st = LearnerState.cold_start(r.kg.concept_ids, time_budget_s=3600)
     deadline = datetime.strptime(args.by, "%Y-%m-%d").date() if args.by else None
+    speed_mult = {"slow": 0.45, "normal": 1.0, "fast": 3.0}[args.speed]
     rm = build_roadmap(
-        r.kg, r, st, weekly_hours=args.hours_per_week, deadline=deadline, band=args.band
+        r.kg,
+        r,
+        st,
+        weekly_hours=args.hours_per_week,
+        deadline=deadline,
+        band=args.band,
+        speed=speed_mult,
     )
 
     head = rm.role or rm.domain
     print(
-        f"\nRoadmap: {head}   pace {rm.pace}   level {rm.band}   {args.hours_per_week:.0f} h/week"
+        f"\nRoadmap: {head}   pace {rm.pace}   level {rm.band}   speed {args.speed}   "
+        f"{args.hours_per_week:.0f} h/week"
     )
     print(
         f"~{rm.total_hours:.0f} study hours over ~{rm.total_weeks:.0f} weeks"
@@ -540,6 +548,12 @@ def main(argv: list[str] | None = None) -> int:
         default="intermediate",
         choices=("beginner", "intermediate", "advanced"),
         help="your self-reported level (selects which resources to recommend)",
+    )
+    rd.add_argument(
+        "--speed",
+        default="normal",
+        choices=("slow", "normal", "fast"),
+        help="take it slow / normal / move fast - rescales pace and every estimate",
     )
     rd.set_defaults(fn=cmd_roadmap)
 

@@ -126,6 +126,10 @@ class RoadmapIn(BaseModel):
     band: Literal["beginner", "intermediate", "advanced"] | None = None
     """Self-reported level; defaults to the band from the learner's assessment,
     else 'intermediate'.  Selects which curated resources to recommend."""
+    speed: Literal["slow", "normal", "fast"] = "normal"
+    """"Take it slow" / "move fast" (N2): scales the learner's velocity before
+    pace is read off it, so phase estimates and the finish date move with it -
+    the same knob /recommend uses for the sequenced study plan."""
 
 
 class ScheduleIn(BaseModel):
@@ -610,7 +614,13 @@ def roadmap(body: RoadmapIn) -> dict[str, Any]:
     state = eng.store.get(body.learner_id) or eng.ensure(body.learner_id, time_budget_s=3600.0)
     band = body.band or eng.assessment_band(body.learner_id) or "intermediate"
     rm = build_roadmap(
-        r.kg, r, state, weekly_hours=body.weekly_hours, deadline=body.deadline, band=band
+        r.kg,
+        r,
+        state,
+        weekly_hours=body.weekly_hours,
+        deadline=body.deadline,
+        band=band,
+        speed=_SPEED_MULT[body.speed],
     )
     return {"roadmap": _roadmap_out(rm)}
 

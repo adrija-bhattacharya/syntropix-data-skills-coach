@@ -189,6 +189,18 @@ class LearnerState:
         )
 
 
+def scale_velocity(state: LearnerState, mult: float) -> LearnerState:
+    """A copy of ``state`` with every per-concept velocity scaled by ``mult``
+    and clamped to ``[velocity_min, velocity_max]``.  ``mult == 1.0`` is a no-op
+    (returns ``state`` unchanged) - this is the single knob that turns "take it
+    slow" / "move fast" into a different pace and a different plan (N2)."""
+    if mult == 1.0:
+        return state
+    lo, hi = settings.velocity_min, settings.velocity_max
+    velocity = {c: min(hi, max(lo, v * mult)) for c, v in state.velocity.items()}
+    return replace(state, velocity=velocity)
+
+
 def _logit(p: float) -> float:
     p = min(1.0 - 1e-6, max(1e-6, p))
     return math.log(p / (1.0 - p))

@@ -228,6 +228,7 @@ export function LearnPage() {
               weeklyHours={hoursPerWeek}
               deadline={deadline}
               band={r.assessable ? band : undefined}
+              speed={speed}
             />
           ) : (
             <PlanView

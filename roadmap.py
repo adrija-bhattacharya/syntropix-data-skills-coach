@@ -30,7 +30,7 @@ from data_resources import LearnResource, recommend_resources
 from domain_data import DOMAIN_PREREQS, ROLES, role_profile
 from domains import Resolved, resolve
 from model.knowledge_graph import KnowledgeGraph
-from model.learner import LearnerState
+from model.learner import LearnerState, scale_velocity
 
 NodeId = str
 
@@ -100,8 +100,14 @@ def build_roadmap(
     weekly_hours: float = 5.0,
     deadline: date | None = None,
     band: str = "intermediate",
+    speed: float = 1.0,
 ) -> Roadmap:
+    """``speed`` is the same manual "take it slow" (< 1) / "move fast" (> 1) knob
+    as :meth:`Engine.recommend` (N2): it scales the learner's per-concept
+    velocity before pace is read off it, so the roadmap's phase estimates and
+    finish date move with it exactly like the sequenced study plan does."""
     theta = settings.mastery_threshold
+    state = scale_velocity(state, speed)
     pace = _pace_of(state)
     mult = _PACE[pace]
     profile = resolved.domain  # "data analyst" / "sql" / ... - the profile key prefix
@@ -397,7 +403,10 @@ def roadmap_for_goal(
     weekly_hours: float = 5.0,
     deadline: date | None = None,
     band: str = "intermediate",
+    speed: float = 1.0,
 ) -> Roadmap:
     """Convenience: resolve a free-text goal and build the roadmap in one call."""
     r = resolve(goal)
-    return build_roadmap(r.kg, r, state, weekly_hours=weekly_hours, deadline=deadline, band=band)
+    return build_roadmap(
+        r.kg, r, state, weekly_hours=weekly_hours, deadline=deadline, band=band, speed=speed
+    )

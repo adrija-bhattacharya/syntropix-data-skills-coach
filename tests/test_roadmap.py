@@ -36,6 +36,26 @@ def test_pace_scales_the_estimate() -> None:
     assert slow.total_hours > fast.total_hours
 
 
+def test_speed_knob_rescales_the_same_learner() -> None:
+    """ "Take it slow" / "move fast" (N2) must move the roadmap even for a
+    learner whose *measured* velocity alone would read as "steady" - it is the
+    same manual knob the sequenced study plan already respects."""
+    r = resolve("learn python")
+    baseline = _state(r.kg.concept_ids, velocity=1.0)
+    slow = build_roadmap(r.kg, r, baseline, weekly_hours=5, speed=0.45)
+    normal = build_roadmap(r.kg, r, baseline, weekly_hours=5, speed=1.0)
+    fast = build_roadmap(r.kg, r, baseline, weekly_hours=5, speed=3.0)
+
+    assert slow.pace == "deliberate"
+    assert fast.pace == "fast"
+    assert slow.total_hours > normal.total_hours > fast.total_hours
+    assert slow.total_weeks > normal.total_weeks > fast.total_weeks
+    assert slow.finish_estimate is not None and fast.finish_estimate is not None
+    assert slow.finish_estimate > fast.finish_estimate
+    # the input state itself is untouched (build_roadmap must not mutate it)
+    assert all(v == 1.0 for v in baseline.velocity.values())
+
+
 def test_role_roadmap_groups_by_domain_and_places_certs() -> None:
     r = resolve("become a data analyst")
     rm = build_roadmap(r.kg, r, _state(r.kg.concept_ids), weekly_hours=6, band="beginner")

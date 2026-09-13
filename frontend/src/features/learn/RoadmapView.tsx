@@ -8,6 +8,7 @@ import type {
   LearnResource,
   RoadmapInput,
   RoadmapPhase,
+  Speed,
 } from "../../lib/api";
 import { useRoadmap } from "../../lib/queries";
 
@@ -31,11 +32,13 @@ export function RoadmapView({
   weeklyHours,
   deadline,
   band,
+  speed,
 }: {
   goalText: string;
   weeklyHours: number;
   deadline?: string;
   band?: Band;
+  speed?: Speed;
 }) {
   const { learnerId } = useLearner();
   const input = useMemo<RoadmapInput>(
@@ -45,8 +48,9 @@ export function RoadmapView({
       weekly_hours: weeklyHours,
       deadline: deadline || undefined,
       band,
+      speed,
     }),
-    [learnerId, goalText, weeklyHours, deadline, band],
+    [learnerId, goalText, weeklyHours, deadline, band, speed],
   );
   const q = useRoadmap(input, true);
 
