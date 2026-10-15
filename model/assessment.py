@@ -220,6 +220,16 @@ class AdaptiveSession:
         self._prior_mean, self._prior_sd = mean, sd
         self.max_items_per_skill = cap
 
+    @property
+    def prior_mean(self) -> float:
+        """Mean of the ability prior the self-reported band set."""
+        return self._prior_mean
+
+    @property
+    def prior_sd(self) -> float:
+        """SD of the ability prior the band set - the widest the estimate can be."""
+        return self._prior_sd
+
     # -- estimation ------------------------------------------------------
     def _pairs(self, skill: str) -> list[tuple[Item, bool]]:
         return [(self.bank.items[r.item_id], r.correct) for r in self.responses[skill]]
@@ -302,6 +312,29 @@ class AdaptiveSession:
     @property
     def n_answered(self) -> int:
         return len(self._asked)
+
+    def remaining_estimate(self) -> int:
+        """Expected questions left - not the worst case.  A skill still needing
+        items needs enough Fisher information to bring its SE to the target:
+        ``1/se_target^2 - 1/se^2``, at ~0.4 per typical item (a ~ 1.3 at
+        P ~ 0.5), and at least 2 answers; capped by the per-skill item limit
+        and by the questions the bank still has for that skill."""
+        if self.done:
+            return 0
+        if self.band == "beginner":
+            return max(0, min(len(self.skills), 4) - self.n_answered)
+        left = 0
+        for s in self.skills:
+            if not self._needs_more(s):
+                continue
+            est = self.estimate(s)
+            need = max(0.0, 1 / self.se_target**2 - 1 / max(est.se, 1e-6) ** 2)
+            k = max(math.ceil(need / 0.4), 2 - est.n_items, 1)
+            unasked = sum(
+                1 for i in self.bank.items.values() if i.skill == s and i.id not in self._asked
+            )
+            left += min(k, self.max_items_per_skill - est.n_items, unasked)
+        return max(1, left)
 
     def progress(self) -> float:
         """Rough completion fraction for a progress bar."""

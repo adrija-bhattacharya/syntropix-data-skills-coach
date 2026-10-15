@@ -143,6 +143,7 @@ class GraphEvidence:
     edges: dict[Edge, EdgeBelief] = field(default_factory=dict)
     candidates: dict[Edge, EdgeBelief] = field(default_factory=dict)
     observations: int = 0
+    attributions: int = 0  # execution-fingerprinted failures (see :meth:`attribute`)
     _names: dict[NodeId, str] = field(default_factory=dict)
     _prereqs: dict[NodeId, frozenset[NodeId]] = field(default_factory=dict)
     _into: dict[NodeId, list[Edge]] = field(default_factory=dict)
@@ -191,6 +192,19 @@ class GraphEvidence:
                 continue
             belief = self.edges.get(edge) or self.candidates[edge]
             belief.update(snapshot[a], correct)
+
+    def attribute(self, a: NodeId, b: NodeId, weight: float) -> EdgeBelief | None:
+        """Execution evidence: a failed attempt at ``b`` was fingerprinted as a
+        misconception about ``a``.  That is direct evidence ``a`` gates ``b`` -
+        no confounder filtering needed, the error itself names the culprit.
+        Only edges and watched candidates are updated; returns the belief, or
+        ``None`` when ``(a, b)`` is neither."""
+        belief = self.edges.get((a, b)) or self.candidates.get((a, b))
+        if belief is None:
+            return None
+        belief.alpha += weight * settings.graph_evidence_weight
+        self.attributions += 1
+        return belief
 
     # ------------------------------------------------------------- accessors
     def confidence(self, a: NodeId, b: NodeId) -> float:

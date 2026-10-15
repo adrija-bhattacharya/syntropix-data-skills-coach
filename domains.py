@@ -92,6 +92,18 @@ _BRIDGES: tuple[tuple[str, str, str, str], ...] = (
     ("sql", "python_data", "inner_join", "merge_join"),
     ("python_data", "stats", "groupby_agg", "descriptive"),
     ("python_data", "dataviz", "plot_pandas", "matplotlib_basics"),
+    ("spreadsheets", "powerbi", "pivot_tables", "dax_aggregations"),
+    ("spreadsheets", "powerbi", "power_query", "pbi_get_data"),
+    ("spreadsheets", "tableau", "pivot_tables", "tab_aggregation"),
+    ("sql", "powerbi", "inner_join", "relationships_cardinality"),
+    ("sql", "data_eng", "ctes", "dbt_models"),
+    ("sql", "data_eng", "window_functions", "dedup_keys"),
+    ("sql", "data_eng", "ddl", "de_data_modeling"),
+    ("python", "data_eng", "modules", "orchestration"),
+    ("python_data", "data_eng", "read_write_data", "file_formats"),
+    ("git", "data_eng", "branches", "dbt_models"),
+    ("dataviz", "powerbi", "choosing_chart", "pbi_visuals"),
+    ("dataviz", "tableau", "choosing_chart", "tab_basic_charts"),
 )
 
 
@@ -122,10 +134,12 @@ def resolve(goal: str, *, allow_dynamic: bool = True) -> Resolved:
     want = _norm(goal)
 
     # roles first ("become a data analyst")
-    for role in _ROLES.values():
-        if any(a in g for a in role.aliases):
-            kg, goals = role_graph(role)
-            return Resolved(kg, goals, role.name, "role", "cs")
+    # the longest matching alias wins, so "bi analyst" is not read as "analyst"
+    hits = [(len(a), role) for role in _ROLES.values() for a in role.aliases if a in g]
+    if hits:
+        role = max(hits, key=lambda h: h[0])[1]
+        kg, goals = role_graph(role)
+        return Resolved(kg, goals, role.name, "role", "cs")
 
     if want & _BEGINNER or "complete beginner" in g:
         kg = seed_graph("foundations")
@@ -148,7 +162,12 @@ def resolve(goal: str, *, allow_dynamic: bool = True) -> Resolved:
     if best is not None:
         s = best[1]
         kg = seed_graph(s.name)
-        goals = _match_concepts(kg, want) or kg.sink_concepts()[:1]
+        # the subject's own name ("python", "sql", "excel") says which graph, not
+        # which topic; an alias that names a topic ("airflow", "dax") still counts
+        labels = set().union(*(_norm(label) for _cid, label in s.concepts))
+        subject = _norm(s.name) | _norm(s.aliases[0])
+        subject |= {w for a in s.aliases for w in _norm(a) if w not in labels}
+        goals = _match_concepts(kg, want - subject) or _capstones(kg)
         return Resolved(kg, goals, s.name, "seed", s.hint)
 
     if allow_dynamic:
@@ -159,6 +178,16 @@ def resolve(goal: str, *, allow_dynamic: bool = True) -> Resolved:
 
     kg = seed_graph("foundations")
     return Resolved(kg, kg.sink_concepts(), "foundations", "seed", "general")
+
+
+def _capstones(kg: KnowledgeGraph) -> list[str]:
+    """For a whole-subject goal ("learn sql"): the most advanced end topic(s) -
+    the sinks with the most prerequisites (ties kept, at most two)."""
+    depth = {c: len(kg.all_prerequisites(c)) for c in kg.sink_concepts()}
+    if not depth:
+        return []
+    top = max(depth.values())
+    return sorted(c for c, d in depth.items() if d == top)[:2]
 
 
 def _match_concepts(kg: KnowledgeGraph, want: set[str]) -> list[str]:

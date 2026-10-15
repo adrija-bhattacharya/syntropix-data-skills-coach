@@ -6,7 +6,7 @@ import { BrowserRouter } from "react-router-dom";
 import { App } from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LearnerProvider } from "./context/LearnerContext";
-import { ThemeProvider } from "./lib/theme";
+import { TrackProvider } from "./context/TrackContext";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -23,13 +23,13 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <LearnerProvider>
+        <LearnerProvider>
+          <TrackProvider>
             <BrowserRouter>
               <App />
             </BrowserRouter>
-          </LearnerProvider>
-        </ThemeProvider>
+          </TrackProvider>
+        </LearnerProvider>
         {import.meta.env.DEV && (
           <React.Suspense fallback={null}>
             <DevtoolsLazy initialIsOpen={false} />

@@ -55,7 +55,15 @@ FOUNDATIONS = SeedSpec(
 SPREADSHEETS = SeedSpec(
     name="spreadsheets",
     hint="general",
-    aliases=("excel", "google sheets", "spreadsheet", "sheets"),
+    aliases=(
+        "excel",
+        "microsoft excel",
+        "google sheets",
+        "spreadsheet",
+        "sheets",
+        "power query",
+        "xlookup",
+    ),
     concepts=(
         ("cells_ranges", "Cells, ranges & references"),
         ("formulas", "Formulas & the formula bar"),
@@ -70,6 +78,9 @@ SPREADSHEETS = SeedSpec(
         ("pivot_tables", "Pivot tables"),
         ("charts_ss", "Charts"),
         ("cleaning_ss", "Cleaning messy data"),
+        ("excel_tables", "Excel Tables & structured references"),
+        ("dynamic_arrays", "Dynamic arrays (FILTER / UNIQUE / SORT)"),
+        ("power_query", "Power Query (get & transform)"),
     ),
     prereqs=(
         ("cells_ranges", "formulas"),
@@ -85,6 +96,11 @@ SPREADSHEETS = SeedSpec(
         ("agg_functions", "charts_ss"),
         ("text_functions", "cleaning_ss"),
         ("sort_filter", "cleaning_ss"),
+        ("formulas", "excel_tables"),
+        ("lookups", "dynamic_arrays"),
+        ("sort_filter", "dynamic_arrays"),
+        ("cleaning_ss", "power_query"),
+        ("excel_tables", "power_query"),
     ),
 )
 
@@ -410,6 +426,142 @@ GIT = SeedSpec(
     ),
 )
 
+POWERBI = SeedSpec(
+    name="powerbi",
+    hint="general",
+    aliases=("power bi", "powerbi", "pbi", "dax", "pl-300", "pl300"),
+    concepts=(
+        ("pbi_get_data", "Get data & Power Query in Power BI"),
+        ("pbi_modeling", "Data model: tables & relationships"),
+        ("star_schema", "Star schema: facts & dimensions"),
+        ("relationships_cardinality", "Cardinality & cross-filter direction"),
+        ("dax_basics", "DAX: calculated columns vs measures"),
+        ("dax_aggregations", "DAX aggregations (SUM, COUNTROWS, DISTINCTCOUNT)"),
+        ("filter_context", "Row context vs filter context"),
+        ("calculate", "CALCULATE & filter modifiers (ALL, FILTER)"),
+        ("iterators", "Iterators (SUMX, AVERAGEX)"),
+        ("time_intelligence", "Time intelligence (date table, YTD, prior year)"),
+        ("pbi_visuals", "Visuals, slicers & interactions"),
+        ("pbi_dashboards", "Report design & dashboards"),
+        ("rls", "Row-level security"),
+        ("pbi_publish", "Publish, share & scheduled refresh"),
+    ),
+    prereqs=(
+        ("pbi_get_data", "pbi_modeling"),
+        ("pbi_modeling", "star_schema"),
+        ("pbi_modeling", "relationships_cardinality"),
+        ("pbi_modeling", "dax_basics"),
+        ("dax_basics", "dax_aggregations"),
+        ("dax_aggregations", "filter_context"),
+        ("filter_context", "calculate"),
+        ("filter_context", "iterators"),
+        ("calculate", "time_intelligence"),
+        ("star_schema", "time_intelligence"),
+        ("pbi_modeling", "pbi_visuals"),
+        ("pbi_visuals", "pbi_dashboards"),
+        ("dax_aggregations", "pbi_dashboards"),
+        ("relationships_cardinality", "rls"),
+        ("pbi_dashboards", "pbi_publish"),
+        ("rls", "pbi_publish"),
+    ),
+)
+
+TABLEAU = SeedSpec(
+    name="tableau",
+    hint="general",
+    aliases=("tableau", "tableau desktop", "tableau public", "lod expressions"),
+    concepts=(
+        ("tab_connect", "Connecting data & the data source page"),
+        ("dims_measures", "Dimensions vs measures, discrete vs continuous"),
+        ("tab_basic_charts", "Building views (marks card, Show Me)"),
+        ("tab_filters", "Filters & the order of operations"),
+        ("tab_calcs", "Calculated fields"),
+        ("tab_aggregation", "Aggregation & the view's level of detail"),
+        ("table_calcs", "Table calculations (running total, % of total)"),
+        ("lod", "LOD expressions (FIXED, INCLUDE, EXCLUDE)"),
+        ("tab_parameters", "Parameters"),
+        ("tab_maps", "Maps & geographic roles"),
+        ("tab_dashboards", "Dashboards & actions"),
+        ("tab_stories", "Stories & publishing"),
+    ),
+    prereqs=(
+        ("tab_connect", "dims_measures"),
+        ("dims_measures", "tab_basic_charts"),
+        ("tab_basic_charts", "tab_filters"),
+        ("dims_measures", "tab_calcs"),
+        ("dims_measures", "tab_aggregation"),
+        ("tab_aggregation", "table_calcs"),
+        ("tab_aggregation", "lod"),
+        ("tab_calcs", "lod"),
+        ("tab_filters", "lod"),
+        ("tab_calcs", "tab_parameters"),
+        ("tab_basic_charts", "tab_maps"),
+        ("tab_basic_charts", "tab_dashboards"),
+        ("tab_filters", "tab_dashboards"),
+        ("tab_dashboards", "tab_stories"),
+    ),
+)
+
+DATA_ENG = SeedSpec(
+    name="data_eng",
+    hint="cs",
+    aliases=(
+        "etl",
+        "elt",
+        "data pipeline",
+        "data pipelines",
+        "dbt",
+        "airflow",
+        "spark",
+        "data warehouse",
+        "warehousing",
+        "lakehouse",
+    ),
+    concepts=(
+        ("de_data_modeling", "Data modelling (normalisation, keys)"),
+        ("dimensional_modeling", "Dimensional modelling (star schema, grain)"),
+        ("file_formats", "File formats (CSV, JSON, Parquet)"),
+        ("etl_elt", "ETL vs ELT pipelines"),
+        ("warehouses", "Cloud data warehouses (BigQuery, Snowflake)"),
+        ("batch_stream", "Batch vs streaming"),
+        ("incremental_loads", "Incremental loads & watermarks"),
+        ("dedup_keys", "Deduplication; natural vs surrogate keys"),
+        ("idempotency", "Idempotent, re-runnable jobs"),
+        ("scd", "Slowly changing dimensions"),
+        ("data_quality", "Data quality tests"),
+        ("dbt_models", "dbt models & ref()"),
+        ("dbt_tests", "dbt tests & documentation"),
+        ("orchestration", "Orchestration (Airflow DAGs)"),
+        ("partitioning", "Partitioning & clustering"),
+        ("spark_basics", "Spark & distributed processing"),
+        ("containers_cloud", "Docker & cloud basics"),
+    ),
+    prereqs=(
+        ("de_data_modeling", "dimensional_modeling"),
+        ("file_formats", "etl_elt"),
+        ("de_data_modeling", "etl_elt"),
+        ("etl_elt", "warehouses"),
+        ("etl_elt", "batch_stream"),
+        ("etl_elt", "incremental_loads"),
+        ("de_data_modeling", "dedup_keys"),
+        ("incremental_loads", "idempotency"),
+        ("dedup_keys", "idempotency"),
+        ("dimensional_modeling", "scd"),
+        ("dedup_keys", "scd"),
+        ("etl_elt", "data_quality"),
+        ("warehouses", "dbt_models"),
+        ("dimensional_modeling", "dbt_models"),
+        ("dbt_models", "dbt_tests"),
+        ("data_quality", "dbt_tests"),
+        ("idempotency", "orchestration"),
+        ("dbt_models", "orchestration"),
+        ("warehouses", "partitioning"),
+        ("partitioning", "spark_basics"),
+        ("batch_stream", "spark_basics"),
+        ("orchestration", "containers_cloud"),
+    ),
+)
+
 SEEDS: tuple[SeedSpec, ...] = (
     FOUNDATIONS,
     SPREADSHEETS,
@@ -420,6 +572,9 @@ SEEDS: tuple[SeedSpec, ...] = (
     DATAVIZ,
     DSA_PYTHON,
     GIT,
+    POWERBI,
+    TABLEAU,
+    DATA_ENG,
 )
 
 # cross-domain prerequisite edges - which domains build on which
@@ -433,6 +588,10 @@ DOMAIN_PREREQS: tuple[tuple[str, str], ...] = (
     ("python_data", "dataviz"),
     ("python_data", "stats"),
     ("sql", "python_data"),
+    ("spreadsheets", "powerbi"),
+    ("spreadsheets", "tableau"),
+    ("sql", "data_eng"),
+    ("python", "data_eng"),
 )
 
 
@@ -464,31 +623,79 @@ DATA_ANALYST = Role(
         ("stats", "linear_regression", 0.6),
         ("dataviz", "storytelling", 0.9),
         ("dataviz", "rel_plots", 0.6),
-        ("spreadsheets", "pivot_tables", 0.6),
+        ("spreadsheets", "pivot_tables", 0.75),
+        ("spreadsheets", "lookups", 0.7),
+        ("powerbi", "calculate", 0.8),
+        ("powerbi", "pbi_dashboards", 0.75),
         ("git", "push_pull", 0.5),
     ),
 )
 
 ANALYTICS_ENGINEER = Role(
     name="analytics engineer",
-    aliases=("analytics engineer", "data engineer", "dbt", "etl developer"),
+    aliases=("analytics engineer", "analytics engineering", "dbt developer"),
     skills=(
+        ("data_eng", "dbt_models", 1.0),
+        ("data_eng", "dbt_tests", 0.95),
+        ("data_eng", "dimensional_modeling", 0.9),
+        ("data_eng", "incremental_loads", 0.85),
         ("sql", "window_functions", 1.0),
         ("sql", "ctes", 1.0),
-        ("sql", "ddl", 0.9),
-        ("sql", "indexes_sql", 0.8),
-        ("python", "venv_pip", 0.8),
-        ("python", "oop_lite", 0.6),
-        ("python_data", "read_write_data", 0.9),
-        ("python_data", "merge_join", 0.8),
+        ("sql", "ddl", 0.8),
+        ("data_eng", "data_quality", 0.8),
+        ("python_data", "read_write_data", 0.7),
         ("git", "pull_requests", 0.9),
-        ("git", "merge_conflicts", 0.7),
-        ("dsa_python", "big_o", 0.6),
+        ("git", "merge_conflicts", 0.6),
         ("stats", "descriptive", 0.5),
     ),
 )
 
-ROLES: tuple[Role, ...] = (DATA_ANALYST, ANALYTICS_ENGINEER)
+BI_ANALYST = Role(
+    name="bi analyst",
+    aliases=(
+        "bi analyst",
+        "business intelligence",
+        "bi developer",
+        "power bi developer",
+        "reporting analyst",
+        "tableau developer",
+    ),
+    skills=(
+        ("powerbi", "time_intelligence", 1.0),
+        ("powerbi", "calculate", 0.95),
+        ("powerbi", "star_schema", 0.9),
+        ("powerbi", "pbi_dashboards", 0.9),
+        ("tableau", "lod", 0.85),
+        ("tableau", "tab_dashboards", 0.85),
+        ("sql", "group_by", 0.8),
+        ("sql", "outer_join", 0.8),
+        ("spreadsheets", "power_query", 0.75),
+        ("spreadsheets", "pivot_tables", 0.7),
+        ("dataviz", "storytelling", 0.7),
+        ("stats", "descriptive", 0.5),
+    ),
+)
+
+DATA_ENGINEER = Role(
+    name="data engineer",
+    aliases=("data engineer", "data engineering", "etl developer", "big data engineer"),
+    skills=(
+        ("data_eng", "orchestration", 1.0),
+        ("data_eng", "incremental_loads", 0.95),
+        ("data_eng", "spark_basics", 0.9),
+        ("data_eng", "scd", 0.85),
+        ("data_eng", "partitioning", 0.8),
+        ("data_eng", "containers_cloud", 0.7),
+        ("sql", "window_functions", 0.95),
+        ("sql", "indexes_sql", 0.8),
+        ("python", "oop_lite", 0.8),
+        ("python", "exceptions", 0.7),
+        ("git", "pull_requests", 0.8),
+        ("dsa_python", "big_o", 0.6),
+    ),
+)
+
+ROLES: tuple[Role, ...] = (DATA_ANALYST, ANALYTICS_ENGINEER, BI_ANALYST, DATA_ENGINEER)
 
 
 def role_profile(role: Role) -> dict[str, float]:

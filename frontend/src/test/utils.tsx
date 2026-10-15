@@ -4,11 +4,11 @@ import type { ReactElement, ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 
 import { LearnerProvider } from "../context/LearnerContext";
-import { ThemeProvider } from "../lib/theme";
+import { TrackProvider, type Track } from "../context/TrackContext";
 
 export function renderApp(
   ui: ReactElement,
-  { route = "/", ...options }: RenderOptions & { route?: string } = {},
+  { route = "/", track, ...options }: RenderOptions & { route?: string; track?: Partial<Track> } = {},
 ) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -17,11 +17,11 @@ export function renderApp(
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <LearnerProvider>
+        <LearnerProvider>
+          <TrackProvider initial={track}>
             <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
-          </LearnerProvider>
-        </ThemeProvider>
+          </TrackProvider>
+        </LearnerProvider>
       </QueryClientProvider>
     );
   }

@@ -1,247 +1,153 @@
 import { useMemo, useState } from "react";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 
-import { Button, Callout, Select, Spinner } from "../../components/ui";
-import type { Band } from "../../lib/api";
-import { useResolve } from "../../lib/queries";
-import { AssessQuiz } from "./AssessQuiz";
-import { PlanView } from "./PlanView";
-import { RoadmapView } from "./RoadmapView";
+import { ErrorBox, Loading, Ms, Pill, hm } from "../../components/stitch";
+import type { Video } from "../../lib/api";
+import { PACE_LABEL, SKILL_NAME, checkLine, clock, embed, useTrackLibrary, type Pace } from "../../lib/library";
+import { toggle, useDone } from "../../lib/progress";
+import { NeedGoal } from "../plan/NeedGoal";
+import { PaceBar } from "./PaceBar";
 
-type Step = "resolve" | "band" | "assess" | "plan";
-type PlanTab = "roadmap" | "plan";
-
-const BANDS: { value: Band; title: string; blurb: string }[] = [
-  { value: "beginner", title: "Beginner", blurb: "New to this. The plan starts from the basics — we'll mostly go by what you told us." },
-  { value: "intermediate", title: "Intermediate", blurb: "You know some of it. A short adaptive test confirms and refines where you are." },
-  { value: "advanced", title: "Advanced", blurb: "Strong already. The test starts high and checks for the gaps." },
-];
-
+/** Learn (Videos): every video to watch, in order, playing inside the app. */
 export function LearnPage() {
-  const [params] = useSearchParams();
-  const goal = (params.get("goal") ?? "").trim();
-  const resolved = useResolve(goal);
-  const [step, setStep] = useState<Step>("resolve");
-  const [band, setBand] = useState<Band>("intermediate");
-  const [minutes, setMinutes] = useState(150);
-  const [speed, setSpeed] = useState<"slow" | "normal" | "fast">("normal");
-  const [deadline, setDeadline] = useState("");
-  const [hoursPerWeek, setHoursPerWeek] = useState(5);
-  const [planTab, setPlanTab] = useState<PlanTab>("roadmap");
+  const { q, pace, setPace, track } = useTrackLibrary();
+  const done = useDone();
+  const [playing, setPlaying] = useState<Video | null>(null);
 
-  const skillNames = useMemo(() => {
-    const m: Record<string, string> = {};
-    for (const c of resolved.data?.concepts ?? []) m[c.id] = c.name;
-    return m;
-  }, [resolved.data]);
+  const playlist = useMemo<{ v: Video; section: string; concept?: string; mastery?: number }[]>(() => {
+    if (!q.data) return [];
+    const courses = q.data.courses.map((v) => ({ v, section: `${SKILL_NAME[v.domain] ?? v.domain} · full course · ${v.level}` }));
+    const lessons = q.data.steps
+      .filter((s) => s.video)
+      .map((s) => ({ v: s.video!, section: "Topic by topic", concept: s.concept, mastery: s.mastery }));
+    return [...courses, ...lessons];
+  }, [q.data]);
 
-  if (!goal) return <Navigate to="/" replace />;
-  if (resolved.isPending) return <Spinner label={`Resolving "${goal}"…`} />;
-  if (resolved.isError)
-    return (
-      <Callout tone="warn">
-        Couldn’t resolve “{goal}”. {resolved.error.message}
-      </Callout>
-    );
+  if (!track.goal) return <NeedGoal />;
+  if (q.isPending) return <Loading label="Finding the right videos…" />;
+  if (q.isError) return <ErrorBox>{q.error.message}</ErrorBox>;
 
-  const r = resolved.data;
-  const active: Step = (step === "band" || step === "assess") && !r.assessable ? "plan" : step;
-  const stepNo = (s: Step) => (r.assessable ? { resolve: 1, band: 2, assess: 2, plan: 3 }[s] : { resolve: 1, band: 2, assess: 2, plan: 2 }[s]);
+  const current = playing ?? playlist.find((p) => !done.videos[p.v.video_id])?.v ?? playlist[0]?.v ?? null;
+  const idx = current ? playlist.findIndex((p) => p.v.video_id === current.video_id) : -1;
+  const watched = playlist.filter((p) => done.videos[p.v.video_id]).length;
+  const next = playlist.slice(idx + 1).find((p) => !done.videos[p.v.video_id])?.v;
+  const sections = [...new Set(playlist.map((p) => p.section))];
 
   return (
-    <div>
-      <div className="steps-nav">
-        <span className={active !== "resolve" ? "done" : "b"}>1 · Goal</span> ›{" "}
-        {r.assessable && (
-          <>
-            <span className={active === "plan" ? "done" : active !== "resolve" ? "b" : ""}>
-              2 · Assess
-            </span>{" "}
-            ›{" "}
-          </>
-        )}
-        <span className={active === "plan" ? "b" : ""}>{stepNo("plan")} · Plan</span>
-      </div>
+    <div className="flex flex-col gap-space-lg">
+      <header className="flex flex-col gap-space-xs">
+        <h1 className="font-headline-md text-headline-md">Learn with videos</h1>
+        <p className="font-body-md text-body-md text-on-surface-variant max-w-3xl">
+          Start with a full beginner course, then watch one short lesson for each topic, in the order your
+          plan needs them. Videos play right here. Tick each one off when you've watched it.
+        </p>
+      </header>
 
-      {active === "resolve" && (
-        <div className="panel" style={{ maxWidth: 640, margin: "0 auto" }}>
-          <h2>
-            {r.goals.map((g) => skillNames[g] ?? g).join(", ")}{" "}
-            <span className="sub">
-              —{" "}
-              {r.source === "role"
-                ? `${r.domain} role`
-                : r.source === "seed"
-                  ? `curated ${r.domain}`
-                  : "built from Wikipedia"}{" "}
-              graph, {r.concepts.length} concepts
-            </span>
-          </h2>
-          <div className="chips" style={{ marginBottom: 18 }}>
-            {r.concepts.slice(0, 22).map((c) => (
-              <span key={c.id} className="chip" style={{ cursor: "default" }}>
-                {c.name}
-              </span>
-            ))}
-          </div>
+      <PaceBar data={q.data} pace={pace} setPace={(p: Pace) => setPace(p)} />
 
-          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-            <label style={{ fontSize: 12, color: "var(--ink-2)" }}>
-              Time budget
-              <input
-                type="range"
-                min={30}
-                max={600}
-                step={10}
-                value={minutes}
-                onChange={(e) => setMinutes(Number(e.target.value))}
-                style={{ display: "block", width: 180 }}
+      {!current ? (
+        <ErrorBox>No videos yet for this goal.</ErrorBox>
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
+          <section className="xl:col-span-8 flex flex-col gap-space-sm">
+            <div className="relative w-full overflow-hidden rounded-xl bg-black shadow-lg" style={{ aspectRatio: "16 / 9" }}>
+              <iframe
+                key={current.video_id}
+                src={embed(current.video_id, current.check?.start ?? 0)}
+                title={current.title}
+                className="absolute inset-0 w-full h-full"
+                allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
               />
-              <span style={{ fontFamily: "var(--mono)" }}>{minutes} min</span>
-            </label>
-            <label style={{ fontSize: 12, color: "var(--ink-2)" }}>
-              Learning speed
-              <Select
-                value={speed}
-                onChange={setSpeed}
-                options={[
-                  { value: "slow", label: "take it slow" },
-                  { value: "normal", label: "normal" },
-                  { value: "fast", label: "move fast" },
-                ]}
-                style={{ display: "block", marginTop: 4 }}
-              />
-            </label>
-            <label style={{ fontSize: 12, color: "var(--ink-2)" }}>
-              Hours per week
-              <input
-                type="range"
-                min={1}
-                max={30}
-                step={1}
-                value={hoursPerWeek}
-                onChange={(e) => setHoursPerWeek(Number(e.target.value))}
-                style={{ display: "block", width: 160 }}
-              />
-              <span style={{ fontFamily: "var(--mono)" }}>{hoursPerWeek} h/week</span>
-            </label>
-          </div>
-
-          <details className="deadline-box" style={{ marginTop: 16 }}>
-            <summary>Have a deadline?</summary>
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 10 }}>
-              <label style={{ fontSize: 12, color: "var(--ink-2)" }}>
-                Target date
-                <input
-                  type="date"
-                  value={deadline}
-                  onChange={(e) => setDeadline(e.target.value)}
-                  style={{ display: "block", marginTop: 4 }}
-                />
-              </label>
             </div>
-            <p className="hint">
-              We’ll place every step — and spaced reinforcements — on real dates so each goal skill
-              is above the mastery threshold on your date, or tell you exactly what it would take.
-            </p>
-          </details>
+            <div className="flex flex-wrap items-start justify-between gap-space-sm">
+              <div className="flex flex-col gap-1 min-w-0">
+                <h2 className="font-headline-sm text-headline-sm">{current.title}</h2>
+                <span className="font-body-sm text-body-sm text-on-surface-variant">
+                  {current.channel} · {hm(current.minutes)}
+                  {current.views ? ` · ${current.views.toLocaleString()} views` : ""} ·{" "}
+                  <a href={current.url} target="_blank" rel="noreferrer" className="underline hover:text-primary">
+                    open on YouTube
+                  </a>
+                </span>
+                {checkLine(current.check) && (
+                  <span className="font-label-annotation text-label-annotation text-tertiary flex items-center gap-1" title={current.check?.reason}>
+                    <Ms name="fact_check" size={14} /> {checkLine(current.check)}
+                    {current.check && current.check.start > 0 && ` Starts at ${clock(current.check.start)}${current.check.chapter ? `: “${current.check.chapter}”` : ""}.`}
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-space-xs">
+                <button
+                  type="button"
+                  aria-pressed={!!done.videos[current.video_id]}
+                  onClick={() => toggle("videos", current.video_id)}
+                  className={`px-space-md py-2 rounded-lg font-body-strong text-body-sm flex items-center gap-1.5 ${
+                    done.videos[current.video_id] ? "bg-tertiary/20 text-tertiary" : "bg-surface-container-high hover:bg-surface-container-highest"
+                  }`}
+                >
+                  <Ms name={done.videos[current.video_id] ? "check_circle" : "radio_button_unchecked"} size={18} />
+                  {done.videos[current.video_id] ? "Watched" : "Mark as watched"}
+                </button>
+                {next && (
+                  <button type="button" onClick={() => setPlaying(next)} className="px-space-md py-2 rounded-lg bg-primary text-on-primary font-body-strong text-body-sm flex items-center gap-1.5">
+                    Next video <Ms name="skip_next" size={18} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </section>
 
-          <Button
-            variant="primary"
-            className="big"
-            style={{ marginTop: 20 }}
-            onClick={() => setStep(r.assessable ? "band" : "plan")}
-          >
-            {r.assessable ? "Continue →" : "Build my plan →"}
-          </Button>
-          {!r.assessable && (
-            <p className="hint">
-              No calibrated diagnostic for this domain yet — the plan starts from Bayesian
-              cold-start priors and adapts as you log attempts.
-            </p>
-          )}
-        </div>
-      )}
-
-      {active === "band" && (
-        <div className="quiz">
-          <h2 style={{ marginBottom: 6 }}>How much do you already know?</h2>
-          <p className="hint" style={{ marginBottom: 18 }}>
-            Pick where you think you are. It sets where the adaptive test starts — and for a
-            beginner, it does most of the work.
-          </p>
-          <div className="choices">
-            {BANDS.map((b) => (
-              <button
-                key={b.value}
-                className="choice"
-                aria-pressed={band === b.value}
-                onClick={() => {
-                  setBand(b.value);
-                  setStep("assess");
-                }}
-              >
-                <strong>{b.title}</strong>
-                <div className="hint" style={{ margin: "4px 0 0" }}>
-                  {b.blurb}
-                </div>
-              </button>
+          <aside className="xl:col-span-4 flex flex-col gap-space-sm p-space-md rounded-xl bg-surface-container-low max-h-[80vh] overflow-y-auto" aria-label="Playlist">
+            <div className="flex items-center justify-between">
+              <span className="font-body-strong text-body-sm">Your playlist</span>
+              <Pill tone="tertiary">{watched} / {playlist.length} watched</Pill>
+            </div>
+            {sections.map((sec) => (
+              <div key={sec} className="flex flex-col gap-1">
+                <span className="font-label-annotation text-label-annotation text-outline uppercase tracking-wider pt-space-xs">{sec}</span>
+                {playlist
+                  .filter((p) => p.section === sec)
+                  .map((p) => {
+                    const on = p.v.video_id === current.video_id;
+                    const seen = !!done.videos[p.v.video_id];
+                    return (
+                      <button
+                        key={p.v.video_id}
+                        type="button"
+                        onClick={() => setPlaying(p.v)}
+                        aria-current={on ? "true" : undefined}
+                        className={`text-left flex gap-space-sm p-space-xs rounded-lg ${on ? "bg-primary/15 ring-1 ring-primary/50" : "hover:bg-surface-container"}`}
+                      >
+                        <img src={`https://i.ytimg.com/vi/${p.v.video_id}/mqdefault.jpg`} alt="" loading="lazy" className="w-28 aspect-video object-cover rounded shrink-0 bg-surface-container" />
+                        <span className="flex flex-col min-w-0 gap-0.5">
+                          {p.concept && <span className="font-label-annotation text-label-annotation text-primary truncate">{p.concept}</span>}
+                          <span className="font-body-sm text-body-sm text-on-surface line-clamp-2">{p.v.title}</span>
+                          <span className="font-label-annotation text-label-annotation text-outline flex items-center gap-1">
+                            {seen && <Ms name="check_circle" size={13} className="text-tertiary" />}
+                            {p.v.check?.level === "verified" && <Ms name="fact_check" size={13} className="text-tertiary" label="checked: teaches this topic" />}
+                            {p.v.channel} · {hm(p.v.minutes)}
+                            {p.mastery != null && p.mastery >= 0.75 && " · you know this"}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+              </div>
             ))}
-          </div>
+          </aside>
         </div>
       )}
 
-      {active === "assess" && (
-        <AssessQuiz
-          goalText={goal}
-          goals={r.goals}
-          band={band}
-          skillNames={skillNames}
-          onDone={() => setStep("plan")}
-        />
-      )}
-
-      {active === "plan" && (
-        <div className="panel">
-          <div className="seg" role="tablist" style={{ marginBottom: 16 }}>
-            <button
-              role="tab"
-              aria-selected={planTab === "roadmap"}
-              className={planTab === "roadmap" ? "on" : ""}
-              onClick={() => setPlanTab("roadmap")}
-            >
-              Full roadmap
-            </button>
-            <button
-              role="tab"
-              aria-selected={planTab === "plan"}
-              className={planTab === "plan" ? "on" : ""}
-              onClick={() => setPlanTab("plan")}
-            >
-              Study plan
-            </button>
-          </div>
-
-          {planTab === "roadmap" ? (
-            <RoadmapView
-              goalText={goal}
-              weeklyHours={hoursPerWeek}
-              deadline={deadline}
-              band={r.assessable ? band : undefined}
-              speed={speed}
-            />
-          ) : (
-            <PlanView
-              goalText={goal}
-              goals={r.goals}
-              minutes={minutes}
-              speed={speed}
-              deadline={deadline}
-              hoursPerWeek={hoursPerWeek}
-            />
-          )}
-        </div>
-      )}
+      <p className="font-label-annotation text-label-annotation text-outline">
+        Videos are from YouTube teachers like freeCodeCamp, Alex The Analyst, StatQuest, Kevin Stratvert and Guy in a Cube
+        {q.data.harvested ? `, collected on ${q.data.harvested}` : ""}. Want to practise what you just watched?{" "}
+        <Link to="/practice" className="underline hover:text-primary">Go to Practice</Link>.
+      </p>
     </div>
   );
 }
+
+export { PACE_LABEL };

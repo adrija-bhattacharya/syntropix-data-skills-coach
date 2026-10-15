@@ -1,4 +1,4 @@
-"""VELPO command line - one easy entry point for every task.
+"""Syntropix (VELPO engine) command line - one easy entry point for every task.
 
     python velpo.py <command>
 
@@ -11,6 +11,7 @@ Commands
     schedule     place the plan on a real calendar for a deadline (--goal / --by / --hours-per-week)
     roadmap      full personalised roadmap: phases, pace, certifications, finish estimate
     graph-health self-healing prerequisite graph - what learner trajectories say about the edges
+    practice     SQL, Python, Excel, BI, DE tasks: run/graded, mistakes diagnosed, plan adapts
     harvest      discover real open resources (Wikipedia / Wikibooks / MIT / arXiv / YouTube)
     test         run the test suite (pytest)
     lint         ruff check + ruff format --check + mypy --strict
@@ -22,6 +23,12 @@ Commands
     benchmark    VELPO vs greedy / ACO / DQN   (--dataset synthetic|junyi|all  --runs N)
     ablation     N2 check - does learning velocity change the plan?
     seqbench     N1 check - does optimising the sequence (not just selection) pay off?
+    practicebench claim E - diagnosis vs right/wrong grading on learners with a hidden gap
+    reschedulebench claim F - calendar feedback loop vs a fixed calendar, simulated weeks
+    velocitybench claim G - velocity-sized plans + calibrated finish forecasts
+    velocityplusbench claims G1-G5 - self-check, slowdowns, what fits, best times, focus
+    verify-videos check each video teaches its topic (transcript/chapters; LLM with an API key)
+    library      re-collect LeetCode/HackerRank problems + YouTube lessons (--fresh: from scratch)
     datasets     download / inspect the benchmark datasets (--full for the whole Junyi graph)
 
 Everything works on Windows PowerShell, macOS and Linux with no `make`.
@@ -395,6 +402,68 @@ def cmd_graph_health(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_practice(args: argparse.Namespace) -> int:
+    from domains import seed_graph
+    from engine import Engine
+    from practice import SHOP_SCHEMA
+    from practice.catalogue import BY_ID, CONCEPT_DOMAIN
+
+    goal = args.target
+    domain = CONCEPT_DOMAIN.get(goal)
+    if domain is None:
+        print(f"unknown concept {goal!r}; try one of: {', '.join(sorted(CONCEPT_DOMAIN))}")
+        return 2
+    eng = Engine(seed_graph(domain))
+    print(f"\nExecution-verified practice ({domain}) - answers are run and checked.")
+    print("Tables: " + "; ".join(f"{t}({', '.join(c)})" for t, c in SHOP_SCHEMA.items()))
+    print(f"Goal: {eng.kg.concepts[goal].name}.  SQL/Python: finish with a line ';' or a")
+    print("blank line after code.  Empty first line or 'q' quits.\n")
+    task_id = args.task or eng.next_practice_task("cli", [goal])[0]
+    while task_id:
+        task = BY_ID[task_id]
+        print(f"[{eng.kg.concepts[task.concept].name}] {task.prompt}")
+        if task.cell:
+            print(f"  (formula for {task.cell}{', filled down' if task.fill_down else ''})")
+        if task.options:
+            print("  options: " + " | ".join(task.options))
+        for row in task.context:
+            print("  " + "  ".join(f"{c:>10}" for c in row))
+        prompt = {"sql": "sql> ", "python": "py> ", "excel": "fx> "}.get(task.kind, "> ")
+        multi = task.kind in ("sql", "python")
+        lines: list[str] = []
+        while True:
+            try:
+                line = input(prompt if not lines else "...> ")
+            except EOFError:
+                return 0
+            if not lines and line.strip().lower() in ("", "q", "quit", "exit"):
+                return 0
+            if multi and lines and not line.strip():
+                break
+            lines.append(line)
+            if not multi or line.rstrip().endswith(";"):
+                break
+        out = eng.submit_practice("cli", task_id, "\n".join(lines), goals=[goal])
+        if out.correct:
+            print("  correct.")
+        else:
+            if out.result.error:
+                print(f"  error: {out.result.error}")
+            else:
+                print(f"  got {len(out.result.rows)} row(s): {list(out.result.rows[:4])}")
+            for d in out.diagnoses:
+                print(f"  why: {d.message}  [{d.concept}]")
+        for c, (before, after) in out.mastery.items():
+            print(f"  mastery {eng.kg.concepts[c].name}: {before:.2f} -> {after:.2f}")
+        for a, b, m in out.edge_evidence:
+            print(f"  graph: {a} -> {b} now {m:.0%} confident")
+        path = " > ".join(dict.fromkeys(out.plan.concepts))
+        print(f"  re-planned in {out.replan_ms:.1f} ms: {path}\n")
+        task_id = out.next_task
+    print(f"Goal reached: {eng.kg.concepts[goal].name}.")
+    return 0
+
+
 def cmd_test(args: argparse.Namespace) -> int:
     return _run([*PY, "-m", "pytest", *args.rest])
 
@@ -403,6 +472,8 @@ def cmd_lint(_: argparse.Namespace) -> int:
     targets = [
         "algorithms",
         "model",
+        "practice",
+        "banks",
         "tests",
         "benchmarks",
         "config.py",
@@ -410,6 +481,10 @@ def cmd_lint(_: argparse.Namespace) -> int:
         "certifications.py",
         "data_resources.py",
         "engine.py",
+        "skill_library.py",
+        "portfolio.py",
+        "portfolio_page.py",
+        "telemetry.py",
         "explain.py",
         "roadmap.py",
         "api.py",
@@ -425,6 +500,8 @@ def cmd_fmt(_: argparse.Namespace) -> int:
     targets = [
         "algorithms",
         "model",
+        "practice",
+        "banks",
         "tests",
         "benchmarks",
         "config.py",
@@ -432,6 +509,10 @@ def cmd_fmt(_: argparse.Namespace) -> int:
         "certifications.py",
         "data_resources.py",
         "engine.py",
+        "skill_library.py",
+        "portfolio.py",
+        "portfolio_page.py",
+        "telemetry.py",
         "explain.py",
         "roadmap.py",
         "api.py",
@@ -470,6 +551,36 @@ def cmd_benchmark(args: argparse.Namespace) -> int:
 
 def cmd_ablation(_: argparse.Namespace) -> int:
     return _run([*PY, "-m", "benchmarks.ablation_velocity"])
+
+
+def cmd_practicebench(_: argparse.Namespace) -> int:
+    return _run([*PY, "-m", "benchmarks.practice_bench"])
+
+
+def cmd_velocityplusbench(_: argparse.Namespace) -> int:
+    return _run([*PY, "-m", "benchmarks.velocity_plus_bench"])
+
+
+def cmd_velocitybench(_: argparse.Namespace) -> int:
+    return _run([*PY, "-m", "benchmarks.velocity_bench"])
+
+
+def cmd_reschedulebench(_: argparse.Namespace) -> int:
+    return _run([*PY, "-m", "benchmarks.reschedule_bench"])
+
+
+def cmd_verify_videos(args: argparse.Namespace) -> int:
+    from harvest.verify import main
+
+    return main(
+        (["--redo"] if args.redo else []) + (["--no-transcripts"] if args.no_transcripts else [])
+    )
+
+
+def cmd_library(args: argparse.Namespace) -> int:
+    from harvest.library import main
+
+    return main(["--fresh"] if args.fresh else [])
 
 
 def cmd_seqbench(args: argparse.Namespace) -> int:
@@ -564,6 +675,13 @@ def main(argv: list[str] | None = None) -> int:
     gh.add_argument("--seed", type=int, default=0)
     gh.set_defaults(fn=cmd_graph_health)
 
+    pr = sub.add_parser("practice")
+    pr.add_argument(
+        "--target", default="outer_join", help="concept id to work toward (any data skill)"
+    )
+    pr.add_argument("--task", default=None, help="start with this task id")
+    pr.set_defaults(fn=cmd_practice)
+
     t = sub.add_parser("test")
     t.add_argument("rest", nargs=argparse.REMAINDER)
     t.set_defaults(fn=cmd_test)
@@ -580,6 +698,19 @@ def main(argv: list[str] | None = None) -> int:
     b.set_defaults(fn=cmd_benchmark)
 
     sub.add_parser("ablation").set_defaults(fn=cmd_ablation)
+    sub.add_parser("practicebench").set_defaults(fn=cmd_practicebench)
+    sub.add_parser("reschedulebench").set_defaults(fn=cmd_reschedulebench)
+    sub.add_parser("velocitybench").set_defaults(fn=cmd_velocitybench)
+    sub.add_parser("velocityplusbench").set_defaults(fn=cmd_velocityplusbench)
+    vv = sub.add_parser("verify-videos")
+    vv.add_argument("--redo", action="store_true", help="re-judge every video, not only new ones")
+    vv.add_argument(
+        "--no-transcripts", action="store_true", help="use descriptions + chapters only"
+    )
+    vv.set_defaults(fn=cmd_verify_videos)
+    lb = sub.add_parser("library")
+    lb.add_argument("--fresh", action="store_true", help="re-search every video, not only the gaps")
+    lb.set_defaults(fn=cmd_library)
 
     sb = sub.add_parser("seqbench")
     sb.add_argument("rest", nargs=argparse.REMAINDER)

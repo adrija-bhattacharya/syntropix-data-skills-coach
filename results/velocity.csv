@@ -1,0 +1,10 @@
+scenario,policy,on_time,forecast_error_days,actual_within_p80,late_flagged_by_week_2,learners
+light calendar,lesson minutes,0.57,13.0,0.22,0.256,100
+light calendar,velocity-sized,0.57,12.6,0.79,0.86,100
+light calendar,velocity-sized + matched,0.56,12.7,0.78,0.841,100
+busy calendar,lesson minutes,0.53,14.0,0.14,0.511,100
+busy calendar,velocity-sized,0.53,12.8,0.73,0.809,100
+busy calendar,velocity-sized + matched,0.53,12.9,0.76,0.83,100
+very busy + tight deadline,lesson minutes,0.42,13.8,0.15,0.759,100
+very busy + tight deadline,velocity-sized,0.49,12.9,0.77,0.863,100
+very busy + tight deadline,velocity-sized + matched,0.47,12.8,0.77,0.849,100

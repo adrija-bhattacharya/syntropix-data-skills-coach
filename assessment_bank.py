@@ -12,6 +12,8 @@ Hand-authored and clearly synthetic, exactly like ``curriculum.py``.
 
 from __future__ import annotations
 
+import random
+
 from curriculum import build_curriculum
 from model.assessment import Item, ItemBank
 
@@ -379,36 +381,38 @@ _PY_TASK: dict[str, tuple[str, str]] = {
 }
 
 
+def _shuffled(item_id: str, choices: tuple[str, ...], ans: int) -> tuple[tuple[str, ...], int]:
+    """Authors write the correct choice first; show the choices in a fixed,
+    per-item random order so the answer's position gives nothing away."""
+    order = list(range(len(choices)))
+    random.Random(item_id).shuffle(order)
+    return tuple(choices[i] for i in order), order.index(ans)
+
+
 def _mk_bank(
     concept_ids: list[str],
     mcq: dict[str, list[tuple[str, tuple[str, ...], int]]],
     task: dict[str, tuple[str, str]],
     depth: dict[str, int],
+    prefix: str = "",
 ) -> ItemBank:
+    """``prefix`` namespaces skills and item ids (``"sql."``) for role graphs."""
     dmax = max(depth.values(), default=1) or 1
     items: list[Item] = []
     for cid in concept_ids:
         base = -1.4 + 3.0 * depth.get(cid, 0) / dmax
+        skill = f"{prefix}{cid}"
         for k, (stem, choices, ans) in enumerate(mcq.get(cid, [])):
             off = (-0.9, 0.9)[k] if k < 2 else 1.4
-            items.append(
-                Item(
-                    f"{cid}:q{k + 1}",
-                    cid,
-                    1.1,
-                    round(base + off, 2),
-                    stem,
-                    "mcq",
-                    tuple(choices),
-                    ans,
-                )
-            )
+            iid = f"{skill}:q{k + 1}"
+            shown, idx = _shuffled(iid, tuple(choices), ans)
+            items.append(Item(iid, skill, 1.1, round(base + off, 2), stem, "mcq", shown, idx))
         if cid in task:
             stem, ans_text = task[cid]
             items.append(
                 Item(
-                    f"{cid}:task",
-                    cid,
+                    f"{skill}:task",
+                    skill,
                     1.9,
                     round(base + 0.3, 2),
                     stem,
@@ -431,16 +435,50 @@ def _seed_depth(name: str) -> dict[str, int]:
     return {c: len(kg.all_prerequisites(c)) for c in kg.concept_ids}
 
 
+def _seed_bank(
+    domain: str,
+) -> tuple[dict[str, list[tuple[str, tuple[str, ...], int]]], dict[str, tuple[str, str]]] | None:
+    from banks import BANKS
+
+    if domain == "sql":
+        return _SQL_MCQ, _sql_tasks()
+    if domain == "python":
+        return _PY_MCQ, _py_tasks()
+    return BANKS.get(domain)
+
+
 def build_item_bank(domain: str = "algebra") -> ItemBank | None:
-    """Calibrated item bank for a domain, or ``None`` where none exists yet
-    (the plan then starts from Bayesian cold-start priors)."""
+    """Calibrated item bank for a domain - a seed graph, a target role (the
+    union of its domains' banks, skills prefixed like the role graph), or the
+    legacy algebra curriculum.  ``None`` where none exists yet: the plan then
+    starts from Bayesian cold-start priors."""
     if domain == "algebra":
         return _mk_bank(list(_MCQ), _MCQ, _mk_algebra_tasks(), _algebra_depth())
-    if domain == "sql":
-        return _mk_bank(list(_SQL_MCQ), _SQL_MCQ, _sql_tasks(), _seed_depth("sql"))
-    if domain == "python":
-        return _mk_bank(list(_PY_MCQ), _PY_MCQ, _py_tasks(), _seed_depth("python"))
-    return None
+    seed = _seed_bank(domain)
+    if seed is not None:
+        mcq, task = seed
+        return _mk_bank(list(mcq), mcq, task, _seed_depth(domain))
+    return _role_bank(domain)
+
+
+def _role_bank(role_name: str) -> ItemBank | None:
+    from domain_data import ROLES
+    from domains import role_graph
+
+    role = next((r for r in ROLES if r.name == role_name), None)
+    if role is None:
+        return None
+    kg, _goals = role_graph(role)
+    depth = {c: len(kg.all_prerequisites(c)) for c in kg.concept_ids}
+    items: list[Item] = []
+    for d in sorted({d for d, _c, _w in role.skills}):
+        seed = _seed_bank(d)
+        if seed is None:
+            continue
+        mcq, task = seed
+        sub = {c: depth.get(f"{d}.{c}", 0) for c in mcq}
+        items += _mk_bank(list(mcq), mcq, task, sub, prefix=f"{d}.").items.values()
+    return ItemBank(items) if items else None
 
 
 def _mk_algebra_tasks() -> dict[str, tuple[str, str]]:

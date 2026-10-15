@@ -33,3 +33,6 @@ harvest/.cache/
 .idea/
 # .vscode/ is committed on purpose (shared tasks / launch / extensions)
 .vscode/*.local
+
+# learners' own data (portfolios) - never committed
+state/

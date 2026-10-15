@@ -1,0 +1,23 @@
+experiment,case,policy,metric,value
+G1,steady learners,forecast as is,done by the 80% date,1.0
+G1,steady learners,self-checking forecast,done by the 80% date,1.0
+G1,bursty learners,forecast as is,done by the 80% date,0.708
+G1,bursty learners,self-checking forecast,done by the 80% date,0.775
+G2,slow topic with a hidden gap,slowdown detector,flagged,0.983
+G2,"same topic, no gap",slowdown detector,false alarm,0.033
+G2,other topics,slowdown detector,false alarms per learner,0.275
+G2,slow topic with a hidden gap,slowdown detector,missing prerequisite named first,0.683
+G2,slow topic with a hidden gap,slowdown detector,... in top 3,0.883
+G2,slow topic with a hidden gap,random weak neighbour,missing prerequisite named first,0.417
+G3,"8 goals, capacity ~70% of expected need",90% confidence,chosen set actually finished,0.925
+G3,"8 goals, capacity ~70% of expected need",90% confidence,share of goal value chosen,0.394
+G3,"8 goals, capacity ~70% of expected need",expected time,chosen set actually finished,0.692
+G3,"8 goals, capacity ~70% of expected need",expected time,share of goal value chosen,0.635
+G4/G5,time-of-day effects + focus fade,plain loop,learning per hour studied,0.689
+G4/G5,time-of-day effects + focus fade,plain loop,days to finish 25 h of learning,51.2
+G4/G5,time-of-day effects + focus fade,+ best study times,learning per hour studied,0.882
+G4/G5,time-of-day effects + focus fade,+ best study times,days to finish 25 h of learning,38.1
+G4/G5,time-of-day effects + focus fade,+ focus-sized blocks,learning per hour studied,0.766
+G4/G5,time-of-day effects + focus fade,+ focus-sized blocks,days to finish 25 h of learning,44.8
+G4/G5,time-of-day effects + focus fade,+ both,learning per hour studied,0.983
+G4/G5,time-of-day effects + focus fade,+ both,days to finish 25 h of learning,33.1

@@ -222,3 +222,36 @@ def test_roadmap_speed_knob_changes_the_estimate(client: TestClient) -> None:
     assert slow["total_hours"] > normal["total_hours"] > fast["total_hours"]
     assert slow["pace"] == "deliberate"
     assert fast["pace"] == "fast"
+
+
+def test_schedule_start_date_simulates_missed_days(client: TestClient) -> None:
+    from datetime import date, timedelta
+
+    deadline = (date.today() + timedelta(days=40)).isoformat()
+    base = {
+        "learner_id": "cal",
+        "goal": "learn sql",
+        "goals": ["outer_join"],
+        "deadline": deadline,
+        "weekly_minutes": 300,
+    }
+    now = client.post("/schedule", json=base).json()["calendar"]
+    late = client.post(
+        "/schedule", json={**base, "start": (date.today() + timedelta(days=3)).isoformat()}
+    ).json()["calendar"]
+    assert late["start"] > now["start"]
+
+    def last_new(cal: dict) -> str:  # the day the last plan step (not a refresher) lands
+        return max(s["day"] for s in cal["steps"] if s["kind"] != "retention")
+
+    # the same plan, started later, can only finish its new material later
+    assert last_new(late) >= last_new(now)
+
+
+def test_assessment_exposes_irt_parameters(client: TestClient) -> None:
+    s = client.post(
+        "/assess/start", json={"learner_id": "irt", "goals": ["outer_join"], "goal": "learn sql"}
+    ).json()
+    assert s["question"]["a"] > 0 and "b" in s["question"]
+    assert s["prior_sd"] > s["se_target"] > 0
+    assert s["remaining"] >= 1

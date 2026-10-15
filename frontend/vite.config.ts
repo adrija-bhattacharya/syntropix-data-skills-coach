@@ -3,7 +3,25 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 const API = "http://127.0.0.1:8000";
-const ENDPOINTS = ["/health", "/catalogue", "/recommend", "/observe", "/explain"];
+const ENDPOINTS = [
+  "/health",
+  "/catalogue",
+  "/recommend",
+  "/observe",
+  "/explain",
+  "/resolve",
+  "/assess",
+  "/schedule",
+  "/roadmap",
+  "/graph",
+  "/discover",
+  "/practice/", // trailing slash: /practice itself is the SPA page
+  "/library",
+  "/certifications",
+  "/reschedule",
+  "/portfolio/", // trailing slash: /portfolio itself is the SPA page
+  "/p/", // public portfolio pages
+];
 
 // build output -> web/  (FastAPI serves it from there at /)
 export default defineConfig({

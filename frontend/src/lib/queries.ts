@@ -6,6 +6,7 @@ import {
   type AssessState,
   type Band,
   type ObserveInput,
+  type PracticeInput,
   type RecommendInput,
   type RoadmapInput,
   type ScheduleInput,
@@ -59,11 +60,36 @@ export function useRoadmap(input: RoadmapInput, enabled: boolean) {
   });
 }
 
-/** Self-healing prerequisite graph — the controlled recovery experiment. */
-export function useGraphHealth(goal: string, enabled: boolean) {
+/** Real videos + problems for the track, ordered along the path and paced by velocity. */
+export function useLibrary(q: { goal: string; learner_id: string; speed: string; pace: string; hours_per_week: number }) {
   return useQuery({
-    queryKey: ["graph-health", goal] as const,
-    queryFn: () => api.graphHealth(goal),
+    queryKey: ["library", q] as const,
+    queryFn: () => api.library(q),
+    enabled: q.goal.trim().length > 1,
+    placeholderData: (prev) => prev,
+    staleTime: 60_000,
+  });
+}
+
+export function useLibraryStats() {
+  return useQuery({ queryKey: ["library-stats"], queryFn: api.libraryStats, staleTime: Infinity, retry: 0 });
+}
+
+export function useCertifications(goal: string) {
+  return useQuery({
+    queryKey: ["certifications", goal] as const,
+    queryFn: () => api.certifications(goal),
+    enabled: goal.trim().length > 1,
+    staleTime: Infinity,
+  });
+}
+
+/** Self-healing prerequisite graph: ``learners = 0`` reads the live evidence
+ *  (real attempts and diagnosed errors); ``> 0`` runs the recovery experiment. */
+export function useGraphHealth(goal: string, enabled: boolean, learners = 6000) {
+  return useQuery({
+    queryKey: ["graph-health", goal, learners] as const,
+    queryFn: () => api.graphHealth(goal, learners),
     enabled: enabled && goal.trim().length > 1,
     staleTime: Infinity,
   });
@@ -123,4 +149,27 @@ export function useAssessment(learnerId: string) {
     },
   });
   return { start, answer };
+}
+
+/** Practice tasks + the task to start on for this learner and target concept. */
+export function usePracticeTasks(learnerId: string, target: string, goal?: string) {
+  return useQuery({
+    queryKey: ["practice-tasks", learnerId, target, goal ?? ""] as const,
+    queryFn: () => api.practiceTasks(learnerId, target, goal),
+    staleTime: Infinity,
+  });
+}
+
+/** Run a query in the sandbox: graded, diagnosed, and the plan re-made. */
+export function usePracticeSubmit(learnerId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Omit<PracticeInput, "learner_id">) =>
+      api.practiceSubmit({ ...input, learner_id: learnerId }),
+    onSuccess: () => {
+      // the learner model moved -> cached plans are stale
+      void qc.invalidateQueries({ queryKey: ["recommend"] });
+      void qc.invalidateQueries({ queryKey: ["roadmap"] });
+    },
+  });
 }

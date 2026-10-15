@@ -1,0 +1,9 @@
+scenario,condition,learners,success_rate,mean_attempts,mean_attempts_successful,median_attempts,identified_rate,mean_attempts_to_identify,edge_hidden_to_goal,edge_in_curated_graph
+NULL logic behind LEFT JOIN,outcome-only,200,0.67,12.84,9.31,9.0,0.0,,0.25,False
+NULL logic behind LEFT JOIN,execution-verified,200,1.0,10.07,10.07,10.0,0.995,1.12,0.984,False
+join fan-out behind GROUP BY,outcome-only,200,0.61,13.89,9.98,9.0,0.0,,,False
+join fan-out behind GROUP BY,execution-verified,200,0.995,9.07,9.02,9,0.995,1.14,,False
+GROUP BY behind HAVING,outcome-only,200,0.685,12.54,9.12,8,0.0,,0.645,True
+GROUP BY behind HAVING,execution-verified,200,0.995,9.45,9.39,9,0.985,1.13,0.969,True
+control: no misconception,outcome-only,200,1.0,3.69,3.69,3.0,,,,
+control: no misconception,execution-verified,200,1.0,3.69,3.69,3.0,,,,

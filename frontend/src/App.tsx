@@ -1,75 +1,62 @@
 import { lazy, Suspense } from "react";
-import { Link, NavLink, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 
-import { CommandPalette } from "./components/CommandPalette";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { ThemeToggle } from "./components/ThemeToggle";
-import { Callout, Empty, Spinner } from "./components/ui";
-import type { Catalogue } from "./lib/api";
-import { useCatalogue } from "./lib/queries";
-import { HomePage } from "./features/home/HomePage";
+import { Shell } from "./components/Shell";
+import { ErrorBox, Loading } from "./components/stitch";
+import { AssessPage } from "./features/assess/AssessPage";
+import { CalendarPage } from "./features/calendar/CalendarPage";
+import { CertificationsPage } from "./features/certifications/CertificationsPage";
+import { InterviewPage } from "./features/interview/InterviewPage";
 import { LearnPage } from "./features/learn/LearnPage";
+import { MapPage } from "./features/map/MapPage";
+import { PlanPage } from "./features/plan/PlanPage";
+import { PortfolioPage } from "./features/portfolio/PortfolioPage";
+import { RoadmapPage } from "./features/plan/RoadmapPage";
+import { SessionPage } from "./features/plan/SessionPage";
+import { PracticeHub } from "./features/practice/PracticeHub";
+import { ProgressPage } from "./features/progress/ProgressPage";
+import { ProjectsPage } from "./features/projects/ProjectsPage";
+import { TodayPage } from "./features/today/TodayPage";
+import { WelcomePage } from "./features/welcome/WelcomePage";
+import { useCatalogue } from "./lib/queries";
 
-const TeacherPage = lazy(() =>
-  import("./features/teacher/TeacherPage").then((m) => ({ default: m.TeacherPage })),
-);
+// recharts lives only here - keep it out of the main bundle
+const TeacherPage = lazy(() => import("./features/teacher/TeacherPage").then((m) => ({ default: m.TeacherPage })));
 
 export function App() {
   return (
-    <div className="shell">
-      <CommandPalette />
-      <header className="topbar">
-        <Link to="/" className="wordmark">
-          VELPO
-        </Link>
-        <span className="spacer" />
-        <NavLink to="/teacher" className={({ isActive }) => `navlink ${isActive ? "active" : ""}`}>
-          Teacher console
-        </NavLink>
-        <span className="kbd">⌘K</span>
-        <ThemeToggle />
-      </header>
-
+    <Shell>
       <ErrorBoundary>
-        <Suspense fallback={<Empty>Loading…</Empty>}>
+        <Suspense fallback={<Loading label="Loading…" />}>
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<WelcomePage />} />
+            <Route path="/today" element={<TodayPage />} />
+            <Route path="/roadmap" element={<RoadmapPage />} />
+            <Route path="/plan" element={<PlanPage />} />
+            <Route path="/session/:n" element={<SessionPage />} />
+            <Route path="/map" element={<MapPage />} />
             <Route path="/learn" element={<LearnPage />} />
-            <Route
-              path="/teacher"
-              element={
-                <CatalogueGate>{(cat) => <TeacherPage catalogue={cat} />}</CatalogueGate>
-              }
-            />
-            <Route path="*" element={<HomePage />} />
+            <Route path="/practice" element={<PracticeHub />} />
+            <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/portfolio" element={<PortfolioPage />} />
+            <Route path="/interview" element={<InterviewPage />} />
+            <Route path="/certifications" element={<CertificationsPage />} />
+            <Route path="/progress" element={<ProgressPage />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/assess" element={<AssessPage />} />
+            <Route path="/teacher" element={<Teacher />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </ErrorBoundary>
-
-      <footer className="foot">
-        Every path is a linear extension of the prerequisite poset — valid <em>by construction</em>.
-        The sequencing DP is provably optimal; the adaptive test is 2-parameter IRT; resources are
-        real and open.
-      </footer>
-    </div>
+    </Shell>
   );
 }
 
-function CatalogueGate({ children }: { children: (c: Catalogue) => React.ReactNode }) {
-  const { data, isPending, isError, error, refetch } = useCatalogue();
-  if (isPending) return <Spinner label="Loading…" />;
-  if (isError)
-    return (
-      <div style={{ marginTop: 24 }}>
-        <Callout tone="warn">
-          {error.message}
-          <div style={{ marginTop: 10 }}>
-            <button className="btn" onClick={() => void refetch()}>
-              Retry
-            </button>
-          </div>
-        </Callout>
-      </div>
-    );
-  return <>{children(data)}</>;
+function Teacher() {
+  const cat = useCatalogue();
+  if (cat.isPending) return <Loading label="Loading the course catalogue…" />;
+  if (cat.isError) return <ErrorBox>{cat.error.message}</ErrorBox>;
+  return <TeacherPage catalogue={cat.data} />;
 }

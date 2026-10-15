@@ -3,6 +3,8 @@ informative items; it never asks the learner to rate themselves."""
 
 from __future__ import annotations
 
+import random
+
 import numpy as np
 import pytest
 
@@ -122,7 +124,7 @@ def test_item_banks_exist_and_span_a_difficulty_band(domain: str) -> None:
 
 
 def test_no_item_bank_for_an_uncalibrated_domain() -> None:
-    assert build_item_bank("dataviz") is None
+    assert build_item_bank("dsa_python") is None
 
 
 def test_sql_adaptive_session_recovers_rank_order() -> None:
@@ -223,3 +225,20 @@ def test_answering_an_item_twice_is_rejected() -> None:
     sess.submit(q.id, True)
     with pytest.raises(ValueError, match="already answered"):
         sess.submit(q.id, False)
+
+
+def test_remaining_estimate_counts_down_to_the_real_end() -> None:
+    """'About N more' must be the expected count, not the worst case: it counts
+    down by one per answer and reaches 0 exactly when the test stops."""
+    for domain in ("sql", "algebra", "python"):
+        bank = build_item_bank(domain)
+        s = AdaptiveSession(bank, skills=bank.skills[:6])
+        rng = random.Random(0)
+        seen: list[int] = []
+        while not s.done:
+            seen.append(s.remaining_estimate())
+            q = s.next_question()
+            assert q is not None
+            s.submit(q.id, rng.random() < 0.6)
+        assert s.remaining_estimate() == 0
+        assert seen[0] == len(seen)  # the first estimate was the true length

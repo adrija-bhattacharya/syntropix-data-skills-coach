@@ -15,28 +15,23 @@ npm run build    # -> ../web/
 
 | concern | choice |
 |---|---|
-| server state | **TanStack Query** - caching, dedupe, `placeholderData`, mutation-driven invalidation |
-| routing | **React Router** - `/learner` and `/teacher`, both `React.lazy` code-split |
+| look | **Tailwind CSS** with the Google Stitch "DAG runtime" theme (`tailwind.config.js`), Material Symbols icons |
+| server state | **TanStack Query** - caching, dedupe, mutation-driven invalidation |
+| routing | **React Router** - one route per Stitch screen; the Teacher Console is code-split |
 | runtime validation | **Zod** - every API response is parsed; a shape change fails in one place |
-| charts | **Recharts** - difficulty line per plan, Pareto scatter (bubble = cognitive load) |
-| local state | `useReducer` for the teacher constraint builder; `Context` for the shared learner id |
-| theming | light / dark / system, persisted to `localStorage` |
-| tests | **Vitest + @testing-library/react + MSW** - 19 tests, mock API, no backend needed |
-| resilience | an `ErrorBoundary` at the root and around the routed views; explicit loading / error / empty states |
+| app state | `TrackContext` (goal, level, hours, date, last skill check) and `LearnerContext`, both persisted |
+| tests | **Vitest + @testing-library/react + MSW** - mock API, no backend needed |
 
 ## Layout
 
 ```
 src/
-  main.tsx                providers: QueryClient · Router · Theme · Learner · ErrorBoundary
-  App.tsx                 shell, nav, route table, catalogue gate
-  index.css               design tokens + light/dark
-  lib/        api.ts (zod client) · queries.ts (hooks) · format.ts · theme.tsx
-  context/    LearnerContext.tsx
-  components/ ui.tsx · ChipSelect · PathCard · ParetoChart · ThemeToggle · ErrorBoundary
-  features/
-    learner/  LearnerPage · RecommendForm · ObservePanel
-    teacher/  TeacherPage · ConstraintBuilder · constraintReducer(.test)
+  main.tsx              providers: QueryClient · Learner · Track · Router · ErrorBoundary
+  App.tsx               route table inside the Stitch shell
+  components/ Shell.tsx (sidebar, top bar, status footer, palette) · stitch.tsx (primitives) · ParetoChart
+  context/    LearnerContext · TrackContext
+  lib/        api.ts (zod client) · queries.ts · plan.ts (sessions, delta) · ics.ts · format.ts
+  features/   map · assess · plan (study plan, roadmap, session) · calendar · practice · teacher
   test/       setup.ts · server.ts · handlers.ts · utils.tsx
 ```
 

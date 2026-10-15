@@ -299,4 +299,289 @@ export const handlers = [
       reason: `Why ${b.resource_id}: grounded in the graph.`,
     });
   }),
+
+  http.get("/health", () =>
+    HttpResponse.json({ status: "ok", version: "1.0.0", concepts: 4, resources: 5 }),
+  ),
+
+  http.post("/graph/health", async ({ request }) => {
+    const b = (await request.json()) as { learners: number };
+    return HttpResponse.json({
+      domain: "algebra",
+      source: "seed",
+      observations: b.learners ? 18000 : 3,
+      watched: 4,
+      clean: !b.learners,
+      pruned: [],
+      added: [],
+      suggested: [],
+      reweighted: [],
+      recovery: b.learners
+        ? { recall: 1, precision_drop: 0.5, hidden: [], injected: [], hidden_recovered: [], injected_pruned: [] }
+        : null,
+    });
+  }),
+
+  http.get("/practice/tasks", () => HttpResponse.json(practiceTasksFixture)),
+  http.post("/practice/submit", () => HttpResponse.json(practiceFailFixture)),
+  http.get("/library", ({ request }) => {
+    const pace = new URL(request.url).searchParams.get("pace");
+    return HttpResponse.json({ ...libraryFixture, pace: pace && pace !== "auto" ? pace : "steady" });
+  }),
+  http.get("/portfolio/:id", () => HttpResponse.json(portfolioFixture)),
+  http.put("/portfolio/:id/profile", async ({ request }) => {
+    const b = (await request.json()) as { name: string; public: boolean };
+    return HttpResponse.json({ ...portfolioFixture, name: b.name, public: b.public, slug: "ada", share_path: "/p/ada" });
+  }),
+  http.post("/portfolio/:id/projects", async ({ request }) => {
+    const b = (await request.json()) as { project_id: string; title: string; repo_url: string; skills: string[] };
+    return HttpResponse.json({
+      ...portfolioFixture,
+      projects: [{ ...b, summary: "", demo_url: "", added_at: "2026-10-13T10:00", link_ok: true }],
+    });
+  }),
+  http.post("/what-fits", () =>
+    HttpResponse.json({
+      confidence: 0.9,
+      capacity_hours: 20,
+      chosen: [{ concept_id: "quadratics", concept: "Quadratic equations", value: 1 }],
+      dropped: [{ concept_id: "window_functions", concept: "Window functions", value: 1 }],
+      p_finish: 0.93,
+      expected_hours: 12,
+      p90_hours: 17,
+      value_share: 0.5,
+      hours_per_week_for_all: 8,
+      by_expected_time: { goals: ["Quadratic equations", "Window functions"], p_finish: 0.55 },
+    }),
+  ),
+  http.post("/reschedule", async ({ request }) => {
+    const b = (await request.json()) as { log: { done_minutes: number; planned_minutes: number }[] };
+    const missed = b.log.some((e) => e.done_minutes < e.planned_minutes);
+    return HttpResponse.json({
+      adherence: missed ? 0.65 : 1,
+      logged_days: b.log.length,
+      done_minutes: 0,
+      planned_minutes_so_far: missed ? 40 : 0,
+      effective_hours_per_week: 4,
+      busy_events: 0,
+      past_days: [{ day: "2026-01-05", planned_minutes: 40 }],
+      remaining_minutes: missed ? 300 : 200,
+      feasible: true,
+      finish: "2026-01-20",
+      deadline: "2026-01-26",
+      hours_per_week_needed: 0,
+      reasons: missed ? ["You've been studying about 65% of planned time, so the remaining work is planned as 300 minutes instead of 200."] : [],
+      blocks: [
+        { day: "2099-01-06", start: "19:00", end: "19:45", minutes: 45, concept_id: "integers", concept: "Integers & number line", title: "Integers", kind: "teach", part: 1, parts: 2 },
+      ],
+      days: [{ day: "2099-01-06", busy_minutes: 0, fatigue: 0, cap_minutes: 90, max_block: 60, study_minutes: 45 }],
+      busy_spans: {},
+      forecast: { p50: "2026-01-21", p80: "2026-01-24", p95: "2026-01-29", p_on_time: 0.83, trust: 0.4, checks: 5, hits: 3 },
+      study_times: [
+        { slot: "weekend morning", multiplier: 1.3, answers: 14 },
+        { slot: "weekday night", multiplier: 0.8, answers: 9 },
+      ],
+      focus: { half_life_min: 30, block_min: 25, answers: 40 },
+      practice_answers: 60,
+      slowdowns: [
+        {
+          concept_id: "outer_join",
+          concept: "LEFT / RIGHT / FULL JOIN",
+          ratio: 0.3,
+          suspects: [{ concept_id: "null_logic", concept: "NULL & three-valued logic", kind: "missing_prerequisite", mastery: 0.2 }],
+        },
+      ],
+      velocity: {
+        aware: true,
+        measured_topics: 1,
+        topics: [
+          { concept_id: "quadratics", concept: "Quadratic equations", ratio: 1.6, velocity: 0.6, hours_to_master: 1.2, source: "predicted" },
+          { concept_id: "integers", concept: "Integers & number line", ratio: 0.5, velocity: 2.1, hours_to_master: 0.3, source: "measured" },
+        ],
+      },
+      naive: { finish: "2026-01-28", feasible: false, notes: ["3 block(s) clash with events in your calendar."] },
+    });
+  }),
+  http.get("/library/stats", () =>
+    HttpResponse.json({ harvested: "2026-10-13", problems: 600, videos: 195, leetcode: 230, hackerrank: 252, open_sites: 68, domains: ["sql"] }),
+  ),
+  http.get("/certifications", () =>
+    HttpResponse.json({
+      certifications: [
+        { id: "hr_sql", name: "HackerRank SQL (Basic)", provider: "HackerRank", url: "https://www.hackerrank.com/skills-verification/sql_basic", level: "entry", free: true, price_note: "", hours: 2, blurb: "A free skills badge." },
+        { id: "pl300", name: "Microsoft PL-300", provider: "Microsoft", url: "https://learn.microsoft.com/", level: "associate", free: false, price_note: "Paid exam", hours: 60, blurb: "Power BI Data Analyst." },
+      ],
+    }),
+  ),
 ];
+
+const video = (id: string, concept: string | null, kind: string, level = "") => ({
+  video_id: id,
+  title: `Video ${id}`,
+  channel: "freeCodeCamp.org",
+  minutes: 12,
+  views: 1000,
+  url: `https://www.youtube.com/watch?v=${id}`,
+  domain: "algebra",
+  concept,
+  level,
+  kind,
+});
+const problem = (title: string, difficulty: string, platform = "LeetCode") => ({
+  platform,
+  set: platform === "LeetCode" ? "SQL 50" : "SQL track",
+  section: "",
+  title,
+  url: `https://example.com/${title.replaceAll(" ", "-")}`,
+  difficulty,
+  domain: "algebra",
+  concept: "integers",
+  free: true,
+});
+export const libraryFixture = {
+  pace: "steady",
+  pace_text: "You learn at a steady pace.",
+  pace_source: "your speed setting",
+  harvested: "2026-10-13",
+  totals: { problems: 2, videos: 2, stretch: 1, review: 0, mixed: 0, weeks: 1, leetcode: 1, hackerrank: 1 },
+  courses: [video("course00001", null, "course", "Beginner")],
+  steps: [
+    {
+      concept_id: "integers",
+      domain: "algebra",
+      concept: "Integers & number line",
+      mastery: 0.2,
+      video: video("lesson00001", "integers", "lesson"),
+      problems: [problem("Big Countries", "Easy"), problem("Revising the Select Query", "Easy", "HackerRank")],
+    },
+  ],
+  weeks: [
+    {
+      week: 1,
+      minutes: 50,
+      items: [
+        { type: "video", concept_id: "integers", concept: "Integers & number line", minutes: 12, title: "Video lesson00001", url: "u", video_id: "lesson00001", channel: "c" },
+        { type: "problem", ...problem("Big Countries", "Easy"), concept_id: "integers", concept: "Integers & number line", minutes: 12 },
+      ],
+    },
+  ],
+  stretch: [{ ...problem("Hard One", "Hard"), concept_id: "integers" }],
+  review: [],
+  mixed: [],
+};
+
+export const practiceTasksFixture = {
+  start: "orders_per_customer",
+  path: ["null_logic", "outer_join"],
+  mastery: { null_logic: 0.9, outer_join: 0.09 },
+  p_correct: { null_logic: 0.83, outer_join: 0.26 },
+  schema: {
+    customers: {
+      rows: 6,
+      columns: [
+        { name: "id", type: "INTEGER", pk: true, nulls: 0 },
+        { name: "city", type: "TEXT", pk: false, nulls: 1 },
+      ],
+    },
+  },
+  tasks: [
+    {
+      id: "unknown_city",
+      concept_id: "null_logic",
+      concept: "NULL & three-valued logic",
+      prompt: "Names of the customers whose city is unknown.",
+      ordered: false,
+      minutes: 6,
+      hints: ["NULL means unknown: test it with IS NULL.", "SELECT … FROM … WHERE … IS NULL"],
+    },
+    {
+      id: "orders_per_customer",
+      concept_id: "outer_join",
+      concept: "LEFT / RIGHT / FULL JOIN",
+      prompt: "Every customer's name with their number of orders - customers with none show 0.",
+      ordered: false,
+      minutes: 12,
+      hints: ["LEFT JOIN keeps every row of the left table.", "SELECT …, COUNT(…) FROM … LEFT JOIN … ON … = … GROUP BY …"],
+    },
+  ],
+};
+
+export const practiceFailFixture = {
+  task_id: "orders_per_customer",
+  correct: false,
+  result: {
+    columns: ["name", "COUNT(*)"],
+    rows: [["Asha", 2], ["Eshan", 1]],
+    error: "",
+    truncated: false,
+    ms: 0.4,
+    row_status: ["ok", "extra"],
+    missing_rows: 1,
+    expected_rows: 2,
+  },
+  checks: [
+    { id: "runs", label: "Query runs", passed: true, detail: "Ran in 0.4 ms." },
+    { id: "values", label: "Same rows and values", passed: false, detail: "1 expected row(s) not matched." },
+  ],
+  p_correct_before: 0.26,
+  diagnoses: [
+    {
+      code: "count_star_outer",
+      concept_id: "null_logic",
+      weight: 0.9,
+      message: "COUNT(*) counts the NULL-padded row an outer join adds for 'no match'.",
+    },
+  ],
+  mastery: {
+    outer_join: { name: "LEFT / RIGHT / FULL JOIN", before: 0.09, after: 0.21 },
+    null_logic: { name: "NULL & three-valued logic", before: 0.9, after: 0.65 },
+  },
+  edge_evidence: [{ from: "null_logic", to: "outer_join", confidence: 0.37 }],
+  plan: {
+    feasible: true,
+    note: "",
+    total_minutes: 30,
+    objective: { neg_gain: -1, seconds: 1800, load: 0.5, diff_jump: 0, neg_review: 0 },
+    steps: [
+      { resource_id: "null_logic:practice", concept_id: "null_logic", reason: "", repair: true },
+      { resource_id: "outer_join:practice", concept_id: "outer_join", reason: "" },
+    ],
+    sessions: [],
+  },
+  next_task: "unknown_city",
+  replan_ms: 0.6,
+};
+
+export const portfolioFixture = {
+  name: "A Syntropix learner",
+  headline: "",
+  github: "",
+  linkedin: "",
+  slug: "learner-abc",
+  public: false,
+  skills: {
+    sql: [
+      {
+        task_id: "products_list",
+        concept: "select_from",
+        concept_name: "SELECT ... FROM",
+        domain: "sql",
+        kind: "sql",
+        prompt: "List every product's name and price.",
+        answer: "SELECT name, price FROM products",
+        checks: ["Runs without errors", "Same rows and values"],
+        result_preview: [["Pen", 1.5]],
+        columns: ["name", "price"],
+        solved_at: "2026-10-13T09:00",
+        attempts: 2,
+        rechecked: true,
+      },
+    ],
+  },
+  projects: [],
+  solved: 1,
+  rechecked_ok: 1,
+  mastery: {},
+  built: "today",
+  share_path: "/p/learner-abc",
+};

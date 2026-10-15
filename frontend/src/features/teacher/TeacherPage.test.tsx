@@ -13,7 +13,7 @@ describe("TeacherPage", () => {
     const user = userEvent.setup();
     renderApp(<TeacherPage catalogue={catalogueFixture} />);
 
-    await user.click(screen.getByRole("button", { name: /Re-solve under constraints/i }));
+    await user.click(screen.getByRole("button", { name: /Find the best plans/i }));
 
     expect(await screen.findByText("2 non-dominated")).toBeInTheDocument();
     // the selected path is inspected below the chart
@@ -31,11 +31,11 @@ describe("TeacherPage", () => {
     const user = userEvent.setup();
     renderApp(<TeacherPage catalogue={catalogueFixture} />);
 
-    const banGroup = screen.getByRole("group", { name: /Ban resources/i });
+    const banGroup = screen.getByRole("group", { name: /Never use these lessons/i });
     await user.click(within(banGroup).getByRole("button", { name: "integers:lesson" }));
     await user.selectOptions(screen.getByLabelText("before"), "fractions");
     await user.selectOptions(screen.getByLabelText("after"), "linear_eq");
-    await user.click(screen.getByRole("button", { name: /Re-solve under constraints/i }));
+    await user.click(screen.getByRole("button", { name: /Find the best plans/i }));
 
     await screen.findByText(/banned everything/i);
     expect(body).toMatchObject({
@@ -53,14 +53,14 @@ describe("TeacherPage", () => {
     );
     const user = userEvent.setup();
     renderApp(<TeacherPage catalogue={catalogueFixture} />);
-    await user.click(screen.getByRole("button", { name: /Re-solve under constraints/i }));
+    await user.click(screen.getByRole("button", { name: /Find the best plans/i }));
     expect(await screen.findByText(/budget too small/i)).toBeInTheDocument();
   });
 
   it("reset clears the constraints", async () => {
     const user = userEvent.setup();
     renderApp(<TeacherPage catalogue={catalogueFixture} />);
-    const lockGroup = screen.getByRole("group", { name: /Lock resources/i });
+    const lockGroup = screen.getByRole("group", { name: /Always include these lessons/i });
     await user.click(within(lockGroup).getByRole("button", { name: "fractions:lesson" }));
     expect(within(lockGroup).getByRole("button", { name: "fractions:lesson" })).toHaveAttribute(
       "aria-pressed",

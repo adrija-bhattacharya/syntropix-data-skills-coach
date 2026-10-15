@@ -121,6 +121,9 @@ _CERT_HOSTS = (
     "hackerrank.com",
     "tableau.com",
     "github.com",
+    "getdbt.com",
+    "databricks.com",
+    "cloud.google.com",
 )
 
 

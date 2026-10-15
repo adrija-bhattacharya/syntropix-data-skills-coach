@@ -1,0 +1,83 @@
+[
+ {
+  "scenario": "light calendar",
+  "policy": "lesson minutes",
+  "on_time": 0.57,
+  "forecast_error_days": 13.0,
+  "actual_within_p80": 0.22,
+  "late_flagged_by_week_2": 0.256,
+  "learners": 100
+ },
+ {
+  "scenario": "light calendar",
+  "policy": "velocity-sized",
+  "on_time": 0.57,
+  "forecast_error_days": 12.6,
+  "actual_within_p80": 0.79,
+  "late_flagged_by_week_2": 0.86,
+  "learners": 100
+ },
+ {
+  "scenario": "light calendar",
+  "policy": "velocity-sized + matched",
+  "on_time": 0.56,
+  "forecast_error_days": 12.7,
+  "actual_within_p80": 0.78,
+  "late_flagged_by_week_2": 0.841,
+  "learners": 100
+ },
+ {
+  "scenario": "busy calendar",
+  "policy": "lesson minutes",
+  "on_time": 0.53,
+  "forecast_error_days": 14.0,
+  "actual_within_p80": 0.14,
+  "late_flagged_by_week_2": 0.511,
+  "learners": 100
+ },
+ {
+  "scenario": "busy calendar",
+  "policy": "velocity-sized",
+  "on_time": 0.53,
+  "forecast_error_days": 12.8,
+  "actual_within_p80": 0.73,
+  "late_flagged_by_week_2": 0.809,
+  "learners": 100
+ },
+ {
+  "scenario": "busy calendar",
+  "policy": "velocity-sized + matched",
+  "on_time": 0.53,
+  "forecast_error_days": 12.9,
+  "actual_within_p80": 0.76,
+  "late_flagged_by_week_2": 0.83,
+  "learners": 100
+ },
+ {
+  "scenario": "very busy + tight deadline",
+  "policy": "lesson minutes",
+  "on_time": 0.42,
+  "forecast_error_days": 13.8,
+  "actual_within_p80": 0.15,
+  "late_flagged_by_week_2": 0.759,
+  "learners": 100
+ },
+ {
+  "scenario": "very busy + tight deadline",
+  "policy": "velocity-sized",
+  "on_time": 0.49,
+  "forecast_error_days": 12.9,
+  "actual_within_p80": 0.77,
+  "late_flagged_by_week_2": 0.863,
+  "learners": 100
+ },
+ {
+  "scenario": "very busy + tight deadline",
+  "policy": "velocity-sized + matched",
+  "on_time": 0.47,
+  "forecast_error_days": 12.8,
+  "actual_within_p80": 0.77,
+  "late_flagged_by_week_2": 0.849,
+  "learners": 100
+ }
+]

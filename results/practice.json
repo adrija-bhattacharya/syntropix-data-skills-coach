@@ -1,0 +1,117 @@
+{
+  "params": {
+    "learners": 200,
+    "max_attempts": 20,
+    "p_learn": 0.4,
+    "p_incidental": 0.05,
+    "noise": 0.1,
+    "slip": 0.03,
+    "mastery_threshold": 0.75
+  },
+  "rows": [
+    {
+      "scenario": "NULL logic behind LEFT JOIN",
+      "condition": "outcome-only",
+      "learners": 200,
+      "success_rate": 0.67,
+      "mean_attempts": 12.84,
+      "mean_attempts_successful": 9.31,
+      "median_attempts": 9.0,
+      "identified_rate": 0.0,
+      "mean_attempts_to_identify": null,
+      "edge_hidden_to_goal": 0.25,
+      "edge_in_curated_graph": false
+    },
+    {
+      "scenario": "NULL logic behind LEFT JOIN",
+      "condition": "execution-verified",
+      "learners": 200,
+      "success_rate": 1.0,
+      "mean_attempts": 10.07,
+      "mean_attempts_successful": 10.07,
+      "median_attempts": 10.0,
+      "identified_rate": 0.995,
+      "mean_attempts_to_identify": 1.12,
+      "edge_hidden_to_goal": 0.984,
+      "edge_in_curated_graph": false
+    },
+    {
+      "scenario": "join fan-out behind GROUP BY",
+      "condition": "outcome-only",
+      "learners": 200,
+      "success_rate": 0.61,
+      "mean_attempts": 13.89,
+      "mean_attempts_successful": 9.98,
+      "median_attempts": 9.0,
+      "identified_rate": 0.0,
+      "mean_attempts_to_identify": null,
+      "edge_hidden_to_goal": null,
+      "edge_in_curated_graph": false
+    },
+    {
+      "scenario": "join fan-out behind GROUP BY",
+      "condition": "execution-verified",
+      "learners": 200,
+      "success_rate": 0.995,
+      "mean_attempts": 9.07,
+      "mean_attempts_successful": 9.02,
+      "median_attempts": 9,
+      "identified_rate": 0.995,
+      "mean_attempts_to_identify": 1.14,
+      "edge_hidden_to_goal": null,
+      "edge_in_curated_graph": false
+    },
+    {
+      "scenario": "GROUP BY behind HAVING",
+      "condition": "outcome-only",
+      "learners": 200,
+      "success_rate": 0.685,
+      "mean_attempts": 12.54,
+      "mean_attempts_successful": 9.12,
+      "median_attempts": 8,
+      "identified_rate": 0.0,
+      "mean_attempts_to_identify": null,
+      "edge_hidden_to_goal": 0.645,
+      "edge_in_curated_graph": true
+    },
+    {
+      "scenario": "GROUP BY behind HAVING",
+      "condition": "execution-verified",
+      "learners": 200,
+      "success_rate": 0.995,
+      "mean_attempts": 9.45,
+      "mean_attempts_successful": 9.39,
+      "median_attempts": 9,
+      "identified_rate": 0.985,
+      "mean_attempts_to_identify": 1.13,
+      "edge_hidden_to_goal": 0.969,
+      "edge_in_curated_graph": true
+    },
+    {
+      "scenario": "control: no misconception",
+      "condition": "outcome-only",
+      "learners": 200,
+      "success_rate": 1.0,
+      "mean_attempts": 3.69,
+      "mean_attempts_successful": 3.69,
+      "median_attempts": 3.0,
+      "identified_rate": null,
+      "mean_attempts_to_identify": null,
+      "edge_hidden_to_goal": null,
+      "edge_in_curated_graph": null
+    },
+    {
+      "scenario": "control: no misconception",
+      "condition": "execution-verified",
+      "learners": 200,
+      "success_rate": 1.0,
+      "mean_attempts": 3.69,
+      "mean_attempts_successful": 3.69,
+      "median_attempts": 3.0,
+      "identified_rate": null,
+      "mean_attempts_to_identify": null,
+      "edge_hidden_to_goal": null,
+      "edge_in_curated_graph": null
+    }
+  ]
+}

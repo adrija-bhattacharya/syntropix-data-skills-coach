@@ -1,5 +1,5 @@
 /**
- * Typed VELPO API client.  Every response is validated at runtime with zod, so
+ * Typed Syntropix API client.  Every response is validated at runtime with zod, so
  * a shape change on the Python side fails loudly in one place instead of
  * surfacing as `undefined` deep in a component.
  */
@@ -31,6 +31,9 @@ export const Step = z.object({
   source: z.string().default(""),
   kind: z.string().default("lesson"),
   difficulty: z.number().default(0),
+  minutes: z.number().default(0),
+  concept: z.string().default(""),
+  repair: z.boolean().default(false),
 });
 export const Session = z.object({ start: z.number(), end: z.number() });
 export const Objective = z.object({
@@ -49,6 +52,12 @@ export const Path = z.object({
   sessions: z.array(Session).default([]),
   confidence: z.record(z.number()).optional(),
   min_confidence: z.number().optional(),
+  mastery: z.record(z.number()).default({}),
+  prerequisites: z.record(z.array(z.string())).default({}),
+  names: z.record(z.string()).default({}),
+  p_correct: z.record(z.number()).default({}),
+  baseline_minutes: z.number().default(0),
+  session_minutes: z.number().default(35),
 });
 export const RecommendResponse = z.object({
   paths: z.array(Path),
@@ -219,6 +228,8 @@ export const AssessQuestion = z.object({
   kind: z.enum(["mcq", "task"]),
   stem: z.string(),
   choices: z.array(z.string()),
+  a: z.number().default(1),
+  b: z.number().default(0),
 });
 export const SkillEstimate = z.object({
   skill: z.string(),
@@ -233,6 +244,11 @@ export const AssessState = z.object({
   band: z.string().default("intermediate"),
   answered: z.number(),
   progress: z.number(),
+  /** expected questions left, including the current one */
+  remaining: z.number().nullable().default(null),
+  prior_sd: z.number().default(1.5),
+  prior_mean: z.number().default(0),
+  se_target: z.number().default(0.55),
   style: z
     .object({ hands_on: z.number(), recall: z.number(), note: z.string() })
     .nullable()
@@ -254,6 +270,73 @@ export const DiscoverResource = z.object({
 export const DiscoverResponse = z.object({
   concept: z.string(),
   resources: z.array(DiscoverResource),
+});
+
+// --- execution-verified practice (claim E) ---
+export const PracticeTask = z.object({
+  id: z.string(),
+  concept_id: z.string(),
+  concept: z.string(),
+  /** sql | python | excel | value - decides the workspace */
+  kind: z.string().default("sql"),
+  domain: z.string().default("sql"),
+  prompt: z.string(),
+  ordered: z.boolean(),
+  minutes: z.number().default(5),
+  hints: z.array(z.string()).default([]),
+  cell: z.string().default(""),
+  fill_down: z.boolean().default(false),
+  options: z.array(z.string()).default([]),
+  context: z.array(z.array(z.string())).default([]),
+  context_note: z.string().default(""),
+  env: z.record(z.string()).default({}),
+});
+export const SchemaColumn = z.object({
+  name: z.string(),
+  type: z.string(),
+  pk: z.boolean(),
+  nulls: z.number(),
+});
+export const PracticeTasks = z.object({
+  start: z.string().nullable().default(null),
+  path: z.array(z.string()).default([]),
+  mastery: z.record(z.number()).default({}),
+  p_correct: z.record(z.number()).default({}),
+  schema: z.record(z.object({ rows: z.number(), columns: z.array(SchemaColumn) })),
+  /** the Excel practice sheet, A..I x rows 1..11, as displayed values */
+  sheet: z.array(z.array(z.string())).default([]),
+  tasks: z.array(PracticeTask),
+});
+export const PracticeDiagnosis = z.object({
+  code: z.string(),
+  concept_id: z.string(),
+  weight: z.number(),
+  message: z.string(),
+});
+export const PracticeResult = z.object({
+  task_id: z.string(),
+  correct: z.boolean(),
+  result: z.object({
+    columns: z.array(z.string()),
+    rows: z.array(z.array(z.union([z.string(), z.number(), z.null()]))),
+    error: z.string(),
+    truncated: z.boolean(),
+    ms: z.number().default(0),
+    row_status: z.array(z.enum(["ok", "extra"])).default([]),
+    missing_rows: z.number().default(0),
+    expected_rows: z.number().default(0),
+  }),
+  checks: z
+    .array(z.object({ id: z.string(), label: z.string(), passed: z.boolean(), detail: z.string() }))
+    .default([]),
+  p_correct_before: z.number().default(0),
+  diagnoses: z.array(PracticeDiagnosis),
+  mastery: z.record(z.object({ name: z.string(), before: z.number(), after: z.number() })),
+  edge_evidence: z.array(z.object({ from: z.string(), to: z.string(), confidence: z.number() })),
+  plan: Path,
+  next_task: z.string().nullable(),
+  replan_ms: z.number(),
+  in_portfolio: z.boolean().default(false),
 });
 
 export type Concept = z.infer<typeof Concept>;
@@ -279,6 +362,281 @@ export type AssessQuestion = z.infer<typeof AssessQuestion>;
 export type SkillEstimate = z.infer<typeof SkillEstimate>;
 export type AssessState = z.infer<typeof AssessState>;
 export type DiscoverResource = z.infer<typeof DiscoverResource>;
+export type PracticeTask = z.infer<typeof PracticeTask>;
+export type SchemaColumn = z.infer<typeof SchemaColumn>;
+// --- skill library: real videos + practice problems, ordered by velocity ---
+export const Video = z.object({
+  video_id: z.string(),
+  title: z.string(),
+  channel: z.string(),
+  minutes: z.number(),
+  views: z.number().default(0),
+  url: z.string(),
+  domain: z.string(),
+  concept: z.string().nullable(),
+  level: z.string().default(""),
+  kind: z.string(),
+  /** semantic check: does it teach the topic, from what evidence, where */
+  check: z
+    .object({
+      level: z.string(),
+      source: z.string(),
+      judge: z.string(),
+      start: z.number(),
+      chapter: z.string(),
+      reason: z.string(),
+      score: z.number(),
+      coverage: z.array(z.string()),
+    })
+    .nullable()
+    .default(null),
+});
+export const Problem = z.object({
+  platform: z.string(),
+  set: z.string(),
+  section: z.string().default(""),
+  title: z.string(),
+  url: z.string(),
+  difficulty: z.string(),
+  domain: z.string().nullable(),
+  concept: z.string().nullable(),
+  free: z.boolean().default(true),
+  minutes: z.number().optional(),
+  concept_id: z.string().optional(),
+});
+export const LibraryStep = z.object({
+  concept_id: z.string(),
+  domain: z.string(),
+  concept: z.string(),
+  mastery: z.number(),
+  video: Video.nullable(),
+  problems: z.array(Problem),
+});
+export const WeekItem = z.object({
+  type: z.enum(["video", "problem"]),
+  concept_id: z.string(),
+  concept: z.string(),
+  minutes: z.number(),
+  title: z.string(),
+  url: z.string(),
+  platform: z.string().optional(),
+  set: z.string().optional(),
+  difficulty: z.string().optional(),
+  video_id: z.string().optional(),
+  channel: z.string().optional(),
+});
+export const Library = z.object({
+  pace: z.string(),
+  pace_text: z.string(),
+  pace_source: z.string(),
+  harvested: z.string().nullable(),
+  totals: z.record(z.number()),
+  courses: z.array(Video),
+  steps: z.array(LibraryStep),
+  weeks: z.array(z.object({ week: z.number(), minutes: z.number(), items: z.array(WeekItem) })),
+  stretch: z.array(Problem),
+  extra: z.array(Problem).default([]),
+  review: z.array(LibraryStep),
+  mixed: z.array(Problem),
+});
+export const LibraryStats = z.object({
+  harvested: z.string().nullable(),
+  problems: z.number(),
+  videos: z.number(),
+  leetcode: z.number(),
+  hackerrank: z.number(),
+  open_sites: z.number(),
+  domains: z.array(z.string()),
+});
+export type Video = z.infer<typeof Video>;
+export type Problem = z.infer<typeof Problem>;
+export type LibraryStep = z.infer<typeof LibraryStep>;
+export type Library = z.infer<typeof Library>;
+export type WeekItem = z.infer<typeof WeekItem>;
+
+// --- calendar feedback loop (claim F) ---
+export const RescheduleBlock = z.object({
+  day: z.string(),
+  start: z.string(),
+  end: z.string(),
+  minutes: z.number(),
+  concept_id: z.string(),
+  concept: z.string(),
+  title: z.string(),
+  kind: z.string(),
+  part: z.number(),
+  parts: z.number(),
+});
+export const RescheduleResponse = z.object({
+  adherence: z.number(),
+  logged_days: z.number(),
+  done_minutes: z.number(),
+  planned_minutes_so_far: z.number(),
+  effective_hours_per_week: z.number(),
+  busy_events: z.number(),
+  past_days: z.array(z.object({ day: z.string(), planned_minutes: z.number() })),
+  remaining_minutes: z.number(),
+  feasible: z.boolean(),
+  finish: z.string().nullable(),
+  deadline: z.string(),
+  hours_per_week_needed: z.number(),
+  reasons: z.array(z.string()),
+  blocks: z.array(RescheduleBlock),
+  days: z.array(
+    z.object({
+      day: z.string(),
+      busy_minutes: z.number(),
+      fatigue: z.number(),
+      cap_minutes: z.number(),
+      max_block: z.number(),
+      study_minutes: z.number(),
+    }),
+  ),
+  busy_spans: z.record(z.array(z.tuple([z.string(), z.string()]))).default({}),
+  forecast: z
+    .object({
+      p50: z.string().nullable(),
+      p80: z.string().nullable(),
+      p95: z.string().nullable(),
+      p_on_time: z.number(),
+      trust: z.number().default(1),
+      checks: z.number().default(0),
+      hits: z.number().default(0),
+    })
+    .nullable()
+    .default(null),
+  study_times: z.array(z.object({ slot: z.string(), multiplier: z.number(), answers: z.number() })).default([]),
+  focus: z.object({ half_life_min: z.number(), block_min: z.number(), answers: z.number() }).nullable().default(null),
+  practice_answers: z.number().default(0),
+  slowdowns: z
+    .array(
+      z.object({
+        concept_id: z.string(),
+        concept: z.string(),
+        ratio: z.number(),
+        suspects: z.array(z.object({ concept_id: z.string(), concept: z.string(), kind: z.string(), mastery: z.number() })),
+      }),
+    )
+    .default([]),
+  velocity: z
+    .object({
+      aware: z.boolean(),
+      measured_topics: z.number(),
+      topics: z.array(
+        z.object({
+          concept_id: z.string(),
+          concept: z.string(),
+          ratio: z.number(),
+          velocity: z.number(),
+          hours_to_master: z.number(),
+          source: z.string(),
+        }),
+      ),
+    })
+    .nullable()
+    .default(null),
+  naive: z.object({ finish: z.string().nullable(), feasible: z.boolean(), notes: z.array(z.string()) }),
+});
+export type RescheduleBlock = z.infer<typeof RescheduleBlock>;
+export type RescheduleResponse = z.infer<typeof RescheduleResponse>;
+export interface RescheduleInput {
+  learner_id: string;
+  goal: string;
+  goals: string[];
+  deadline: string;
+  hours_per_week: number;
+  speed: string;
+  plan_start?: string;
+  log: { day: string; planned_minutes: number; done_minutes: number }[];
+  busy_ics?: string;
+  now_minute?: number;
+}
+
+// --- proof-of-skill portfolio ---
+export const PortfolioSolve = z.object({
+  task_id: z.string(),
+  concept: z.string(),
+  concept_name: z.string(),
+  domain: z.string(),
+  kind: z.string(),
+  prompt: z.string(),
+  answer: z.string(),
+  checks: z.array(z.string()),
+  result_preview: z.array(z.array(z.unknown())),
+  columns: z.array(z.string()),
+  solved_at: z.string(),
+  attempts: z.number(),
+  rechecked: z.boolean(),
+});
+export const PortfolioProject = z.object({
+  project_id: z.string(),
+  title: z.string(),
+  summary: z.string(),
+  skills: z.array(z.string()),
+  repo_url: z.string(),
+  demo_url: z.string(),
+  added_at: z.string(),
+  link_ok: z.boolean().nullable(),
+});
+export const PortfolioView = z.object({
+  name: z.string(),
+  headline: z.string(),
+  github: z.string(),
+  linkedin: z.string(),
+  slug: z.string(),
+  public: z.boolean(),
+  skills: z.record(z.array(PortfolioSolve)),
+  projects: z.array(PortfolioProject),
+  solved: z.number(),
+  rechecked_ok: z.number(),
+  mastery: z.record(z.number()),
+  built: z.string(),
+  share_path: z.string(),
+  /** issued once, the first time the portfolio is opened - kept in this browser */
+  edit_key: z.string().optional(),
+});
+export type PortfolioView = z.infer<typeof PortfolioView>;
+export type PortfolioSolve = z.infer<typeof PortfolioSolve>;
+export interface ProfileInput {
+  name: string;
+  headline: string;
+  github: string;
+  linkedin: string;
+  public: boolean;
+}
+export interface ProjectInput {
+  project_id: string;
+  title: string;
+  summary: string;
+  skills: string[];
+  repo_url: string;
+  demo_url: string;
+}
+
+export const WhatFits = z.object({
+  confidence: z.number(),
+  capacity_hours: z.number(),
+  chosen: z.array(z.object({ concept_id: z.string(), concept: z.string(), value: z.number() })),
+  dropped: z.array(z.object({ concept_id: z.string(), concept: z.string(), value: z.number() })),
+  p_finish: z.number(),
+  expected_hours: z.number(),
+  p90_hours: z.number(),
+  value_share: z.number(),
+  hours_per_week_for_all: z.number().nullable(),
+  by_expected_time: z.object({ goals: z.array(z.string()), p_finish: z.number() }),
+});
+export type WhatFits = z.infer<typeof WhatFits>;
+
+export const Health = z.object({
+  status: z.string(),
+  version: z.string(),
+  concepts: z.number(),
+  resources: z.number(),
+});
+export type Health = z.infer<typeof Health>;
+export type PracticeTasks = z.infer<typeof PracticeTasks>;
+export type PracticeDiagnosis = z.infer<typeof PracticeDiagnosis>;
+export type PracticeResult = z.infer<typeof PracticeResult>;
 export type Speed = "slow" | "normal" | "fast";
 export type SolverMode = "sequence" | "optimal" | "interactive" | "pareto";
 
@@ -302,6 +660,7 @@ export interface ScheduleInput {
   deadline: string; // YYYY-MM-DD
   weekly_minutes?: number;
   speed?: Speed;
+  start?: string; // YYYY-MM-DD; a later start simulates missed days
 }
 
 export interface RoadmapInput {
@@ -321,6 +680,30 @@ export interface ObserveInput {
   hints?: number;
 }
 
+export interface PracticeInput {
+  learner_id: string;
+  task_id: string;
+  query: string;
+  goals?: string[];
+  /** the track's free-text goal - picks the same graph the plan uses */
+  goal?: string;
+}
+
+// ---- last request latency, for the status bar (a tiny external store)
+let lastLatency: number | null = null;
+const listeners = new Set<() => void>();
+function recordLatency(ms: number): void {
+  lastLatency = Math.round(ms);
+  listeners.forEach((l) => l());
+}
+export const latencyStore = {
+  subscribe(l: () => void) {
+    listeners.add(l);
+    return () => listeners.delete(l);
+  },
+  get: () => lastLatency,
+};
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -337,14 +720,16 @@ async function request<T>(
   init?: RequestInit,
 ): Promise<T> {
   let res: Response;
+  const t0 = performance.now();
   try {
     res = await fetch(path, {
       ...init,
-      headers: init?.body ? { "Content-Type": "application/json" } : undefined,
+      headers: { ...(init?.body ? { "Content-Type": "application/json" } : {}), ...(init?.headers as Record<string, string> | undefined) },
     });
   } catch {
-    throw new ApiError("Cannot reach the VELPO API. Is it running? (python velpo.py api)", 0);
+    throw new ApiError("Can't reach the Syntropix server. Is it running? (python velpo.py serve)", 0);
   }
+  recordLatency(performance.now() - t0);
   const body: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const detail =
@@ -360,7 +745,56 @@ async function request<T>(
   return parsed.data;
 }
 
+/** The portfolio's edit key lives in this browser only. */
+export function portfolioKey(learnerId: string): string | null {
+  try {
+    return localStorage.getItem(`syntropix-portfolio-key:${learnerId}`);
+  } catch {
+    return null;
+  }
+}
+
+async function owned(learnerId: string, path: string, init: RequestInit = {}) {
+  const key = portfolioKey(learnerId);
+  const out = await request(PortfolioView, path, { ...init, headers: key ? { "X-Portfolio-Key": key } : {} });
+  if (out.edit_key) {
+    try {
+      localStorage.setItem(`syntropix-portfolio-key:${learnerId}`, out.edit_key);
+    } catch {
+      /* private mode: the key lasts for this tab only */
+    }
+  }
+  return out;
+}
+
 export const api = {
+  health: () => request(Health, "/health"),
+
+  library: (q: { goal: string; learner_id: string; speed: string; pace: string; hours_per_week: number }) =>
+    request(Library, `/library?${new URLSearchParams({ ...q, hours_per_week: String(q.hours_per_week) })}`),
+
+  libraryStats: () => request(LibraryStats, "/library/stats"),
+
+  portfolio: (learnerId: string) => owned(learnerId, `/portfolio/${encodeURIComponent(learnerId)}`),
+  portfolioProfile: (learnerId: string, input: ProfileInput) =>
+    owned(learnerId, `/portfolio/${encodeURIComponent(learnerId)}/profile`, { method: "PUT", body: JSON.stringify(input) }),
+  portfolioProject: (learnerId: string, input: ProjectInput) =>
+    owned(learnerId, `/portfolio/${encodeURIComponent(learnerId)}/projects`, { method: "POST", body: JSON.stringify(input) }),
+  portfolioRemove: (learnerId: string, what: "solves" | "projects", id: string) =>
+    owned(learnerId, `/portfolio/${encodeURIComponent(learnerId)}/${what}/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  portfolioExportUrl: (learnerId: string) => {
+    const key = portfolioKey(learnerId);
+    return `/portfolio/${encodeURIComponent(learnerId)}/export.html${key ? `?key=${encodeURIComponent(key)}` : ""}`;
+  },
+
+  whatFits: (input: { learner_id: string; goal: string; goals: string[]; deadline: string; hours_per_week: number; confidence: number; log: RescheduleInput["log"] }) =>
+    request(WhatFits, "/what-fits", { method: "POST", body: JSON.stringify(input) }),
+
+  reschedule: (input: RescheduleInput) =>
+    request(RescheduleResponse, "/reschedule", { method: "POST", body: JSON.stringify(input) }),
+
+  certifications: (goal: string) =>
+    request(z.object({ certifications: z.array(Certification) }), `/certifications?goal=${encodeURIComponent(goal)}`),
   catalogue: () => request(Catalogue, "/catalogue"),
 
   recommend: (input: RecommendInput) =>
@@ -398,6 +832,16 @@ export const api = {
 
   roadmap: (input: RoadmapInput) =>
     request(RoadmapResponse, "/roadmap", { method: "POST", body: JSON.stringify(input) }),
+
+  practiceTasks: (learner_id: string, target: string, goal?: string) =>
+    request(
+      PracticeTasks,
+      `/practice/tasks?learner_id=${encodeURIComponent(learner_id)}&target=${encodeURIComponent(target)}` +
+        (goal ? `&goal=${encodeURIComponent(goal)}` : ""),
+    ),
+
+  practiceSubmit: (input: PracticeInput) =>
+    request(PracticeResult, "/practice/submit", { method: "POST", body: JSON.stringify(input) }),
 
   graphHealth: (goal: string, learners = 6000) =>
     request(GraphHealth, "/graph/health", {

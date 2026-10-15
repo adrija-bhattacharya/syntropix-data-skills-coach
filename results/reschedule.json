@@ -1,0 +1,92 @@
+[
+ {
+  "scenario": "light calendar",
+  "policy": "fixed calendar",
+  "on_time": 0.917,
+  "mean_days_late_if_late": 2.4,
+  "clash_rate": 0.089,
+  "longest_block_on_busy_days": 0.0,
+  "max_week_vs_offered": 1.93,
+  "learners": 120
+ },
+ {
+  "scenario": "light calendar",
+  "policy": "adaptive, no calendar",
+  "on_time": 1.0,
+  "mean_days_late_if_late": 0.0,
+  "clash_rate": 0.063,
+  "longest_block_on_busy_days": 0.0,
+  "max_week_vs_offered": 1.0,
+  "learners": 120
+ },
+ {
+  "scenario": "light calendar",
+  "policy": "adaptive + calendar",
+  "on_time": 1.0,
+  "mean_days_late_if_late": 0.0,
+  "clash_rate": 0.0,
+  "longest_block_on_busy_days": 0.0,
+  "max_week_vs_offered": 1.0,
+  "learners": 120
+ },
+ {
+  "scenario": "busy calendar",
+  "policy": "fixed calendar",
+  "on_time": 0.567,
+  "mean_days_late_if_late": 4.7,
+  "clash_rate": 0.228,
+  "longest_block_on_busy_days": 0.0,
+  "max_week_vs_offered": 1.8,
+  "learners": 120
+ },
+ {
+  "scenario": "busy calendar",
+  "policy": "adaptive, no calendar",
+  "on_time": 1.0,
+  "mean_days_late_if_late": 0.0,
+  "clash_rate": 0.153,
+  "longest_block_on_busy_days": 0.0,
+  "max_week_vs_offered": 1.0,
+  "learners": 120
+ },
+ {
+  "scenario": "busy calendar",
+  "policy": "adaptive + calendar",
+  "on_time": 1.0,
+  "mean_days_late_if_late": 0.0,
+  "clash_rate": 0.0,
+  "longest_block_on_busy_days": 0.0,
+  "max_week_vs_offered": 1.0,
+  "learners": 120
+ },
+ {
+  "scenario": "very busy + tight deadline",
+  "policy": "fixed calendar",
+  "on_time": 0.242,
+  "mean_days_late_if_late": 9.6,
+  "clash_rate": 0.335,
+  "longest_block_on_busy_days": 0.0,
+  "max_week_vs_offered": 1.65,
+  "learners": 120
+ },
+ {
+  "scenario": "very busy + tight deadline",
+  "policy": "adaptive, no calendar",
+  "on_time": 0.892,
+  "mean_days_late_if_late": 2.7,
+  "clash_rate": 0.217,
+  "longest_block_on_busy_days": 0.0,
+  "max_week_vs_offered": 1.0,
+  "learners": 120
+ },
+ {
+  "scenario": "very busy + tight deadline",
+  "policy": "adaptive + calendar",
+  "on_time": 1.0,
+  "mean_days_late_if_late": 0.0,
+  "clash_rate": 0.0,
+  "longest_block_on_busy_days": 0.0,
+  "max_week_vs_offered": 1.0,
+  "learners": 120
+ }
+]
