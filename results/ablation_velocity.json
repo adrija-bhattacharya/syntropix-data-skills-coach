@@ -1,0 +1,48 @@
+{
+  "runs": 5,
+  "divergence_rate_signal_on": 0.6,
+  "divergence_rate_signal_off": 0.0,
+  "goals_with_a_different_plan": 4,
+  "per_goal": [
+    {
+      "goal": "decimals",
+      "concepts": 2,
+      "divergent_on": 0,
+      "divergent_off": 0,
+      "fast_minutes": 13,
+      "slow_minutes": 13
+    },
+    {
+      "goal": "graphing",
+      "concepts": 7,
+      "divergent_on": 4,
+      "divergent_off": 0,
+      "fast_minutes": 64,
+      "slow_minutes": 47.6
+    },
+    {
+      "goal": "inequalities",
+      "concepts": 6,
+      "divergent_on": 3,
+      "divergent_off": 0,
+      "fast_minutes": 52,
+      "slow_minutes": 39.6
+    },
+    {
+      "goal": "quadratics",
+      "concepts": 8,
+      "divergent_on": 6,
+      "divergent_off": 0,
+      "fast_minutes": 74,
+      "slow_minutes": 49.2
+    },
+    {
+      "goal": "word_problems",
+      "concepts": 7,
+      "divergent_on": 5,
+      "divergent_off": 0,
+      "fast_minutes": 70,
+      "slow_minutes": 46.8
+    }
+  ]
+}

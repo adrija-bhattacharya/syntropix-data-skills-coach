@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "velpo"
+version = "1.0.0"
+description = "Personalised Learning-Path Optimisation via graph traversal + constrained multi-objective dynamic programming (DAA project)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Adrija Bhattacharya" }]
+
+dependencies = [
+    "networkx>=3.2",
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "pandas>=2.1",
+    "scikit-learn>=1.4",
+    "pydantic>=2.6",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "hypothesis>=6.100",
+    "httpx>=0.27",
+    "ruff>=0.4",
+    "mypy>=1.9",
+    "matplotlib>=3.8",
+]
+# optional: video verification (verify-videos) - captions, and an LLM judge when ANTHROPIC_API_KEY is set
+verify = [
+    "youtube-transcript-api>=1.2",
+    "anthropic>=0.40",
+]
+
+[project.scripts]
+velpo = "velpo:main"
+velpo-api = "api:run"
+
+# flat layout: the code lives directly at the repo root
+[tool.setuptools]
+py-modules = ["config", "curriculum", "domain_data", "domains", "dynamic", "assessment_bank", "certifications", "data_resources", "engine", "explain", "roadmap", "skill_library", "portfolio", "portfolio_page", "telemetry", "api", "velpo"]
+
+[tool.setuptools.packages.find]
+include = ["algorithms*", "model*", "harvest*", "practice*", "banks*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "C4", "RUF"]
+ignore = ["B905"]  # zip() strict= - lengths are known-equal at every call site
+
+[tool.ruff.lint.per-file-ignores]
+"banks/*" = ["E501", "RUF001"]
+"practice/content/*" = ["E501", "RUF001"]
+"portfolio_page.py" = ["E501"]  # an HTML/CSS template
+"benchmarks/velocity_plus_bench.py" = ["E501"]  # result-table rows  # prose: prompts, messages, real symbols like ×  # question text is data: long stems, real symbols (×, α)
+
+[tool.ruff.lint.isort]
+known-first-party = ["algorithms", "model", "harvest", "practice", "banks", "benchmarks", "config", "curriculum", "domain_data", "domains", "dynamic", "assessment_bank", "certifications", "data_resources", "engine", "explain", "roadmap", "api", "velpo"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["algorithms", "model", "harvest", "practice", "banks", "config.py", "curriculum.py", "domain_data.py", "domains.py", "dynamic.py", "assessment_bank.py", "certifications.py", "data_resources.py", "engine.py", "explain.py", "roadmap.py", "skill_library.py", "portfolio.py", "portfolio_page.py", "telemetry.py", "api.py", "velpo.py"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.coverage.run]
+source = ["algorithms", "model", "engine", "explain", "curriculum"]
+branch = true

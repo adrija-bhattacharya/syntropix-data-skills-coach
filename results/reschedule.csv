@@ -1,0 +1,10 @@
+scenario,policy,on_time,mean_days_late_if_late,clash_rate,longest_block_on_busy_days,max_week_vs_offered,learners
+light calendar,fixed calendar,0.917,2.4,0.089,0.0,1.93,120
+light calendar,"adaptive, no calendar",1.0,0.0,0.063,0.0,1.0,120
+light calendar,adaptive + calendar,1.0,0.0,0.0,0.0,1.0,120
+busy calendar,fixed calendar,0.567,4.7,0.228,0.0,1.8,120
+busy calendar,"adaptive, no calendar",1.0,0.0,0.153,0.0,1.0,120
+busy calendar,adaptive + calendar,1.0,0.0,0.0,0.0,1.0,120
+very busy + tight deadline,fixed calendar,0.242,9.6,0.335,0.0,1.65,120
+very busy + tight deadline,"adaptive, no calendar",0.892,2.7,0.217,0.0,1.0,120
+very busy + tight deadline,adaptive + calendar,1.0,0.0,0.0,0.0,1.0,120

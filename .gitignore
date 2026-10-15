@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# frontend  (web is the built SPA - regenerate with `make frontend`)
+node_modules/
+frontend/dist/
+/web/
+
+# local dev
+velpo.db
+*.local
+# downloaded dataset files / raw HTTP cache (the offline samples + snapshot ARE committed)
+benchmarks/data/cache/
+harvest/.cache/
+
+# OS / editor
+.DS_Store
+.idea/
+# .vscode/ is committed on purpose (shared tasks / launch / extensions)
+.vscode/*.local
+
+# learners' own data (portfolios) - never committed
+state/

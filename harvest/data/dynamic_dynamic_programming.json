@@ -1,0 +1,35 @@
+{
+ "goal": "dynamic_programming",
+ "concepts": {
+  "Bellman equation": "Bellman equation",
+  "Dynamic programming language": "Dynamic programming language",
+  "Dynamic problem": "Dynamic problem",
+  "Algorithmic paradigm": "Algorithmic paradigm",
+  "Recursion": "Recursion",
+  "Dynamic programming": "Dynamic programming",
+  "Optimal substructure": "Optimal substructure",
+  "Mathematical optimization": "Mathematical optimization"
+ },
+ "prereqs": [
+  [
+   "Bellman equation",
+   "Optimal substructure"
+  ],
+  [
+   "Dynamic programming language",
+   "Dynamic programming"
+  ],
+  [
+   "Algorithmic paradigm",
+   "Dynamic programming"
+  ],
+  [
+   "Recursion",
+   "Dynamic programming"
+  ],
+  [
+   "Mathematical optimization",
+   "Dynamic programming"
+  ]
+ ]
+}

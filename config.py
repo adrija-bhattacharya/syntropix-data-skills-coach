@@ -1,0 +1,149 @@
+"""Tunable constants - one place, so runs are reproducible."""
+
+from __future__ import annotations
+
+import random
+from dataclasses import dataclass
+
+__version__ = "1.0.0"
+SEED = 20260909
+
+
+@dataclass(frozen=True)
+class Settings:
+    # --- optimiser -------------------------------------------------------
+    mastery_threshold: float = 0.75
+    """A prerequisite counts as satisfied once its estimated mastery >= this."""
+
+    budget_buckets: int = 40
+    """The time budget is discretised into this many buckets for the DP state
+    ``(concept_index, buckets_used)``.  Cost is ``O(V * R * B)``."""
+
+    pareto_epsilon: float = 0.02
+    """Grid size for epsilon-pruning the Pareto front (0 = exact)."""
+
+    # --- sequencing DP (algorithms.sequencing) ------------------------
+    seq_max_ideals: int = 16_000
+    """If the relevant poset has more order ideals than this, the sequencing DP
+    is intractable and the engine falls back to knapsack-select + heuristic order."""
+
+    seq_ideal_bound_soft: int = 3_000_000
+    """When the cheap ``prod(chain+1)`` bound is between ``seq_max_ideals`` and
+    this, count the ideals exactly (capped) before deciding to run or fall back."""
+
+    seq_half_life_steps: float = 9.0
+    """Steps after which a concept's post-teaching mastery halves - the decay the
+    sequencing DP plans against (why order and review placement matter)."""
+
+    seq_post_mastery: float = 0.9
+    """Assumed mastery of a concept immediately after it is taught / reviewed."""
+
+    review_threshold: float = 0.6
+    """A covered concept whose predicted mastery drops below this is a review
+    candidate for the in-sequence review pass."""
+
+    max_reviews: int = 4
+    """Cap on review steps the sequence may insert."""
+
+    session_minutes: float = 35.0
+    session_max_load: float = 3.2
+    """Per study-session caps the session-packing DP respects."""
+
+    # --- risk-aware planning (claim B) ------------------------------
+    risk_kappa: float = 0.7
+    """Standard deviations to subtract from a measured skill's logit-mastery
+    before the planner acts on it (0 disables risk-aware planning)."""
+
+    risk_confidence_target: float = 0.8
+    """Below this ``P(ready)`` for a skill that gates >= 2 downstream concepts,
+    the sequencer splices a quick confidence check right after it is taught."""
+
+    risk_max_checks: int = 3
+    """Cap on risk-driven confidence-check steps a single plan may insert."""
+
+    # --- deadline calendar scheduling (claim C) --------------------
+    calendar_base_retention_days: float = 3.0
+    """Days a freshly-taught concept stays above the mastery threshold before it
+    needs its first reinforcement (scaled per-learner by the estimated
+    forgetting half-life)."""
+
+    calendar_spacing_factor: float = 1.9
+    """After each successful review a concept's retention window is multiplied by
+    this (the spacing effect) - so review gaps expand geometrically."""
+
+    calendar_max_reviews_per_goal: int = 8
+    """If a goal skill needs more retention reviews than this to hold until the
+    deadline, the calendar is reported infeasible (deadline too far, or slots
+    too sparse)."""
+
+    calendar_weekly_minutes_default: float = 300.0
+    """Assumed weekly study availability (5 h) when the learner gives none."""
+
+    calendar_deadline_days_default: int = 28
+
+    # --- roadmap -------------------------------------------------------
+    roadmap_min_hours_per_skill: float = 2.0
+    """Floor on the effort a single skill is estimated to take, before the
+    per-learner pace multiplier - the synthetic resource minutes are tuned for
+    the sequencing DP, not for a realistic study estimate."""
+
+    # --- self-healing prerequisite graph (claim D) ----------------
+    graph_evidence_weight: float = 1.0
+    """Pseudo-count added to an edge's Beta posterior per discriminating attempt."""
+
+    graph_min_support_prune: float = 12.0
+    graph_min_support_add: float = 12.0
+    """Evidence (attempts) an edge / candidate needs before it can be
+    pruned / added by the self-healing pass."""
+
+    graph_prune_below: float = 0.35
+    """Posterior mean below which a well-supported edge is dropped."""
+
+    graph_add_above: float = 0.72
+    graph_autoadd_above: float = 0.85
+    """A watched non-edge above ``add_above`` is suggested; above ``autoadd_above``
+    it is spliced in automatically (when it keeps the graph acyclic)."""
+
+    graph_reweight_delta: float = 0.15
+    """Posterior-mean shift from the prior that counts as strengthened/weakened."""
+
+    graph_max_candidates: int = 240
+    """Cap on watched non-edges per graph."""
+
+    # --- role-gap sequencing (algorithms.roleplan) -------------------
+    role_max_ideals: int = 60_000
+    """Above this many order ideals in the role's relevant poset, the
+    max-readiness prerequisite-closed set is chosen greedily instead of exactly."""
+
+    # --- adaptive assessment (model.assessment) ----------------------
+    assess_max_items_per_skill: int = 6
+    """Hard cap on adaptive items administered per target skill."""
+
+    assess_se_target: float = 0.55
+    """Stop testing a skill once the posterior SE of theta drops to this."""
+
+    # --- learner model -------------------------------------------------
+    velocity_alpha: float = 0.3
+    velocity_min: float = 1e-3
+    velocity_max: float = 5.0
+
+    bkt_p_init: float = 0.15
+    bkt_p_transit: float = 0.20
+    bkt_p_slip: float = 0.10
+    bkt_p_guess: float = 0.20
+
+    forgetting_half_life_h: float = 120.0
+
+    # --- scalarised objective weights ---------------------------------
+    # order: (-mastery_gain, time, load, difficulty_jump, -review_gain)
+    weights: tuple[float, float, float, float, float] = (5.0, 6e-4, 0.4, 0.25, 0.7)
+
+
+settings = Settings()
+
+
+def seed_everything(seed: int = SEED) -> None:
+    import numpy as np
+
+    random.seed(seed)
+    np.random.seed(seed)

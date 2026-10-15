@@ -1,0 +1,56 @@
+{
+ "goal": "photosynthesis",
+ "concepts": {
+  "Algae": "Algae",
+  "Archaea": "Archaea",
+  "Photosynthesis": "Photosynthesis",
+  "Anoxygenic photosynthesis": "Anoxygenic photosynthesis",
+  "Biological energy": "Biological energy",
+  "Biological reductant": "Biological reductant",
+  "Biomass (ecology)": "Biomass",
+  "Bacteria": "Bacteria",
+  "Biological system": "Biological system",
+  "Biological process": "Biological process",
+  "Adenosine triphosphate": "Adenosine triphosphate",
+  "Bacteriochlorophyll": "Bacteriochlorophyll",
+  "Autotroph": "Autotroph"
+ },
+ "prereqs": [
+  [
+   "Archaea",
+   "Photosynthesis"
+  ],
+  [
+   "Biological energy",
+   "Photosynthesis"
+  ],
+  [
+   "Biological reductant",
+   "Photosynthesis"
+  ],
+  [
+   "Biomass (ecology)",
+   "Photosynthesis"
+  ],
+  [
+   "Bacteria",
+   "Photosynthesis"
+  ],
+  [
+   "Bacteria",
+   "Anoxygenic photosynthesis"
+  ],
+  [
+   "Biological system",
+   "Photosynthesis"
+  ],
+  [
+   "Biological process",
+   "Photosynthesis"
+  ],
+  [
+   "Adenosine triphosphate",
+   "Photosynthesis"
+  ]
+ ]
+}

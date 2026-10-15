@@ -1,0 +1,34 @@
+{
+  "version": "2.0.0",
+  "options": { "cwd": "${workspaceFolder}" },
+  "tasks": [
+    { "label": "setup",   "type": "shell", "command": "python velpo.py setup",   "problemMatcher": [] },
+    { "label": "doctor",  "type": "shell", "command": "python velpo.py doctor",  "problemMatcher": [] },
+    { "label": "demo",    "type": "shell", "command": "python velpo.py demo",    "problemMatcher": [] },
+    { "label": "assess",  "type": "shell", "command": "python velpo.py assess",  "problemMatcher": [] },
+    { "label": "harvest", "type": "shell", "command": "python velpo.py harvest", "problemMatcher": [] },
+    {
+      "label": "test",
+      "type": "shell",
+      "command": "python velpo.py test",
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    { "label": "lint",   "type": "shell", "command": "python velpo.py lint",  "problemMatcher": [] },
+    { "label": "format", "type": "shell", "command": "python velpo.py fmt",   "problemMatcher": [] },
+    { "label": "benchmark",          "type": "shell", "command": "python velpo.py benchmark --dataset all", "problemMatcher": [] },
+    { "label": "ablation: velocity (N2)", "type": "shell", "command": "python velpo.py ablation", "problemMatcher": [] },
+    { "label": "seqbench: does order matter? (N1)", "type": "shell", "command": "python velpo.py seqbench --dataset all", "problemMatcher": [] },
+    { "label": "datasets (N7)",      "type": "shell", "command": "python velpo.py datasets", "problemMatcher": [] },
+    {
+      "label": "frontend: dev",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    { "label": "frontend: test", "type": "shell", "command": "python velpo.py ui-test", "problemMatcher": [] },
+    { "label": "run app (build UI + serve)", "type": "shell", "command": "python velpo.py serve", "problemMatcher": [] }
+  ]
+}

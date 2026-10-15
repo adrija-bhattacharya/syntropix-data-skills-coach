@@ -1,0 +1,156 @@
+[
+ {
+  "experiment": "G1",
+  "case": "steady learners",
+  "policy": "forecast as is",
+  "metric": "done by the 80% date",
+  "value": 1.0
+ },
+ {
+  "experiment": "G1",
+  "case": "steady learners",
+  "policy": "self-checking forecast",
+  "metric": "done by the 80% date",
+  "value": 1.0
+ },
+ {
+  "experiment": "G1",
+  "case": "bursty learners",
+  "policy": "forecast as is",
+  "metric": "done by the 80% date",
+  "value": 0.708
+ },
+ {
+  "experiment": "G1",
+  "case": "bursty learners",
+  "policy": "self-checking forecast",
+  "metric": "done by the 80% date",
+  "value": 0.775
+ },
+ {
+  "experiment": "G2",
+  "case": "slow topic with a hidden gap",
+  "policy": "slowdown detector",
+  "metric": "flagged",
+  "value": 0.983
+ },
+ {
+  "experiment": "G2",
+  "case": "same topic, no gap",
+  "policy": "slowdown detector",
+  "metric": "false alarm",
+  "value": 0.033
+ },
+ {
+  "experiment": "G2",
+  "case": "other topics",
+  "policy": "slowdown detector",
+  "metric": "false alarms per learner",
+  "value": 0.275
+ },
+ {
+  "experiment": "G2",
+  "case": "slow topic with a hidden gap",
+  "policy": "slowdown detector",
+  "metric": "missing prerequisite named first",
+  "value": 0.683
+ },
+ {
+  "experiment": "G2",
+  "case": "slow topic with a hidden gap",
+  "policy": "slowdown detector",
+  "metric": "... in top 3",
+  "value": 0.883
+ },
+ {
+  "experiment": "G2",
+  "case": "slow topic with a hidden gap",
+  "policy": "random weak neighbour",
+  "metric": "missing prerequisite named first",
+  "value": 0.417
+ },
+ {
+  "experiment": "G3",
+  "case": "8 goals, capacity ~70% of expected need",
+  "policy": "90% confidence",
+  "metric": "chosen set actually finished",
+  "value": 0.925
+ },
+ {
+  "experiment": "G3",
+  "case": "8 goals, capacity ~70% of expected need",
+  "policy": "90% confidence",
+  "metric": "share of goal value chosen",
+  "value": 0.394
+ },
+ {
+  "experiment": "G3",
+  "case": "8 goals, capacity ~70% of expected need",
+  "policy": "expected time",
+  "metric": "chosen set actually finished",
+  "value": 0.692
+ },
+ {
+  "experiment": "G3",
+  "case": "8 goals, capacity ~70% of expected need",
+  "policy": "expected time",
+  "metric": "share of goal value chosen",
+  "value": 0.635
+ },
+ {
+  "experiment": "G4/G5",
+  "case": "time-of-day effects + focus fade",
+  "policy": "plain loop",
+  "metric": "learning per hour studied",
+  "value": 0.689
+ },
+ {
+  "experiment": "G4/G5",
+  "case": "time-of-day effects + focus fade",
+  "policy": "plain loop",
+  "metric": "days to finish 25 h of learning",
+  "value": 51.2
+ },
+ {
+  "experiment": "G4/G5",
+  "case": "time-of-day effects + focus fade",
+  "policy": "+ best study times",
+  "metric": "learning per hour studied",
+  "value": 0.882
+ },
+ {
+  "experiment": "G4/G5",
+  "case": "time-of-day effects + focus fade",
+  "policy": "+ best study times",
+  "metric": "days to finish 25 h of learning",
+  "value": 38.1
+ },
+ {
+  "experiment": "G4/G5",
+  "case": "time-of-day effects + focus fade",
+  "policy": "+ focus-sized blocks",
+  "metric": "learning per hour studied",
+  "value": 0.766
+ },
+ {
+  "experiment": "G4/G5",
+  "case": "time-of-day effects + focus fade",
+  "policy": "+ focus-sized blocks",
+  "metric": "days to finish 25 h of learning",
+  "value": 44.8
+ },
+ {
+  "experiment": "G4/G5",
+  "case": "time-of-day effects + focus fade",
+  "policy": "+ both",
+  "metric": "learning per hour studied",
+  "value": 0.983
+ },
+ {
+  "experiment": "G4/G5",
+  "case": "time-of-day effects + focus fade",
+  "policy": "+ both",
+  "metric": "days to finish 25 h of learning",
+  "value": 33.1
+ }
+]
