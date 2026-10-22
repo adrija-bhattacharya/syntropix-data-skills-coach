@@ -127,7 +127,7 @@ mistake_moments.py  wrong answer -> the video chapter that explains the mistake 
 portfolio.py    proof-of-skill portfolio, signed re-tests on new data (H2) · practice/mutate.py builds the new data
 telemetry.py    practice answers with time of day and session clock (study context, forgetting)
 explain.py      knowledge-graph-grounded reason strings
-domain_data.py  9 curated seed graphs (SQL, Python, pandas, stats, ...) + target roles
+domain_data.py  12 curated seed graphs (SQL, Python, pandas, stats, Excel, Power BI, Tableau, data eng, ...) + target roles
 domains.py      goal router;  dynamic.py = Wikipedia-built graphs
 curriculum.py   legacy algebra curriculum
 api.py          FastAPI  (+ serves the built SPA at /)
