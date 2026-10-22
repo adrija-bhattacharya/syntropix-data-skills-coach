@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "velpo"
 version = "1.0.0"
-description = "Personalised Learning-Path Optimisation via graph traversal + constrained multi-objective dynamic programming (DAA project)."
+description = "Syntropix: an adaptive data-skills coach - optimal learning paths (graph traversal + DP), graded practice linked to the exact video moment, calendar-aware velocity planning, learned forgetting and a proof-of-skill portfolio re-tested on new data (DAA project)."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }

@@ -9,8 +9,17 @@ resources, and produces the **provably-optimal ordered sequence** to your goal -
 using classic **Design-and-Analysis-of-Algorithms** machinery (graph traversal +
 dynamic programming + A\*) instead of black-box reinforcement learning.
 
+Then it keeps you on track: practice that is **run and graded** (SQL, Python,
+pandas, Excel and more), with each mistake named and linked to **the exact minute
+of a checked YouTube video** that explains it; a study plan that **reads your real
+calendar back** and is sized to **your own learning speed**; reviews booked
+**just before you'd forget** a topic you need next; and a **proof-of-skill
+portfolio** whose answers anyone can **re-test on data they have never seen**.
+
 Domains: `sql`, `python`, `python_data` (pandas/NumPy), `stats`, `dataviz`,
-`dsa_python`, `spreadsheets`, `git`, `foundations` (zero-knowledge on-ramp), plus
+`spreadsheets` (Excel), `powerbi`, `tableau`, `data_eng`, `git`, `dsa_python`,
+`foundations` (zero-knowledge on-ramp), plus target roles (data analyst, BI
+analyst, data engineer, analytics engineer), plus
 the legacy `algebra` curriculum.  Unknown goals get a graph **built from
 Wikipedia**.
 
@@ -29,7 +38,7 @@ Wikipedia**.
 | study sessions | a partition DP splits the plan into sessions under time + load caps | none |
 | capability input | an **adaptive test** (2PL IRT + max-information item selection) *measures* the learner's level per skill; nothing is self-rated | the learner picks a level, or picks topics |
 | resources | **discovered live** from open sources (Wikipedia, Wikibooks, MIT, arXiv, YouTube) and **auto-level-estimated** (readability + jargon + source priors) | a fixed, hand-built catalogue |
-| any goal | a **router**: 9 curated seed graphs (SQL / Python / pandas / stats / viz / DSA / …) + **target roles** that union the domains a job needs, else a graph **built from Wikipedia** | one hard-coded curriculum |
+| any goal | a **router**: 12 curated seed graphs (SQL / Python / pandas / stats / viz / DSA / …) + **target roles** that union the domains a job needs, else a graph **built from Wikipedia** | one hard-coded curriculum |
 | a job role (claim A) | picks the **prerequisite-closed concept set of maximum hiring-readiness inside the budget** — a knapsack over the order-ideal lattice of a weighted poset — and reports a readiness curve | not addressed |
 | measurement risk (claim B) | the adaptive test returns mastery **± a standard error**; the planner acts on the **pessimistic lower confidence bound**, reports `P(ready)` per goal skill, and **splices a confidence check** before the concepts that build on a pivotal prerequisite the test left uncertain — two learners with the *same* point mastery get *different* plans | point estimate only; uncertainty discarded |
 | a deadline (claim C) | give a **target date** + **weekly availability** and VELPO embeds the plan on a **real calendar** — precedence list-scheduling of the steps plus **expanding-interval reinforcements** — with a guarantee that every goal skill is **≥ threshold on the date** (forgetting between slots modelled), or a precise diagnostic (*"needs ≈ 6.5 h/week for this date"*) | a flat list, no dates, no retention math |
@@ -40,6 +49,9 @@ Wikipedia**.
 | reading the calendar back (claim F) | **bi-directional**: the learner logs done / half / missed sessions and can import their calendar (`.ics`). Adherence (an exponentially-weighted share of planned minutes actually studied) inflates the remaining work; a **fatigue index** (how much busier a day is than the learner's usual day) lowers that day's cap and shortens its blocks; the rest of the plan is **split into micro-blocks and fitted earliest-first** into free gaps inside the learner's availability, never above the weekly hours offered. Earliest-fit is optimal for a fixed (prerequisite) order of preemptible work (exchange argument) | push-only: a missed day breaks the schedule |
 | does a video teach the topic? | every library video is **checked against what it says**: transcript when YouTube serves captions, else the creator's description + chapter list. A discriminative judge (TF-IDF over rich topic profiles built from the skill-check questions and practice tasks; or **Claude** when `ANTHROPIC_API_KEY` is set) keeps a lesson only if it is about *its* topic rather than the skill in general, and finds the **chapter where it's taught** so the player starts there | keyword search results |
 | proof of skill | every answer the app **runs and checks correct** goes into a portfolio; the shareable page **re-runs each answer** when it is built, so the proof is the working code, re-checked - plus projects with checked links. Private until the learner publishes it; also downloadable as one self-contained HTML file | self-reported skills, badges |
+| a wrong answer (claim H1) | the diagnosed mistake opens **the chapter of a checked video that explains it** (start to next chapter, ~3 min), even when the mistake belongs to a different topic than the task | "watch the lesson again" |
+| proof on new data (claim H2) | portfolio answers are **re-tested on freshly generated variants of the practice database**; memorised or lucky answers fail, results are signed and reproducible from their seeds | re-runs on the same data, or a badge |
+| forgetting (claim H3) | a **half-life per learner per topic**, fitted from their own answers after a pause (prior from the prerequisites); 10-minute reviews go into **free calendar gaps just before a lesson that needs a fading topic** | one forgetting rate for everyone |
 | cold-start (N4) | the adaptive test seeds mastery at interaction #0; then DKT-lite refinement | usually unsolved |
 | re-plan (N6) | **anytime A\***: feasible plan instantly, proven-optimal in <1 ms, no retraining | policy retraining, instability |
 | evidence (N7) | one benchmark harness over synthetic **and the real Junyi graph** | "no standard benchmark" |
@@ -107,8 +119,13 @@ The code sits **directly at the repo root** - no nesting:
 velpo.py        the CLI - every task is one command
 algorithms/     poset.py (Dilworth + order ideals) · sequencing.py (the core: order-ideal DP + review + sessions)
                 graph_traversal.py · dynamic_programming.py (knapsack fallback) · astar.py (anytime) · pareto.py
+algorithms/     reschedule.py (calendar loop) · velocity_schedule.py · calibration.py · slowdown.py · chance_goals.py
+                study_context.py · forgetting.py (per-topic half-lives + just-in-time reviews, H3)
 model/          knowledge_graph.py · learner.py (BKT + velocity + forgetting) · refine.py (DKT-lite) · cost.py
 engine.py       orchestration
+mistake_moments.py  wrong answer -> the video chapter that explains the mistake (H1)
+portfolio.py    proof-of-skill portfolio, signed re-tests on new data (H2) · practice/mutate.py builds the new data
+telemetry.py    practice answers with time of day and session clock (study context, forgetting)
 explain.py      knowledge-graph-grounded reason strings
 domain_data.py  9 curated seed graphs (SQL, Python, pandas, stats, ...) + target roles
 domains.py      goal router;  dynamic.py = Wikipedia-built graphs
@@ -117,6 +134,8 @@ api.py          FastAPI  (+ serves the built SPA at /)
 config.py       tunable constants + weights
 frontend/       React 18 + TS + Vite · Tailwind (Stitch theme) · TanStack Query · Router · Zod · Vitest · ⌘K
 benchmarks/     benchmark.py · sequencing_bench.py · ablation_velocity.py · datasets.py (synthetic + real Junyi graph)
+                reschedule / velocity / velocity_plus / mistake_moments / fresh_proof / forgetting benches
+harvest/        library.py (LeetCode, HackerRank, open sites, YouTube) · verify.py (does the video teach it?) · segments.py
 tests/          the guarantees
 ```
 
@@ -134,13 +153,13 @@ the nearest real quantity or leaves it out.
 | **Roadmap** `/roadmap` (+ study plan `/plan`, sessions `/session/:n`) | phases to scale in weeks; sessions on real days with typed steps, "Why this now?", what changed since last time, .ics export |
 | **Skill Map** `/map` | set a goal, level, hours and date; how the topics connect, coloured by what you know; "is the map right?" (claim D) |
 | **Learn (Videos)** `/learn` | every video to watch, in order: full courses beginner → advanced, then one lesson per topic in the order your plan needs; plays inside the site; tick off watched |
-| **Practice** `/practice` | two tabs: *Practise here* (SQL / Python / Excel / concept questions run and checked instantly, mistakes named and repaired) and *LeetCode, HackerRank & more* (real problems, week by week or topic by topic, paced by your velocity; Stretch, Review and More-practice lists) |
+| **Practice** `/practice` | two tabs: *Practise here* (SQL / Python / Excel / concept questions run and checked instantly, mistakes named and repaired, and **Watch the fix**: the video chapter that explains your mistake, played in the page) and *LeetCode, HackerRank & more* (real problems, week by week or topic by topic, paced by your velocity; Stretch, Review and More-practice lists) |
 | **Projects** `/projects` | 13 portfolio projects on real public datasets, beginner → advanced, filtered to your goal |
-| **Portfolio** `/portfolio` | your solved problems (answers re-run and checked), projects with links, a public page at `/p/<name>` when you choose, or a downloadable page. The first browser to open a portfolio gets a private edit key (only its hash is stored on the server); reading the private view or changing anything needs it |
+| **Portfolio** `/portfolio` | your solved problems (answers re-run and checked, and **re-tested on new data** with one click - by you or anyone viewing your public page), projects with links, a public page at `/p/<name>` when you choose, or a downloadable page. The first browser to open a portfolio gets a private edit key (only its hash is stored on the server); reading the private view or changing anything needs it |
 | **Interview Prep** `/interview` | a 30-minute mock interview from the built-in graded tasks, the questions interviewers ask per skill, HackerRank certificate tests, the classic lists (SQL 50, 30 Days of Pandas, 10 Days of Statistics) |
 | **Certifications** `/certifications` | real certificates for your goal, start-here → stand-out, free-only filter |
 | **Progress** `/progress` | topics known per skill, videos watched, problems solved, streak, skill-check results |
-| **Calendar** `/calendar` | your sessions on a calendar; **Your week, re-planned** (sized to your measured speed per topic, with a 50/80% finish forecast): mark sessions done / half / missed, add your calendar (.ics), and the rest is split into blocks around your real week (two-week timeline, export to your calendar) |
+| **Calendar** `/calendar` | your sessions on a calendar; **Your week, re-planned** (sized to your measured speed per topic, with a 50/80% finish forecast): mark sessions done / half / missed, add your calendar (.ics), and the rest is split into blocks around your real week (two-week timeline, export to your calendar); slowdown alerts, your best study times and focus span, and **how long topics stay with you** with 10-minute reviews booked in your free time |
 | skill check `/assess`, for teachers `/teacher` | adaptive quiz; class rules + the best plans to choose from (Pareto front) |
 
 All wording is written for beginners; the method names (BKT, IRT, Pareto, …)
@@ -224,9 +243,9 @@ topic follows the prerequisites' speed with noise - the stated assumption):
 | scenario | policy | on time | finish-date error at start | actually done by the "80%" date | late learners flagged by week 2 |
 |---|---|---|---|---|---|
 | light calendar | lesson minutes | 57% | 13.0 d | 22% | 26% |
-| light calendar | **velocity-sized** | 57% | 12.6 d | **79%** | **81%** |
+| light calendar | **velocity-sized** | 57% | 12.6 d | **79%** | **86%** |
 | busy calendar | lesson minutes | 53% | 14.0 d | 14% | 51% |
-| busy calendar | **velocity-sized** | 53% | 12.8 d | **73%** | **79%** |
+| busy calendar | **velocity-sized** | 53% | 12.8 d | **73%** | **81%** |
 | very busy + tight | lesson minutes | 42% | 13.8 d | 15% | 76% |
 | very busy + tight | **velocity-sized** | **49%** | 12.9 d | **77%** | **86%** |
 
@@ -236,6 +255,18 @@ promise, and it warns most late learners within two weeks.  A third policy,
 **matching** slow topics to light days and quick ones to busy days, gave *no
 consistent gain* (56 / 53 / 47% on time) and is left off in the app
 (`reschedule(..., match=True)` keeps it available for study).
+
+### Five more velocity-aware signals (claims G1-G5)
+
+`python velpo.py velocityplusbench` (simulated learners; assumptions in the file):
+
+| claim | what it does | result |
+|---|---|---|
+| G1 self-checking forecast | each week the forecast checks whether its own 80% date held for this learner, and widens its bands when it didn't | bursty learners done by the "80%" date: 71% -> **78%** (steady learners stay at 100%) |
+| G2 slowdown diagnosis | a topic learned far slower than its prerequisites predict names the likely gap: a weak prerequisite, or a missing one the graph doesn't list (that becomes evidence for the self-healing graph, claim D) | slow topics flagged **98%**, false alarms 3%; missing prerequisite named first **68%** (random weak neighbour 42%), in the top 3 88% |
+| G3 what fits | picks the goals that finish with 90% confidence (chance-constrained knapsack over prerequisite closures) instead of by expected time | chosen set actually finished **93%** vs 69% (at a lower share of goal value, 39% vs 64% - the honest trade) |
+| G4 best study times | measures how well the learner answers by weekday/weekend x time of day and plans in the best slots | |
+| G5 focus span | fits how fast accuracy fades within a session and sizes blocks to it | G4 + G5: days to finish 25 h of learning 51 -> **33** |
 
 ## Mistake -> video moment, proof on new data, learned forgetting (claims H1-H3)
 
