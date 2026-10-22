@@ -814,6 +814,26 @@ def reschedule_plan(body: RescheduleIn) -> dict[str, Any]:
             and eng.evidence.attribute(top.concept, sd.concept, 1.0 - sd.ratio) is not None
         ):
             _SLOW_ATTRIBUTED.add(key)
+    # memory (H3): forgetting measured per topic, reviews just before they're needed
+    from algorithms import forgetting as fg
+
+    recs = fg.recalls(events)  # type: ignore[arg-type]
+    half_lives = fg.fit_half_lives(recs, eng.kg.concept_ids, prereq_map)
+    seen = fg.last_seen(events)  # type: ignore[arg-type]
+    mastery_now = dict(state.mastery) if state else {}
+    known = {c: d for c, d in seen.items() if c in names and mastery_now.get(c, 0.0) >= 0.75}
+    lesson_starts: dict[str, date] = {}
+    for b in new.blocks:
+        if b.kind not in ("review", "retention") and b.concept not in known:
+            lesson_starts.setdefault(b.concept, b.day)
+    due = fg.plan_reviews(
+        known, half_lives, prereq_map, lesson_starts, today=today,
+        until=today + timedelta(days=21), unmastered=set(lesson_starts),
+    )  # fmt: skip
+    placed = fg.place_reviews(
+        due, new.blocks, windows, busy, today=today, now_minute=body.now_minute or 0,
+        slot_score=sx.slot_scorer(speeds) if speeds else None,
+    )  # fmt: skip
     from algorithms.calibration import calibrate
 
     calib = calibrate(entries)  # does this learner's record back the forecast's bands?
@@ -901,6 +921,37 @@ def reschedule_plan(body: RescheduleIn) -> dict[str, Any]:
             else None
         ),
         "practice_answers": len(events),
+        "memory": {
+            "recalls": len(recs),
+            "topics": [
+                {
+                    "concept_id": c,
+                    "concept": nm(c),
+                    "half_life_days": half_lives[c].days,
+                    "recalls": half_lives[c].recalls,
+                    "source": half_lives[c].source,
+                }
+                for c in sorted(known, key=lambda c: half_lives[c].days)
+                if c in half_lives
+            ],
+        },
+        "reviews": [
+            {
+                "concept_id": p.review.concept,
+                "concept": nm(p.review.concept),
+                "day": p.day.isoformat(),
+                "start": rs.hhmm(p.start),
+                "end": rs.hhmm(p.end),
+                "due": p.review.due.isoformat(),
+                "recall_at_due": p.review.recall_at_due,
+                "before": nm(p.review.reason.split(":", 1)[1])
+                if p.review.reason.startswith("before:")
+                else None,
+                "priority": p.review.priority,
+                "late": p.late,
+            }
+            for p in placed
+        ],
         "slowdowns": [
             {
                 "concept_id": sd.concept,
@@ -1325,6 +1376,7 @@ def practice_submit(body: PracticeIn) -> dict[str, Any]:
         pass
     if out.correct:  # proof of skill: the run, checked answer goes into the portfolio
         in_portfolio = _record_solve(body, eng, out, g)
+    fix_clip = None if out.correct else _fix_clip(eng, out.task_id, out.diagnoses)
     return {
         "task_id": out.task_id,
         "correct": out.correct,
@@ -1361,7 +1413,27 @@ def practice_submit(body: PracticeIn) -> dict[str, Any]:
         "next_task": out.next_task,
         "replan_ms": out.replan_ms,
         "in_portfolio": in_portfolio,
+        "fix_clip": fix_clip,
     }
+
+
+def _fix_clip(eng: Engine, task_id: str, diagnoses: Any) -> dict[str, Any] | None:
+    """Claim H1: the video moment that explains this answer's mistake."""
+    import mistake_moments
+    from practice.catalogue import BY_ID
+
+    task = BY_ID.get(task_id)
+    if task is None:
+        return None
+    names = {c: eng.kg.concepts[c].name for c in eng.kg.concept_ids}
+    for d in diagnoses:  # graph ids may differ from the grader's raw ids
+        cid = eng.concept_id(d.concept)
+        if cid and cid in names:
+            names.setdefault(d.concept, names[cid])
+    try:
+        return mistake_moments.for_answer(task.domain, task.kind, diagnoses, names)
+    except (OSError, ValueError):
+        return None
 
 
 _ATTEMPTS: dict[tuple[str, str], int] = {}
@@ -1534,7 +1606,86 @@ def portfolio_public(slug: str) -> HTMLResponse:
     pf = portfolio.by_slug(slug)
     if pf is None or not pf.public:
         raise HTTPException(404, "No public portfolio here.")
-    return HTMLResponse(render(portfolio.public_view(pf)))
+    return HTMLResponse(render(portfolio.public_view(pf), live=True))
+
+
+@app.post("/p/{slug}/retest", include_in_schema=False)
+def portfolio_public_retest(slug: str) -> Response:
+    """The public page's button: re-test on new data, then show the page again."""
+    import portfolio
+
+    pf = portfolio.by_slug(slug)
+    if pf is None or not pf.public:
+        raise HTTPException(404, "No public portfolio here.")
+    try:
+        _reprove(pf.learner_id, slug, None)
+    except HTTPException as exc:
+        if exc.status_code != 429:  # pressed twice: just show the latest result
+            raise
+    return Response(status_code=303, headers={"Location": f"/p/{slug}#proof"})
+
+
+# ------------------------------------------ fresh-data proof (claim H2)
+_REPROVED_AT: dict[str, float] = {}
+REPROVE_EVERY_S = 30.0
+
+
+class ReproveIn(BaseModel):
+    seed: int | None = Field(None, ge=0, le=10**9)
+
+
+class AttestIn(BaseModel):
+    payload: dict[str, Any]
+    sig: str = Field(max_length=128)
+
+
+def _reprove(learner_id: str, slug: str, seed: int | None) -> dict[str, Any]:
+    import time
+
+    import portfolio
+
+    now = time.monotonic()
+    if seed is None and now - _REPROVED_AT.get(slug, -1e9) < REPROVE_EVERY_S:
+        raise HTTPException(429, "Re-tested moments ago - try again in half a minute.")
+    _REPROVED_AT[slug] = now
+    proofs = portfolio.reprove(learner_id, seed)
+    return {
+        "seed": seed,
+        "reproduced": seed is not None,
+        "proofs": proofs,
+        "passed": sum(1 for p in proofs.values() if p["payload"]["passed"]),
+        "tested": len(proofs),
+    }
+
+
+@app.post("/portfolio/{learner_id}/reprove")
+def portfolio_reprove(
+    learner_id: str, body: ReproveIn, x_portfolio_key: str | None = Header(None)
+) -> dict[str, Any]:
+    """Re-test the owner's answers on new practice data (or rebuild a seed)."""
+    import portfolio
+
+    _owner(learner_id, x_portfolio_key)
+    return _reprove(learner_id, portfolio.load(learner_id).slug, body.seed)
+
+
+@app.post("/p/{slug}/reprove")
+def portfolio_public_reprove(slug: str, body: ReproveIn) -> dict[str, Any]:
+    """Anyone viewing a public page can have its answers re-tested on new data."""
+    import portfolio
+
+    pf = portfolio.by_slug(slug)
+    if pf is None or not pf.public:
+        raise HTTPException(404, "No public portfolio here.")
+    return _reprove(pf.learner_id, slug, body.seed)
+
+
+@app.post("/attest/verify")
+def attest_verify(body: AttestIn) -> dict[str, bool]:
+    """Was this proof issued by this Syntropix server, unchanged?"""
+    import portfolio
+
+    return {"valid": portfolio.verify_attestation(body.payload, body.sig)}
 
 
 @app.post("/explain")

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ErrorBox, Loading, Ms, Pill, dayLabel, hm, isoToday } from "../../components/stitch";
 import type { RescheduleBlock, RescheduleResponse } from "../../lib/api";
 import { useFeedback } from "../../lib/feedback";
-import { ForecastCheck, Slowdowns, StudyContext, WhatFitsCard } from "./SmartPanels";
+import { ForecastCheck, Memory, Slowdowns, StudyContext, WhatFitsCard } from "./SmartPanels";
 import { downloadIcs } from "../../lib/ics";
 
 /**
@@ -227,6 +227,7 @@ function Result({ r, goal, domain }: { r: RescheduleResponse; goal: string; doma
       <ForecastCheck r={r} />
       <Slowdowns r={r} domain={domain} />
       <StudyContext r={r} />
+      <Memory r={r} domain={domain} />
       {r.velocity?.aware && r.velocity.topics.length > 0 && <Speed v={r.velocity} />}
 
       {r.reasons.length > 0 && (

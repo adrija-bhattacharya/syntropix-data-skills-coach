@@ -6,6 +6,12 @@ learner, with the code, the checks it passed and the topic.  Finished projects
 re-runs every recorded answer through the same grader when it is built, so the
 proof is the work itself, re-checked, not a badge anyone could claim.
 
+Claim H2 - **re-proven on data it has never seen**: SQL and pandas answers are
+also run on freshly generated variants of the practice database
+(:mod:`practice.mutate`) whenever someone asks the page to re-test them.  A
+memorised or lucky answer fails there.  Each result is signed by this server
+(HMAC) and names its seeds, so anyone can rebuild the same data and reproduce it.
+
 Storage: one JSON file per learner under ``state/portfolio`` (outside git).
 """
 
@@ -66,6 +72,9 @@ class Portfolio:
     projects: list[Project] = field(default_factory=list)
     mastery: dict[str, float] = field(default_factory=dict)  # concept name -> latest mastery
     key_hash: str = ""  # sha256 of the owner's edit key ("" = not claimed yet)
+    proofs: dict[str, dict[str, Any]] = field(
+        default_factory=dict
+    )  # task -> latest fresh-data proof
 
 
 def _path(learner_id: str) -> Path:
@@ -207,6 +216,81 @@ def owns(learner_id: str, key: str | None) -> bool:
 
 
 # --------------------------------------------------------------------------- #
+# fresh-data proof (claim H2): signed, reproducible re-tests on new data
+# --------------------------------------------------------------------------- #
+ATTEST_KEY = STATE.parent / "attest.key"
+
+
+def _attest_key() -> bytes:
+    if not ATTEST_KEY.exists():
+        ATTEST_KEY.parent.mkdir(parents=True, exist_ok=True)
+        ATTEST_KEY.write_text(secrets.token_hex(32), encoding="utf-8")
+    return bytes.fromhex(ATTEST_KEY.read_text(encoding="utf-8").strip())
+
+
+def _canonical(payload: dict[str, Any]) -> bytes:
+    return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+
+
+def sign(payload: dict[str, Any]) -> str:
+    import hmac
+
+    return hmac.new(_attest_key(), _canonical(payload), hashlib.sha256).hexdigest()
+
+
+def verify_attestation(payload: dict[str, Any], sig: str) -> bool:
+    import hmac
+
+    return hmac.compare_digest(sign(payload), sig or "")
+
+
+def answer_sha(answer: str) -> str:
+    return hashlib.sha256(answer.encode()).hexdigest()
+
+
+def prove(slug: str, solve: Solve, seeds: list[int]) -> dict[str, Any] | None:
+    """Re-test one answer on fresh data; ``None`` for kinds that can't be re-generated."""
+    from practice.catalogue import BY_ID
+    from practice.mutate import fresh_check, uses_db
+
+    task = BY_ID.get(solve.task_id)
+    if task is None or not uses_db(task):
+        return None
+    p = fresh_check(task, solve.answer, seeds)
+    payload = {
+        "slug": slug,
+        "task_id": solve.task_id,
+        "answer_sha256": answer_sha(solve.answer),
+        "seeds": [r.seed for r in p.runs],
+        "passed": p.passed,
+        "fresh": p.fresh,
+        "datasets": len(p.runs),
+        "at": dt.datetime.now().isoformat(timespec="seconds"),
+    }
+    return {"payload": payload, "sig": sign(payload), "runs": [asdict(r) for r in p.runs]}
+
+
+def reprove(
+    learner_id: str, seed: int | None = None, *, save_result: bool = True
+) -> dict[str, dict[str, Any]]:
+    """Re-test every answer that can be re-tested on new data (3 variants each).
+
+    ``seed`` given: rebuild exactly those variants (to reproduce an earlier
+    result); otherwise new random ones.  Only fresh random runs are saved."""
+    pf = load(learner_id)
+    base = seed if seed is not None else secrets.randbelow(10**6)
+    out: dict[str, dict[str, Any]] = {}
+    for s in pf.solves:
+        r = prove(pf.slug, s, [base, base + 1, base + 2])
+        if r is not None:
+            out[s.task_id] = r
+    if save_result and seed is None:
+        pf.proofs.update(out)
+        save(pf)
+    return out
+
+
+# --------------------------------------------------------------------------- #
 # re-verification: run every recorded answer through the grader again
 # --------------------------------------------------------------------------- #
 _RECHECK: dict[str, bool] = {}
@@ -223,11 +307,24 @@ def recheck(solve: Solve) -> bool:
     return _RECHECK[key]
 
 
+def _testable(task_id: str) -> bool:
+    from practice.catalogue import BY_ID
+    from practice.mutate import uses_db
+
+    t = BY_ID.get(task_id)
+    return bool(t and uses_db(t))
+
+
 def public_view(pf: Portfolio) -> dict[str, Any]:
     """What the shareable page shows: profile, re-checked solves per skill, projects."""
     skills: dict[str, list[dict[str, Any]]] = {}
     for s in sorted(pf.solves, key=lambda s: s.solved_at, reverse=True):
-        skills.setdefault(s.domain, []).append({**asdict(s), "rechecked": recheck(s)})
+        proof = pf.proofs.get(s.task_id)
+        if proof and proof["payload"].get("answer_sha256") != answer_sha(s.answer):
+            proof = None  # proven for an older answer
+        skills.setdefault(s.domain, []).append(
+            {**asdict(s), "rechecked": recheck(s), "proof": proof}
+        )
     return {
         "name": pf.name or "A Syntropix learner",
         "headline": pf.headline,
@@ -241,6 +338,14 @@ def public_view(pf: Portfolio) -> dict[str, Any]:
         ],
         "solved": len(pf.solves),
         "rechecked_ok": sum(1 for s in pf.solves if recheck(s)),
+        "fresh_ok": sum(
+            1
+            for s in pf.solves
+            if (p := pf.proofs.get(s.task_id))
+            and p["payload"]["passed"]
+            and p["payload"]["answer_sha256"] == answer_sha(s.answer)
+        ),
+        "fresh_testable": sum(1 for s in pf.solves if _testable(s.task_id)),
         "mastery": pf.mastery,
         "built": dt.datetime.now().strftime("%d %b %Y, %H:%M"),
     }

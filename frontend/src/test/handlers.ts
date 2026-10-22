@@ -340,6 +340,21 @@ export const handlers = [
       projects: [{ ...b, summary: "", demo_url: "", added_at: "2026-10-13T10:00", link_ok: true }],
     });
   }),
+  http.post("/portfolio/:id/reprove", () =>
+    HttpResponse.json({
+      seed: null,
+      reproduced: false,
+      passed: 1,
+      tested: 1,
+      proofs: {
+        products_list: {
+          payload: { slug: "learner-abc", task_id: "products_list", answer_sha256: "ab", seeds: [5, 6, 7], passed: true, fresh: true, datasets: 3, at: "2026-10-22T16:05:00" },
+          sig: "f".repeat(64),
+          runs: [],
+        },
+      },
+    }),
+  ),
   http.post("/what-fits", () =>
     HttpResponse.json({
       confidence: 0.9,
@@ -383,6 +398,16 @@ export const handlers = [
       ],
       focus: { half_life_min: 30, block_min: 25, answers: 40 },
       practice_answers: 60,
+      memory: {
+        recalls: 6,
+        topics: [
+          { concept_id: "null_logic", concept: "NULL & three-valued logic", half_life_days: 2.4, recalls: 4, source: "measured" },
+          { concept_id: "where", concept: "WHERE & comparison operators", half_life_days: 9, recalls: 0, source: "from prerequisites" },
+        ],
+      },
+      reviews: [
+        { concept_id: "null_logic", concept: "NULL & three-valued logic", day: "2099-01-05", start: "20:00", end: "20:10", due: "2099-01-05", recall_at_due: 0.62, before: "LEFT / RIGHT / FULL JOIN", priority: 3, late: false },
+      ],
       slowdowns: [
         {
           concept_id: "outer_join",
@@ -550,6 +575,15 @@ export const practiceFailFixture = {
   },
   next_task: "unknown_city",
   replan_ms: 0.6,
+  fix_clip: {
+    code: "count_star_outer",
+    concept_id: "null_logic",
+    concept: "NULL & three-valued logic",
+    moments: [
+      { video_id: "nullclip001", title: "SQL NULL Functions", channel: "Data With Baraa", start: 1092, end: 1463, chapter: "Handle NULL - Mathematical Operators", score: 0.7, kind: "chapter", why: "" },
+      { video_id: "nullclip002", title: "SQL Course for Beginners", channel: "Programming with Mosh", start: 4311, end: 4458, chapter: "The IS NULL Operator", score: 0.6, kind: "chapter", why: "" },
+    ],
+  },
 };
 
 export const portfolioFixture = {
@@ -581,6 +615,8 @@ export const portfolioFixture = {
   projects: [],
   solved: 1,
   rechecked_ok: 1,
+  fresh_ok: 0,
+  fresh_testable: 1,
   mastery: {},
   built: "today",
   share_path: "/p/learner-abc",

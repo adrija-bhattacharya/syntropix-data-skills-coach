@@ -66,6 +66,9 @@ python velpo.py practicebench                                                   
 python velpo.py library                                                          # re-collect LeetCode/HackerRank problems + YouTube lessons
 python velpo.py verify-videos                                                    # check each video teaches its topic (+ where), -> harvest/data/video_checks.json
 python velpo.py reschedulebench                                                  # claim F evidence: calendar feedback loop vs a fixed calendar
+python velpo.py mistakebench                                                     # claim H1: a wrong answer -> the video chapter that explains it
+python velpo.py freshbench                                                       # claim H2: re-testing on new data vs memorised / lucky answers
+python velpo.py forgetbench                                                      # claim H3: learned per-topic forgetting + just-in-time reviews
 python velpo.py velocitybench                                                    # claim G evidence: velocity-sized plans + calibrated forecasts
 python velpo.py test        # the whole test suite
 python velpo.py lint        # ruff + ruff format --check + mypy --strict
@@ -233,6 +236,66 @@ promise, and it warns most late learners within two weeks.  A third policy,
 **matching** slow topics to light days and quick ones to busy days, gave *no
 consistent gain* (56 / 53 / 47% on time) and is left off in the app
 (`reschedule(..., match=True)` keeps it available for study).
+
+## Mistake -> video moment, proof on new data, learned forgetting (claims H1-H3)
+
+**H1 - a wrong answer opens the minute of video that fixes it.**  The graders
+already name *why* an answer is wrong and which topic that points at (often not
+the task's own topic: a `GROUP BY` task failed because of NULLs).  Syntropix
+matches that diagnosis against the chapter lists of the checked library videos
+(`harvest/data/video_segments.json`, 1,202 chapters in 92 videos) and plays only
+that chapter - start to next chapter - inside the practice page.  No chapter
+good enough: the topic's checked lesson at its jump point.
+`python velpo.py mistakebench` (43 real wrong answers run through the grader;
+a clip is on target when its chapter names the blamed topic, by a fixed
+pattern per topic):
+
+| | clip for the mistake | today: video for the task's topic |
+|---|---|---|
+| on target, all mistakes | **93%** | 67% |
+| on target, mistakes that point at *another* topic (11) | **100%** | 0% |
+| video to watch (median) | **2.8 min** | 10 min |
+
+**H2 - proof re-tested on data it has never seen.**  A portfolio that only
+re-runs saved answers on the practice rows can be gamed: type in the expected
+output, or filter on the ids that happen to work.  Syntropix generates a new
+variant of the practice database from a seed (all original rows kept so the
+traps stay; numbers rescaled; new rows with valid foreign keys, new names, new
+categories and new NULLs) and runs the answer and the reference on three such
+variants.  Anyone viewing a public portfolio can press **Re-test now**; each
+result is signed by the server (HMAC, `POST /attest/verify`) and names its
+seeds, so the same data can be rebuilt to reproduce it.  Works for every task
+computed from the tables (23 SQL + 16 pandas).
+`python velpo.py freshbench`:
+
+| answers that pass the practice data | count | also pass 3 fresh datasets |
+|---|---|---|
+| memorised (the output typed in as constants) | 39 | **0%** |
+| lucky (`WHERE id = 4`, `id IN (...)`, ...) | 12 | **0%** |
+| correct, written differently from the reference | 15 | **100%** |
+
+**H3 - forgetting learned per topic, reviews just before they're needed.**  The
+planner modelled forgetting with one half-life for everyone and every topic.
+Now every answer given after a pause of 12 h+ is a recall test; a Bayesian
+grid fit gives each topic its own half-life, with the prior taken from the
+topics it builds on (then the learner's average).  A known topic gets a
+10-minute review when it would fall below 70% - or the day before a lesson
+that needs it, if it wouldn't be 80% fresh by then - placed in a real free gap
+of the calendar around the study blocks.
+`python velpo.py forgetbench` (150 simulated learners, the 20-topic SQL graph,
+a lesson every 2 days; true half-lives vary by learner and follow the
+prerequisites - the stated assumption):
+
+| policy | lessons starting with every prerequisite >= 70% remembered | reviews | wasted (still > 90%) |
+|---|---|---|---|
+| no reviews | 38% | 0 | - |
+| one fixed half-life (before) | 70% | 70 | 13% |
+| fixed + just in time | 75% | 73 | 18% |
+| learned per topic | 69% | 63 | 6% |
+| **learned + just in time** | **78%** | **63** | 9% |
+
+A moderate gain: more lessons start ready with 14% fewer reviews than the
+fixed model with just-in-time reviews, and half as many wasted ones.
 
 ## Benchmark
 

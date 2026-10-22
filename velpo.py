@@ -27,6 +27,10 @@ Commands
     reschedulebench claim F - calendar feedback loop vs a fixed calendar, simulated weeks
     velocitybench claim G - velocity-sized plans + calibrated finish forecasts
     velocityplusbench claims G1-G5 - self-check, slowdowns, what fits, best times, focus
+    mistakebench claim H1 - does a wrong answer lead to the video moment that fixes it?
+    freshbench   claim H2 - re-testing on new data vs memorised / lucky / correct answers
+    forgetbench  claim H3 - learned per-topic forgetting + just-in-time reviews, simulated
+    segments     copy video chapters from the evidence cache into harvest/data (for H1)
     verify-videos check each video teaches its topic (transcript/chapters; LLM with an API key)
     library      re-collect LeetCode/HackerRank problems + YouTube lessons (--fresh: from scratch)
     datasets     download / inspect the benchmark datasets (--full for the whole Junyi graph)
@@ -482,6 +486,7 @@ def cmd_lint(_: argparse.Namespace) -> int:
         "data_resources.py",
         "engine.py",
         "skill_library.py",
+        "mistake_moments.py",
         "portfolio.py",
         "portfolio_page.py",
         "telemetry.py",
@@ -510,6 +515,7 @@ def cmd_fmt(_: argparse.Namespace) -> int:
         "data_resources.py",
         "engine.py",
         "skill_library.py",
+        "mistake_moments.py",
         "portfolio.py",
         "portfolio_page.py",
         "telemetry.py",
@@ -555,6 +561,24 @@ def cmd_ablation(_: argparse.Namespace) -> int:
 
 def cmd_practicebench(_: argparse.Namespace) -> int:
     return _run([*PY, "-m", "benchmarks.practice_bench"])
+
+
+def cmd_mistakebench(_: argparse.Namespace) -> int:
+    return _run([*PY, "-m", "benchmarks.mistake_moments_bench"])
+
+
+def cmd_freshbench(_: argparse.Namespace) -> int:
+    return _run([*PY, "-m", "benchmarks.fresh_proof_bench"])
+
+
+def cmd_forgetbench(_: argparse.Namespace) -> int:
+    return _run([*PY, "-m", "benchmarks.forgetting_bench"])
+
+
+def cmd_segments(args: argparse.Namespace) -> int:
+    from harvest.segments import main
+
+    return main(["--cache", args.cache] if args.cache else [])
 
 
 def cmd_velocityplusbench(_: argparse.Namespace) -> int:
@@ -702,6 +726,12 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("reschedulebench").set_defaults(fn=cmd_reschedulebench)
     sub.add_parser("velocitybench").set_defaults(fn=cmd_velocitybench)
     sub.add_parser("velocityplusbench").set_defaults(fn=cmd_velocityplusbench)
+    sub.add_parser("mistakebench").set_defaults(fn=cmd_mistakebench)
+    sub.add_parser("freshbench").set_defaults(fn=cmd_freshbench)
+    sub.add_parser("forgetbench").set_defaults(fn=cmd_forgetbench)
+    sg = sub.add_parser("segments")
+    sg.add_argument("--cache", default="", help="evidence cache folder (default: harvest/.cache)")
+    sg.set_defaults(fn=cmd_segments)
     vv = sub.add_parser("verify-videos")
     vv.add_argument("--redo", action="store_true", help="re-judge every video, not only new ones")
     vv.add_argument(

@@ -178,6 +178,19 @@ describe("SQL practice lab", () => {
     expect(await screen.findByText(/whose city is unknown/)).toBeInTheDocument();
   });
 
+  it("a wrong answer opens the video moment that explains the mistake", async () => {
+    const user = userEvent.setup();
+    renderApp(<PracticePage />, { route: "/practice?target=outer_join" });
+    await screen.findByText(/customers with none show 0/);
+    await user.type(screen.getByLabelText("Your SQL"), "SELECT 1{Control>}{Enter}{/Control}");
+    const fix = await screen.findByRole("region", { name: "Watch the fix" });
+    expect(within(fix).getByText(/Handle NULL - Mathematical Operators/)).toBeInTheDocument();
+    await user.click(within(fix).getByRole("button", { name: /Play 18:12–24:23/ }));
+    expect(within(fix).getByTitle("Fix clip nullclip001").getAttribute("src")).toContain("start=1092&end=1463");
+    await user.click(within(fix).getByRole("button", { name: /Try another explanation/ }));
+    expect(within(fix).getByText(/The IS NULL Operator/)).toBeInTheDocument();
+  });
+
   it("hints unlock one level at a time", async () => {
     const user = userEvent.setup();
     renderApp(<PracticePage />, { route: "/practice?target=outer_join" });

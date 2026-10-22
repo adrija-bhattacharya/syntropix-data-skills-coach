@@ -1,5 +1,9 @@
 """The shareable proof-of-skill page: one self-contained HTML file (no scripts,
-no external assets) built from :func:`portfolio.public_view`."""
+no external assets) built from :func:`portfolio.public_view`.
+
+Served live (``live=True``), it carries a plain form that asks the server to
+re-test every answer on new data (claim H2); the downloaded copy shows the last
+signed result instead."""
 
 from __future__ import annotations
 
@@ -40,6 +44,8 @@ pre{background:var(--code);border:1px solid var(--line);border-radius:8px;paddin
 table{border-collapse:collapse;font-size:13px;margin-top:6px}td,th{border:1px solid var(--line);padding:3px 8px;text-align:left}
 details summary{cursor:pointer;color:var(--accent);font-size:14px}
 footer{margin-top:48px;font-size:13px;color:var(--muted)}
+.btn{font:inherit;font-weight:600;padding:8px 14px;border-radius:8px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+.proof{font-size:13px;margin-top:6px}code{font:12px ui-monospace,Consolas,monospace;word-break:break-all}
 .bar{height:6px;border-radius:6px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
 """
 
@@ -48,7 +54,25 @@ def _link(url: str, label: str) -> str:
     return f'<a href="{escape(url, quote=True)}" rel="noopener">{escape(label)}</a>' if url else ""
 
 
-def render(view: dict[str, Any], *, base_url: str = "") -> str:
+def _proof(p: dict[str, Any] | None) -> tuple[str, str]:
+    """(badge, details) for one answer's latest fresh-data test."""
+    if not p:
+        return "", ""
+    pl = p["payload"]
+    when = escape(pl["at"][:16].replace("T", " "))
+    if pl["passed"]:
+        badge = f"<span class='badge'>✓ passed on {pl['datasets']} new datasets</span>"
+    else:
+        badge = "<span class='badge warn'>failed on new data</span>"
+    detail = (
+        f"<div class='proof muted'>Re-tested {when} on database variants "
+        f"{', '.join(str(x) for x in pl['seeds'])} (anyone can rebuild them from these numbers). "
+        f"Signature <code>{escape(p['sig'][:16])}…</code></div>"
+    )
+    return badge, detail
+
+
+def render(view: dict[str, Any], *, base_url: str = "", live: bool = False) -> str:
     name = escape(view["name"])
     links = " · ".join(
         x for x in (_link(view["github"], "GitHub"), _link(view["linkedin"], "LinkedIn")) if x
@@ -66,10 +90,24 @@ def render(view: dict[str, Any], *, base_url: str = "") -> str:
         "<div class='stats'>",
         f"<div class='stat'><b>{view['solved']}</b><span class='muted'>problems solved</span></div>",
         f"<div class='stat'><b>{view['rechecked_ok']}/{view['solved']}</b><span class='muted'>pass when re-run today</span></div>",
+        f"<div class='stat'><b>{view.get('fresh_ok', 0)}/{view.get('fresh_testable', 0)}</b><span class='muted'>pass on new data</span></div>",
         f"<div class='stat'><b>{len(skills)}</b><span class='muted'>skills</span></div>",
         f"<div class='stat'><b>{len(view['projects'])}</b><span class='muted'>projects</span></div>",
         "</div>",
     ]
+    if view.get("fresh_testable"):
+        out.append(
+            "<div class='card' id='proof'><h3>Re-test on data it has never seen</h3>"
+            "<p class='muted' style='margin:4px 0 10px'>SQL and pandas answers can be run on a newly generated "
+            "version of the practice database: more rows, new values, new edge cases. An answer that was memorised "
+            "or only worked on the practice rows fails there.</p>"
+        )
+        if live:
+            out.append(
+                f"<form method='post' action='/p/{escape(view['slug'], quote=True)}/retest'>"
+                "<button class='btn' type='submit'>Re-test now on new data</button></form>"
+            )
+        out.append("</div>")
     if view["projects"]:
         out.append("<h2>Projects</h2>")
         for p in view["projects"]:
@@ -100,6 +138,8 @@ def render(view: dict[str, Any], *, base_url: str = "") -> str:
                 if s["rechecked"]
                 else "<span class='badge warn'>no longer passes</span>"
             )
+            fresh_badge, fresh_detail = _proof(s.get("proof"))
+            badge += " " + fresh_badge
             checks = ", ".join(escape(c) for c in s["checks"])
             table = ""
             if s["columns"] and s["result_preview"] and s["kind"] in ("sql", "python"):
@@ -112,7 +152,7 @@ def render(view: dict[str, Any], *, base_url: str = "") -> str:
             out.append(
                 f"<div class='card'><h3>{escape(s['concept_name'])} {badge}</h3>"
                 f"<div class='muted'>{escape(s['prompt'])}</div>"
-                f"<pre>{escape(s['answer'])}</pre>"
+                f"<pre>{escape(s['answer'])}</pre>{fresh_detail}"
                 f"<details><summary>{escape(LANG.get(s['kind'], s['kind']))} · checks passed: {checks or '—'} · "
                 f"solved {escape(s['solved_at'][:10])}</summary>{table}</details></div>"
             )

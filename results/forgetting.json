@@ -1,0 +1,32 @@
+[
+ {
+  "policy": "no reviews",
+  "lessons_ready": 0.382,
+  "reviews_per_learner": 0,
+  "wasted_review_share": 0.0
+ },
+ {
+  "policy": "fixed half-life",
+  "lessons_ready": 0.705,
+  "reviews_per_learner": 70,
+  "wasted_review_share": 0.131
+ },
+ {
+  "policy": "fixed + just in time",
+  "lessons_ready": 0.752,
+  "reviews_per_learner": 73,
+  "wasted_review_share": 0.175
+ },
+ {
+  "policy": "learned",
+  "lessons_ready": 0.688,
+  "reviews_per_learner": 62.7,
+  "wasted_review_share": 0.059
+ },
+ {
+  "policy": "learned + just in time",
+  "lessons_ready": 0.777,
+  "reviews_per_learner": 63.1,
+  "wasted_review_share": 0.087
+ }
+]

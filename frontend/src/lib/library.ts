@@ -41,8 +41,8 @@ export function useTrackLibrary() {
   return { q, pace, setPace, track };
 }
 
-export const embed = (videoId: string, start = 0) =>
-  `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1${start > 0 ? `&start=${start}` : ""}`;
+export const embed = (videoId: string, start = 0, end = 0) =>
+  `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1${start > 0 ? `&start=${start}` : ""}${end > start ? `&end=${end}` : ""}`;
 
 export const clock = (s: number) =>
   s >= 3600 ? `${Math.floor(s / 3600)}:${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;

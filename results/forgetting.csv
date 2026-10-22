@@ -1,0 +1,6 @@
+policy,lessons_ready,reviews_per_learner,wasted_review_share
+no reviews,0.382,0,0.0
+fixed half-life,0.705,70,0.131
+fixed + just in time,0.752,73,0.175
+learned,0.688,62.7,0.059
+learned + just in time,0.777,63.1,0.087

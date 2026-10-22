@@ -1,0 +1,630 @@
+{
+ "summary": {
+  "memorised": {
+   "answers_passing_practice_data": 39,
+   "share_also_passing_fresh_data": 0.0
+  },
+  "lucky": {
+   "answers_passing_practice_data": 12,
+   "share_also_passing_fresh_data": 0.0
+  },
+  "correct, written differently": {
+   "answers_passing_practice_data": 15,
+   "share_also_passing_fresh_data": 1.0
+  }
+ },
+ "rows": [
+  {
+   "kind": "memorised",
+   "task": "products_list",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 'Notebook', 4.5 UNION ALL SELECT 'Pen set', 8.0 UNION ALL SELECT 'SQL book', 32.0 UNION ALL SELECT 'Stats book', 28.0 UNION ALL SELECT 'Headphones', 45.0"
+  },
+  {
+   "kind": "memorised",
+   "task": "pricey_products",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 'SQL book' UNION ALL SELECT 'Stats book' UNION ALL SELECT 'Headphones'"
+  },
+  {
+   "kind": "memorised",
+   "task": "top3_products",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 'Headphones', 45.0 UNION ALL SELECT 'SQL book', 32.0 UNION ALL SELECT 'Stats book', 28.0"
+  },
+  {
+   "kind": "memorised",
+   "task": "categories",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 'stationery' UNION ALL SELECT 'books' UNION ALL SELECT 'electronics'"
+  },
+  {
+   "kind": "memorised",
+   "task": "unknown_city",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 'Dana'"
+  },
+  {
+   "kind": "memorised",
+   "task": "order_totals",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 7, 232.0"
+  },
+  {
+   "kind": "memorised",
+   "task": "orders_per_status",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 'cancelled', 1 UNION ALL SELECT 'pending', 1 UNION ALL SELECT 'shipped', 5"
+  },
+  {
+   "kind": "memorised",
+   "task": "spend_per_customer",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 'Asha', 72.5 UNION ALL SELECT 'Bilal', 63.0 UNION ALL SELECT 'Chen', 36.5 UNION ALL SELECT 'Dana', 60.0"
+  },
+  {
+   "kind": "memorised",
+   "task": "repeat_customers",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3"
+  },
+  {
+   "kind": "memorised",
+   "task": "order_customer",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 100, 'Asha' UNION ALL SELECT 101, 'Asha' UNION ALL SELECT 102, 'Bilal' UNION ALL SELECT 103, 'Chen' UNION ALL SELECT 104, 'Chen' UNION ALL SELECT 105, 'D"
+  },
+  {
+   "kind": "memorised",
+   "task": "orders_per_customer",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 'Asha', 2 UNION ALL SELECT 'Bilal', 2 UNION ALL SELECT 'Chen', 2 UNION ALL SELECT 'Dana', 1 UNION ALL SELECT 'Eshan', 0 UNION ALL SELECT 'Farah', 0"
+  },
+  {
+   "kind": "memorised",
+   "task": "employee_manager",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 'Nikhil', 'Meera' UNION ALL SELECT 'Ojas', 'Meera' UNION ALL SELECT 'Priya', 'Nikhil' UNION ALL SELECT 'Rohan', 'Nikhil'"
+  },
+  {
+   "kind": "memorised",
+   "task": "above_average",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 'SQL book' UNION ALL SELECT 'Stats book' UNION ALL SELECT 'Headphones'"
+  },
+  {
+   "kind": "memorised",
+   "task": "big_spenders",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 1"
+  },
+  {
+   "kind": "memorised",
+   "task": "price_band",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 'Notebook', 'budget' UNION ALL SELECT 'Pen set', 'budget' UNION ALL SELECT 'SQL book', 'premium' UNION ALL SELECT 'Stats book', 'mid' UNION ALL SELECT 'H"
+  },
+  {
+   "kind": "memorised",
+   "task": "order_vs_customer_total",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 100, 1, 40.5, 72.5 UNION ALL SELECT 101, 1, 32.0, 72.5 UNION ALL SELECT 102, 2, 51.0, 63.0 UNION ALL SELECT 106, 2, 12.0, 63.0 UNION ALL SELECT 103, 3, 3"
+  },
+  {
+   "kind": "memorised",
+   "task": "ordered_or_books",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 10 UNION ALL SELECT 11 UNION ALL SELECT 12 UNION ALL SELECT 13 UNION ALL SELECT 14 UNION ALL SELECT 15"
+  },
+  {
+   "kind": "memorised",
+   "task": "orders_per_month",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT '2025-05', 3 UNION ALL SELECT '2025-06', 3 UNION ALL SELECT '2025-07', 1"
+  },
+  {
+   "kind": "memorised",
+   "task": "shout_names",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 'ASHA' UNION ALL SELECT 'BILAL' UNION ALL SELECT 'CHEN' UNION ALL SELECT 'DANA' UNION ALL SELECT 'ESHAN' UNION ALL SELECT 'FARAH'"
+  },
+  {
+   "kind": "memorised",
+   "task": "de_incremental",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 104, '2025-06-15' UNION ALL SELECT 105, '2025-06-30' UNION ALL SELECT 106, '2025-07-04'"
+  },
+  {
+   "kind": "memorised",
+   "task": "de_latest_order",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 1, 101, '2025-05-20' UNION ALL SELECT 2, 106, '2025-07-04' UNION ALL SELECT 3, 104, '2025-06-15' UNION ALL SELECT 4, 105, '2025-06-30'"
+  },
+  {
+   "kind": "memorised",
+   "task": "de_null_test",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 104"
+  },
+  {
+   "kind": "memorised",
+   "task": "de_fact_revenue",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 'books', 92.0 UNION ALL SELECT 'electronics', 126.0 UNION ALL SELECT 'stationery', 26.0"
+  },
+  {
+   "kind": "memorised",
+   "task": "pd_series_prices",
+   "language": "python",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "result = pd.DataFrame([['Notebook', 4.5], ['Pen set', 8.0], ['SQL book', 32.0], ['Stats book', 28.0], ['Headphones', 45.0], ['USB cable', 6.0]], columns=['name'"
+  },
+  {
+   "kind": "memorised",
+   "task": "pd_count_orders",
+   "language": "python",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "result = 7"
+  },
+  {
+   "kind": "memorised",
+   "task": "pd_select_cols",
+   "language": "python",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "result = pd.DataFrame([['Notebook', 4.5], ['Pen set', 8.0], ['SQL book', 32.0], ['Stats book', 28.0], ['Headphones', 45.0], ['USB cable', 6.0]], columns=['name'"
+  },
+  {
+   "kind": "memorised",
+   "task": "pd_cheap_stationery",
+   "language": "python",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "result = pd.DataFrame([['Notebook'], ['Pen set']], columns=['name'])"
+  },
+  {
+   "kind": "memorised",
+   "task": "pd_price_tax",
+   "language": "python",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "result = pd.DataFrame([['Notebook', 5.31], ['Pen set', 9.44], ['SQL book', 37.76], ['Stats book', 33.04], ['Headphones', 53.1], ['USB cable', 7.08]], columns=['"
+  },
+  {
+   "kind": "memorised",
+   "task": "pd_missing_amount",
+   "language": "python",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "result = 1"
+  },
+  {
+   "kind": "memorised",
+   "task": "pd_spend_per_customer",
+   "language": "python",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "result = pd.DataFrame([[1, 72.5], [2, 63.0], [3, 36.5], [4, 60.0]], columns=['customer_id', 'amount'])"
+  },
+  {
+   "kind": "memorised",
+   "task": "pd_orders_per_customer",
+   "language": "python",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "result = pd.DataFrame([['Asha', 2], ['Bilal', 2], ['Chen', 2], ['Dana', 1], ['Eshan', 0], ['Farah', 0]], columns=['name', 'id_y'])"
+  },
+  {
+   "kind": "memorised",
+   "task": "pd_concat_books_electronics",
+   "language": "python",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "result = pd.DataFrame([['SQL book', 'books'], ['Stats book', 'books'], ['Headphones', 'electronics'], ['USB cable', 'electronics']], columns=['name', 'category'"
+  },
+  {
+   "kind": "memorised",
+   "task": "pd_pivot_status",
+   "language": "python",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "result = pd.DataFrame([[1, 0.0, 0.0, 72.5], [2, 0.0, 51.0, 12.0], [3, 0.0, 0.0, 36.5], [4, 0.0, 0.0, 60.0]], columns=['customer_id', 'cancelled', 'pending', 'sh"
+  },
+  {
+   "kind": "memorised",
+   "task": "pd_category_code",
+   "language": "python",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "result = pd.DataFrame([['Notebook', 'S'], ['Pen set', 'S'], ['SQL book', 'B'], ['Stats book', 'B'], ['Headphones', 'E'], ['USB cable', 'E']], columns=['name', '"
+  },
+  {
+   "kind": "memorised",
+   "task": "pd_orders_per_month",
+   "language": "python",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "result = pd.DataFrame([['2025-05', 3], ['2025-06', 3], ['2025-07', 1]], columns=['order_date', 'count'])"
+  },
+  {
+   "kind": "memorised",
+   "task": "pd_upper_names",
+   "language": "python",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "result = pd.DataFrame([['ASHA'], ['BILAL'], ['CHEN'], ['DANA'], ['ESHAN'], ['FARAH']], columns=['name'])"
+  },
+  {
+   "kind": "memorised",
+   "task": "pd_top3_prices",
+   "language": "python",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "result = pd.DataFrame([['Headphones', 45.0], ['SQL book', 32.0], ['Stats book', 28.0]], columns=['name', 'price'])"
+  },
+  {
+   "kind": "memorised",
+   "task": "np_mean_price",
+   "language": "python",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "result = 20.58"
+  },
+  {
+   "kind": "memorised",
+   "task": "np_discount",
+   "language": "python",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "result = pd.DataFrame([[4.05], [7.2], [28.8], [25.2], [40.5], [5.4]], columns=['value'])"
+  },
+  {
+   "kind": "lucky",
+   "task": "unknown_city",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT name FROM customers WHERE id = 4"
+  },
+  {
+   "kind": "lucky",
+   "task": "pricey_products",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT name FROM products WHERE id IN (12, 13, 14)"
+  },
+  {
+   "kind": "lucky",
+   "task": "top3_products",
+   "language": "sql",
+   "passes_practice_data": false,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT name, price FROM products WHERE price >= 32 ORDER BY price DESC"
+  },
+  {
+   "kind": "lucky",
+   "task": "repeat_customers",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT customer_id FROM orders WHERE customer_id IN (1, 2, 3) GROUP BY customer_id"
+  },
+  {
+   "kind": "lucky",
+   "task": "categories",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 'stationery' UNION SELECT 'books' UNION SELECT 'electronics'"
+  },
+  {
+   "kind": "lucky",
+   "task": "order_totals",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 7, SUM(amount) FROM orders"
+  },
+  {
+   "kind": "lucky",
+   "task": "above_average",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT name FROM products WHERE price > 20"
+  },
+  {
+   "kind": "lucky",
+   "task": "de_null_test",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT 104"
+  },
+  {
+   "kind": "lucky",
+   "task": "spend_per_customer",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT c.name, SUM(o.amount) FROM customers c JOIN orders o ON o.customer_id = c.id WHERE c.id < 5 GROUP BY c.name"
+  },
+  {
+   "kind": "lucky",
+   "task": "employee_manager",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT e.name, m.name FROM employees e JOIN employees m ON m.id = e.manager_id WHERE e.id <= 5"
+  },
+  {
+   "kind": "lucky",
+   "task": "orders_per_customer",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT c.name, COUNT(o.id) FROM customers c LEFT JOIN orders o ON o.customer_id = c.id WHERE c.id <= 6 GROUP BY c.id, c.name"
+  },
+  {
+   "kind": "lucky",
+   "task": "big_spenders",
+   "language": "sql",
+   "passes_practice_data": false,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT customer_id FROM orders WHERE customer_id IN (1, 4) GROUP BY customer_id"
+  },
+  {
+   "kind": "lucky",
+   "task": "orders_per_status",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT status, COUNT(*) FROM orders WHERE id <= 106 GROUP BY status"
+  },
+  {
+   "kind": "lucky",
+   "task": "de_incremental",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": false,
+   "fresh_datasets": 3,
+   "answer": "SELECT id, order_date FROM orders WHERE id IN (104, 105, 106)"
+  },
+  {
+   "kind": "correct, written differently",
+   "task": "pricey_products",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": true,
+   "fresh_datasets": 3,
+   "answer": "SELECT name FROM products WHERE NOT price <= 20"
+  },
+  {
+   "kind": "correct, written differently",
+   "task": "top3_products",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": true,
+   "fresh_datasets": 3,
+   "answer": "SELECT name, price FROM products ORDER BY 2 DESC LIMIT 3"
+  },
+  {
+   "kind": "correct, written differently",
+   "task": "categories",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": true,
+   "fresh_datasets": 3,
+   "answer": "SELECT category FROM products GROUP BY category"
+  },
+  {
+   "kind": "correct, written differently",
+   "task": "unknown_city",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": true,
+   "fresh_datasets": 3,
+   "answer": "SELECT name FROM customers WHERE NOT city IS NOT NULL"
+  },
+  {
+   "kind": "correct, written differently",
+   "task": "repeat_customers",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": true,
+   "fresh_datasets": 3,
+   "answer": "SELECT customer_id FROM orders GROUP BY customer_id HAVING COUNT(id) >= 2"
+  },
+  {
+   "kind": "correct, written differently",
+   "task": "big_spenders",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": true,
+   "fresh_datasets": 3,
+   "answer": "SELECT customer_id FROM orders GROUP BY customer_id HAVING SUM(amount) > 70"
+  },
+  {
+   "kind": "correct, written differently",
+   "task": "orders_per_customer",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": true,
+   "fresh_datasets": 3,
+   "answer": "SELECT c.name, (SELECT COUNT(*) FROM orders o WHERE o.customer_id = c.id) FROM customers c"
+  },
+  {
+   "kind": "correct, written differently",
+   "task": "above_average",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": true,
+   "fresh_datasets": 3,
+   "answer": "WITH a AS (SELECT AVG(price) AS p FROM products) SELECT name FROM products, a WHERE price > a.p"
+  },
+  {
+   "kind": "correct, written differently",
+   "task": "order_totals",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": true,
+   "fresh_datasets": 3,
+   "answer": "SELECT COUNT(id), SUM(amount) FROM orders"
+  },
+  {
+   "kind": "correct, written differently",
+   "task": "orders_per_status",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": true,
+   "fresh_datasets": 3,
+   "answer": "SELECT status, COUNT(id) FROM orders GROUP BY 1"
+  },
+  {
+   "kind": "correct, written differently",
+   "task": "de_null_test",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": true,
+   "fresh_datasets": 3,
+   "answer": "SELECT id FROM orders WHERE amount IS NULL ORDER BY id"
+  },
+  {
+   "kind": "correct, written differently",
+   "task": "order_customer",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": true,
+   "fresh_datasets": 3,
+   "answer": "SELECT orders.id, customers.name FROM customers, orders WHERE customers.id = orders.customer_id"
+  },
+  {
+   "kind": "correct, written differently",
+   "task": "employee_manager",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": true,
+   "fresh_datasets": 3,
+   "answer": "SELECT e.name, (SELECT m.name FROM employees m WHERE m.id = e.manager_id) FROM employees e WHERE e.manager_id IS NOT NULL"
+  },
+  {
+   "kind": "correct, written differently",
+   "task": "shout_names",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": true,
+   "fresh_datasets": 3,
+   "answer": "SELECT UPPER(c.name) FROM customers AS c"
+  },
+  {
+   "kind": "correct, written differently",
+   "task": "price_band",
+   "language": "sql",
+   "passes_practice_data": true,
+   "passes_fresh_data": true,
+   "fresh_datasets": 3,
+   "answer": "SELECT name, CASE WHEN price >= 10 AND price <= 30 THEN 'mid' WHEN price < 10 THEN 'budget' ELSE 'premium' END FROM products"
+  }
+ ]
+}

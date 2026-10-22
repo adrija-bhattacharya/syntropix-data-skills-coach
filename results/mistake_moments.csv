@@ -1,0 +1,44 @@
+task,domain,code,blamed,task_topic,other_topic,clip,clip_on_target,clip_seconds,clip_is_chapter,baseline_on_target,baseline_seconds
+unknown_city,sql,null_equality,null_logic,null_logic,False,chapter: Handle NULL - Mathematical Operators [1092-1463s],True,371,True,True,602
+de_null_test,data_eng,null_equality,null_logic,data_quality,True,chapter: Handle NULL - Mathematical Operators [1092-1463s],True,371,True,False,966
+orders_per_customer,sql,dropped_unmatched,outer_join,outer_join,False,chapter: Left Anti Join - Right Anti Join [2804-3104s],True,300,True,True,78
+orders_per_customer,sql,count_star_outer,null_logic,outer_join,True,chapter: Handle NULL - Joining Tables [1463-1888s],True,425,True,False,78
+repeat_customers,sql,aggregate_in_where,having,having,False,topic: Intermediate SQL Tutorial | Having Clause [0-210s],True,210,False,True,210
+categories,sql,duplicates,distinct,distinct,False,"topic: SQL: Distinct, ALL, IN, NOT IN, Between, LIKE and NOT LIKE Operators | Learn Coding [0-600s]",True,600,False,True,642
+top3_products,sql,unlimited,order_limit,order_limit,False,chapter: The LIMIT Operator [4883-5090s],True,207,True,True,156
+pricey_products,sql,unfiltered,where,where,False,chapter: How to use the WHERE clause? [1197-1232s],True,35,True,False,450
+orders_per_status,sql,missing_group_by,group_by,group_by,False,chapter: Aggregate Functions with GROUP BY [288-396s],True,108,True,True,648
+order_vs_customer_total,sql,missing_partition,window_functions,window_functions,False,chapter: Why We Need Window Functions [306-760s],True,454,True,True,3132
+order_vs_customer_total,sql,collapsed_window,window_functions,window_functions,False,chapter: ROW_NUMBER() Window Function in SQL [393-717s],True,324,True,True,3132
+spend_per_customer,sql,join_fanout,inner_join,group_by,True,chapter: Inner Joins in SQL [330-480s],True,150,True,False,648
+order_customer,sql,ambiguous_column,inner_join,inner_join,False,chapter: Inner Joins in SQL [330-480s],True,150,True,True,1794
+products_list,sql,wrong_columns,select_from,select_from,False,chapter: The SELECT Clause [1770-2298s],True,528,True,True,660
+orders_per_month,sql,wrong_grouping,group_by,date_fns_sql,True,chapter: Window vs Group By [21-306s],True,285,True,False,2222
+top3_products,sql,wrong_direction,order_limit,order_limit,False,chapter: The ORDER BY Operator [4458-4883s],True,425,True,True,156
+employee_manager,sql,result_differs,self_join,self_join,False,chapter: Self Joins [5763-6017s],True,254,True,True,606
+de_incremental,data_eng,inclusive_watermark,incremental_loads,incremental_loads,False,chapter: ETL (Extract Transform Load) [3446-3552s],True,106,True,False,0
+de_latest_order,data_eng,wrong_direction,order_limit,dedup_keys,True,chapter: The ORDER BY Operator [4458-4883s],True,425,True,False,759
+de_fact_revenue,data_eng,ignored_qty,dimensional_modeling,dimensional_modeling,False,chapter: Dimensional Modelling [5601-6034s],True,433,True,True,760
+pd_count_orders,python_data,rows_vs_columns,dataframe,dataframe,False,"chapter: Skip rows in dataframe using ""skiprows [159-284s]",True,125,True,True,1245
+pd_select_cols,python_data,one_column,selecting,selecting,False,chapter: 6. Select columns by data type [301-340s],True,39,True,True,672
+pd_cheap_stationery,python_data,missing_condition,filtering,filtering,False,chapter: booleans [397-483s],True,86,True,True,390
+pd_price_tax,python_data,tax_not_total,new_columns,new_columns,False,chapter: Insert new cell in current cell [492-519s],False,27,True,False,0
+pd_missing_amount,python_data,nan_equality,missing_data,missing_data,False,chapter: 15. Handle missing values [882-957s],True,75,True,True,256
+pd_spend_per_customer,python_data,missing_groupby,groupby_agg,groupby_agg,False,chapter: Popular Aggregate Functions [188-338s],False,150,True,True,478
+pd_spend_per_customer,python_data,wrong_aggregate,groupby_agg,groupby_agg,False,chapter: agg Function [338-452s],False,114,True,True,478
+pd_orders_per_customer,python_data,inner_merge,merge_join,merge_join,False,chapter: Join dataframe with series() function [746-912s],True,166,True,True,840
+pd_orders_per_customer,python_data,size_counts_nan,missing_data,merge_join,True,chapter: 15. Handle missing values [882-957s],True,75,True,False,840
+pd_pivot_status,python_data,no_fill,pivot_melt,pivot_melt,False,chapter: 22. Create a pivot table [1324-1381s],True,57,True,True,318
+pd_orders_per_month,python_data,month_number,datetime_pd,datetime_pd,False,topic: Python Pandas Tutorial (Part 10): Working with Dates and Time Series Data [0-600s],True,600,False,True,2142
+pd_top3_prices,python_data,ascending,sort_rank,sort_rank,False,chapter: Sort [249-314s],True,65,True,True,534
+pd_top3_prices,python_data,no_head,sort_rank,sort_rank,False,chapter: Sort [249-314s],True,65,True,True,534
+np_discount,python_data,discount_amount,array_ops,array_ops,False,chapter: multidimensional arrays [307-774s],True,467,True,True,672
+py_sum_above,python,no_condition,conditionals,loops,True,chapter: if statements [0-87s],True,87,True,False,310
+py_grade_fn,python,boundary,conditionals,functions,True,chapter: if statements [0-87s],True,87,True,False,636
+xl_total_units,spreadsheets,short_range,cells_ranges,agg_functions,True,chapter: Reference cells on other sheets [586-645s],True,59,True,False,414
+xl_avg_units,spreadsheets,blank_as_zero,agg_functions,agg_functions,False,"chapter: Summarize Values (Sum, Max, Count) [136-197s]",True,61,True,True,414
+xl_clean_rep,spreadsheets,no_trim,cleaning_ss,text_functions,True,topic: How to Clean Data in Excel in 10 Minutes (Free File) [0-600s],True,600,False,False,588
+xl_bulk_flag,spreadsheets,boundary,logical_functions,logical_functions,False,"chapter: Logical Functions in Excel (IF, IFS, AND, OR) [307-907s]",True,600,True,True,367
+xl_east_units,spreadsheets,count_not_sum,agg_functions,pivot_tables,True,"chapter: Summarize Values (Sum, Max, Count) [136-197s]",True,61,True,False,404
+xl_distinct_regions,spreadsheets,duplicates_counted,dynamic_arrays,dynamic_arrays,False,chapter: Array Formulas [7274-7874s],True,600,True,True,972
+xl_trim_len,spreadsheets,no_trim,cleaning_ss,cleaning_ss,False,topic: How to Clean Data in Excel in 10 Minutes (Free File) [0-600s],True,600,False,True,600

@@ -313,6 +313,24 @@ export const PracticeDiagnosis = z.object({
   weight: z.number(),
   message: z.string(),
 });
+export const FixMoment = z.object({
+  video_id: z.string(),
+  title: z.string(),
+  channel: z.string().default(""),
+  start: z.number(),
+  end: z.number(),
+  chapter: z.string().default(""),
+  score: z.number().default(0),
+  kind: z.enum(["chapter", "topic"]),
+  why: z.string().default(""),
+});
+/** Claim H1: the video moment that explains the mistake in a wrong answer. */
+export const FixClip = z.object({
+  code: z.string(),
+  concept_id: z.string(),
+  concept: z.string(),
+  moments: z.array(FixMoment),
+});
 export const PracticeResult = z.object({
   task_id: z.string(),
   correct: z.boolean(),
@@ -337,9 +355,11 @@ export const PracticeResult = z.object({
   next_task: z.string().nullable(),
   replan_ms: z.number(),
   in_portfolio: z.boolean().default(false),
+  fix_clip: FixClip.nullable().default(null),
 });
 
 export type Concept = z.infer<typeof Concept>;
+export type FixClip = z.infer<typeof FixClip>;
 export type Resource = z.infer<typeof Resource>;
 export type Catalogue = z.infer<typeof Catalogue>;
 export type Step = z.infer<typeof Step>;
@@ -508,6 +528,30 @@ export const RescheduleResponse = z.object({
   study_times: z.array(z.object({ slot: z.string(), multiplier: z.number(), answers: z.number() })).default([]),
   focus: z.object({ half_life_min: z.number(), block_min: z.number(), answers: z.number() }).nullable().default(null),
   practice_answers: z.number().default(0),
+  /** H3: how long you keep each topic, measured from your own answers after a pause */
+  memory: z
+    .object({
+      recalls: z.number(),
+      topics: z.array(z.object({ concept_id: z.string(), concept: z.string(), half_life_days: z.number(), recalls: z.number(), source: z.string() })),
+    })
+    .default({ recalls: 0, topics: [] }),
+  /** H3: 10-minute reviews placed in free time, just before a topic is needed or fades */
+  reviews: z
+    .array(
+      z.object({
+        concept_id: z.string(),
+        concept: z.string(),
+        day: z.string(),
+        start: z.string(),
+        end: z.string(),
+        due: z.string(),
+        recall_at_due: z.number(),
+        before: z.string().nullable(),
+        priority: z.number(),
+        late: z.boolean(),
+      }),
+    )
+    .default([]),
   slowdowns: z
     .array(
       z.object({
@@ -553,6 +597,28 @@ export interface RescheduleInput {
 }
 
 // --- proof-of-skill portfolio ---
+/** Claim H2: a signed re-test of one answer on newly generated practice data. */
+export const FreshProof = z.object({
+  payload: z.object({
+    slug: z.string(),
+    task_id: z.string(),
+    answer_sha256: z.string(),
+    seeds: z.array(z.number()),
+    passed: z.boolean(),
+    fresh: z.boolean(),
+    datasets: z.number(),
+    at: z.string(),
+  }),
+  sig: z.string(),
+  runs: z.array(z.object({ seed: z.number(), passed: z.boolean(), changed: z.boolean(), rows: z.number() })).default([]),
+});
+export const ReproveResult = z.object({
+  seed: z.number().nullable(),
+  reproduced: z.boolean(),
+  proofs: z.record(FreshProof),
+  passed: z.number(),
+  tested: z.number(),
+});
 export const PortfolioSolve = z.object({
   task_id: z.string(),
   concept: z.string(),
@@ -567,6 +633,7 @@ export const PortfolioSolve = z.object({
   solved_at: z.string(),
   attempts: z.number(),
   rechecked: z.boolean(),
+  proof: FreshProof.nullable().default(null),
 });
 export const PortfolioProject = z.object({
   project_id: z.string(),
@@ -589,6 +656,8 @@ export const PortfolioView = z.object({
   projects: z.array(PortfolioProject),
   solved: z.number(),
   rechecked_ok: z.number(),
+  fresh_ok: z.number().default(0),
+  fresh_testable: z.number().default(0),
   mastery: z.record(z.number()),
   built: z.string(),
   share_path: z.string(),
@@ -782,6 +851,14 @@ export const api = {
     owned(learnerId, `/portfolio/${encodeURIComponent(learnerId)}/projects`, { method: "POST", body: JSON.stringify(input) }),
   portfolioRemove: (learnerId: string, what: "solves" | "projects", id: string) =>
     owned(learnerId, `/portfolio/${encodeURIComponent(learnerId)}/${what}/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  portfolioReprove: (learnerId: string) => {
+    const key = portfolioKey(learnerId);
+    return request(ReproveResult, `/portfolio/${encodeURIComponent(learnerId)}/reprove`, {
+      method: "POST",
+      body: JSON.stringify({}),
+      headers: key ? { "X-Portfolio-Key": key } : {},
+    });
+  },
   portfolioExportUrl: (learnerId: string) => {
     const key = portfolioKey(learnerId);
     return `/portfolio/${encodeURIComponent(learnerId)}/export.html${key ? `?key=${encodeURIComponent(key)}` : ""}`;

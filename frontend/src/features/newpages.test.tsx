@@ -128,6 +128,12 @@ describe("calendar feedback loop", () => {
     expect(screen.getByText("25-minute blocks")).toBeInTheDocument();
     expect(await screen.findByText(/Window functions \(later\)/)).toBeInTheDocument();
     expect(screen.getByText(/to fit everything at this confidence: 8 h a week/)).toBeInTheDocument();
+    // H3: measured forgetting and a just-in-time review in free time
+    const memory = screen.getByRole("region", { name: "Your memory" });
+    expect(within(memory).getByText("2 days")).toBeInTheDocument();
+    expect(within(memory).getByText(/measured from your answers/)).toBeInTheDocument();
+    expect(within(memory).getByText(/refresh it before your LEFT \/ RIGHT \/ FULL JOIN lesson/)).toBeInTheDocument();
+    expect(within(memory).getByText(/3 later topics build on it/)).toBeInTheDocument();
   });
 });
 
@@ -160,6 +166,32 @@ describe("today feeds the calendar loop", () => {
     expect(await screen.findByText(/You manage about 65% of planned time/)).toBeInTheDocument();
     expect(screen.getByText(/likely done .* \(80% by/)).toBeInTheDocument();
     expect(ask).not.toBeInTheDocument();
+  });
+});
+
+describe("portfolio fresh-data re-test", () => {
+  it("re-tests saved answers on new data and shows the badge", async () => {
+    let calls = 0;
+    server.use(
+      http.get("/portfolio/:id", () => {
+        calls += 1;
+        if (calls === 1) return HttpResponse.json(portfolioFixture);
+        const s = portfolioFixture.skills.sql[0]!;
+        const proof = {
+          payload: { slug: "learner-abc", task_id: s.task_id, answer_sha256: "ab", seeds: [5, 6, 7], passed: true, fresh: true, datasets: 3, at: "2026-10-22T16:05:00" },
+          sig: "f".repeat(64),
+          runs: [],
+        };
+        return HttpResponse.json({ ...portfolioFixture, fresh_ok: 1, skills: { sql: [{ ...s, proof }] } });
+      }),
+    );
+    const user = userEvent.setup();
+    renderApp(<PortfolioPage />);
+    const box = await screen.findByRole("region", { name: "Re-test on new data" });
+    expect(screen.getByText("0 / 1")).toBeInTheDocument();
+    await user.click(within(box).getByRole("button", { name: /Re-test now/ }));
+    expect(await within(box).findByText(/1 of 1 answers passed on new data/)).toBeInTheDocument();
+    expect(await screen.findByText("Passed on 3 new datasets")).toBeInTheDocument();
   });
 });
 

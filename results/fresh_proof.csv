@@ -1,0 +1,69 @@
+kind,task,language,passes_practice_data,passes_fresh_data,fresh_datasets,answer
+memorised,products_list,sql,True,False,3,"SELECT 'Notebook', 4.5 UNION ALL SELECT 'Pen set', 8.0 UNION ALL SELECT 'SQL book', 32.0 UNION ALL SELECT 'Stats book', 28.0 UNION ALL SELECT 'Headphones', 45.0"
+memorised,pricey_products,sql,True,False,3,SELECT 'SQL book' UNION ALL SELECT 'Stats book' UNION ALL SELECT 'Headphones'
+memorised,top3_products,sql,True,False,3,"SELECT 'Headphones', 45.0 UNION ALL SELECT 'SQL book', 32.0 UNION ALL SELECT 'Stats book', 28.0"
+memorised,categories,sql,True,False,3,SELECT 'stationery' UNION ALL SELECT 'books' UNION ALL SELECT 'electronics'
+memorised,unknown_city,sql,True,False,3,SELECT 'Dana'
+memorised,order_totals,sql,True,False,3,"SELECT 7, 232.0"
+memorised,orders_per_status,sql,True,False,3,"SELECT 'cancelled', 1 UNION ALL SELECT 'pending', 1 UNION ALL SELECT 'shipped', 5"
+memorised,spend_per_customer,sql,True,False,3,"SELECT 'Asha', 72.5 UNION ALL SELECT 'Bilal', 63.0 UNION ALL SELECT 'Chen', 36.5 UNION ALL SELECT 'Dana', 60.0"
+memorised,repeat_customers,sql,True,False,3,SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+memorised,order_customer,sql,True,False,3,"SELECT 100, 'Asha' UNION ALL SELECT 101, 'Asha' UNION ALL SELECT 102, 'Bilal' UNION ALL SELECT 103, 'Chen' UNION ALL SELECT 104, 'Chen' UNION ALL SELECT 105, 'D"
+memorised,orders_per_customer,sql,True,False,3,"SELECT 'Asha', 2 UNION ALL SELECT 'Bilal', 2 UNION ALL SELECT 'Chen', 2 UNION ALL SELECT 'Dana', 1 UNION ALL SELECT 'Eshan', 0 UNION ALL SELECT 'Farah', 0"
+memorised,employee_manager,sql,True,False,3,"SELECT 'Nikhil', 'Meera' UNION ALL SELECT 'Ojas', 'Meera' UNION ALL SELECT 'Priya', 'Nikhil' UNION ALL SELECT 'Rohan', 'Nikhil'"
+memorised,above_average,sql,True,False,3,SELECT 'SQL book' UNION ALL SELECT 'Stats book' UNION ALL SELECT 'Headphones'
+memorised,big_spenders,sql,True,False,3,SELECT 1
+memorised,price_band,sql,True,False,3,"SELECT 'Notebook', 'budget' UNION ALL SELECT 'Pen set', 'budget' UNION ALL SELECT 'SQL book', 'premium' UNION ALL SELECT 'Stats book', 'mid' UNION ALL SELECT 'H"
+memorised,order_vs_customer_total,sql,True,False,3,"SELECT 100, 1, 40.5, 72.5 UNION ALL SELECT 101, 1, 32.0, 72.5 UNION ALL SELECT 102, 2, 51.0, 63.0 UNION ALL SELECT 106, 2, 12.0, 63.0 UNION ALL SELECT 103, 3, 3"
+memorised,ordered_or_books,sql,True,False,3,SELECT 10 UNION ALL SELECT 11 UNION ALL SELECT 12 UNION ALL SELECT 13 UNION ALL SELECT 14 UNION ALL SELECT 15
+memorised,orders_per_month,sql,True,False,3,"SELECT '2025-05', 3 UNION ALL SELECT '2025-06', 3 UNION ALL SELECT '2025-07', 1"
+memorised,shout_names,sql,True,False,3,SELECT 'ASHA' UNION ALL SELECT 'BILAL' UNION ALL SELECT 'CHEN' UNION ALL SELECT 'DANA' UNION ALL SELECT 'ESHAN' UNION ALL SELECT 'FARAH'
+memorised,de_incremental,sql,True,False,3,"SELECT 104, '2025-06-15' UNION ALL SELECT 105, '2025-06-30' UNION ALL SELECT 106, '2025-07-04'"
+memorised,de_latest_order,sql,True,False,3,"SELECT 1, 101, '2025-05-20' UNION ALL SELECT 2, 106, '2025-07-04' UNION ALL SELECT 3, 104, '2025-06-15' UNION ALL SELECT 4, 105, '2025-06-30'"
+memorised,de_null_test,sql,True,False,3,SELECT 104
+memorised,de_fact_revenue,sql,True,False,3,"SELECT 'books', 92.0 UNION ALL SELECT 'electronics', 126.0 UNION ALL SELECT 'stationery', 26.0"
+memorised,pd_series_prices,python,True,False,3,"result = pd.DataFrame([['Notebook', 4.5], ['Pen set', 8.0], ['SQL book', 32.0], ['Stats book', 28.0], ['Headphones', 45.0], ['USB cable', 6.0]], columns=['name'"
+memorised,pd_count_orders,python,True,False,3,result = 7
+memorised,pd_select_cols,python,True,False,3,"result = pd.DataFrame([['Notebook', 4.5], ['Pen set', 8.0], ['SQL book', 32.0], ['Stats book', 28.0], ['Headphones', 45.0], ['USB cable', 6.0]], columns=['name'"
+memorised,pd_cheap_stationery,python,True,False,3,"result = pd.DataFrame([['Notebook'], ['Pen set']], columns=['name'])"
+memorised,pd_price_tax,python,True,False,3,"result = pd.DataFrame([['Notebook', 5.31], ['Pen set', 9.44], ['SQL book', 37.76], ['Stats book', 33.04], ['Headphones', 53.1], ['USB cable', 7.08]], columns=['"
+memorised,pd_missing_amount,python,True,False,3,result = 1
+memorised,pd_spend_per_customer,python,True,False,3,"result = pd.DataFrame([[1, 72.5], [2, 63.0], [3, 36.5], [4, 60.0]], columns=['customer_id', 'amount'])"
+memorised,pd_orders_per_customer,python,True,False,3,"result = pd.DataFrame([['Asha', 2], ['Bilal', 2], ['Chen', 2], ['Dana', 1], ['Eshan', 0], ['Farah', 0]], columns=['name', 'id_y'])"
+memorised,pd_concat_books_electronics,python,True,False,3,"result = pd.DataFrame([['SQL book', 'books'], ['Stats book', 'books'], ['Headphones', 'electronics'], ['USB cable', 'electronics']], columns=['name', 'category'"
+memorised,pd_pivot_status,python,True,False,3,"result = pd.DataFrame([[1, 0.0, 0.0, 72.5], [2, 0.0, 51.0, 12.0], [3, 0.0, 0.0, 36.5], [4, 0.0, 0.0, 60.0]], columns=['customer_id', 'cancelled', 'pending', 'sh"
+memorised,pd_category_code,python,True,False,3,"result = pd.DataFrame([['Notebook', 'S'], ['Pen set', 'S'], ['SQL book', 'B'], ['Stats book', 'B'], ['Headphones', 'E'], ['USB cable', 'E']], columns=['name', '"
+memorised,pd_orders_per_month,python,True,False,3,"result = pd.DataFrame([['2025-05', 3], ['2025-06', 3], ['2025-07', 1]], columns=['order_date', 'count'])"
+memorised,pd_upper_names,python,True,False,3,"result = pd.DataFrame([['ASHA'], ['BILAL'], ['CHEN'], ['DANA'], ['ESHAN'], ['FARAH']], columns=['name'])"
+memorised,pd_top3_prices,python,True,False,3,"result = pd.DataFrame([['Headphones', 45.0], ['SQL book', 32.0], ['Stats book', 28.0]], columns=['name', 'price'])"
+memorised,np_mean_price,python,True,False,3,result = 20.58
+memorised,np_discount,python,True,False,3,"result = pd.DataFrame([[4.05], [7.2], [28.8], [25.2], [40.5], [5.4]], columns=['value'])"
+lucky,unknown_city,sql,True,False,3,SELECT name FROM customers WHERE id = 4
+lucky,pricey_products,sql,True,False,3,"SELECT name FROM products WHERE id IN (12, 13, 14)"
+lucky,top3_products,sql,False,False,3,"SELECT name, price FROM products WHERE price >= 32 ORDER BY price DESC"
+lucky,repeat_customers,sql,True,False,3,"SELECT customer_id FROM orders WHERE customer_id IN (1, 2, 3) GROUP BY customer_id"
+lucky,categories,sql,True,False,3,SELECT 'stationery' UNION SELECT 'books' UNION SELECT 'electronics'
+lucky,order_totals,sql,True,False,3,"SELECT 7, SUM(amount) FROM orders"
+lucky,above_average,sql,True,False,3,SELECT name FROM products WHERE price > 20
+lucky,de_null_test,sql,True,False,3,SELECT 104
+lucky,spend_per_customer,sql,True,False,3,"SELECT c.name, SUM(o.amount) FROM customers c JOIN orders o ON o.customer_id = c.id WHERE c.id < 5 GROUP BY c.name"
+lucky,employee_manager,sql,True,False,3,"SELECT e.name, m.name FROM employees e JOIN employees m ON m.id = e.manager_id WHERE e.id <= 5"
+lucky,orders_per_customer,sql,True,False,3,"SELECT c.name, COUNT(o.id) FROM customers c LEFT JOIN orders o ON o.customer_id = c.id WHERE c.id <= 6 GROUP BY c.id, c.name"
+lucky,big_spenders,sql,False,False,3,"SELECT customer_id FROM orders WHERE customer_id IN (1, 4) GROUP BY customer_id"
+lucky,orders_per_status,sql,True,False,3,"SELECT status, COUNT(*) FROM orders WHERE id <= 106 GROUP BY status"
+lucky,de_incremental,sql,True,False,3,"SELECT id, order_date FROM orders WHERE id IN (104, 105, 106)"
+"correct, written differently",pricey_products,sql,True,True,3,SELECT name FROM products WHERE NOT price <= 20
+"correct, written differently",top3_products,sql,True,True,3,"SELECT name, price FROM products ORDER BY 2 DESC LIMIT 3"
+"correct, written differently",categories,sql,True,True,3,SELECT category FROM products GROUP BY category
+"correct, written differently",unknown_city,sql,True,True,3,SELECT name FROM customers WHERE NOT city IS NOT NULL
+"correct, written differently",repeat_customers,sql,True,True,3,SELECT customer_id FROM orders GROUP BY customer_id HAVING COUNT(id) >= 2
+"correct, written differently",big_spenders,sql,True,True,3,SELECT customer_id FROM orders GROUP BY customer_id HAVING SUM(amount) > 70
+"correct, written differently",orders_per_customer,sql,True,True,3,"SELECT c.name, (SELECT COUNT(*) FROM orders o WHERE o.customer_id = c.id) FROM customers c"
+"correct, written differently",above_average,sql,True,True,3,"WITH a AS (SELECT AVG(price) AS p FROM products) SELECT name FROM products, a WHERE price > a.p"
+"correct, written differently",order_totals,sql,True,True,3,"SELECT COUNT(id), SUM(amount) FROM orders"
+"correct, written differently",orders_per_status,sql,True,True,3,"SELECT status, COUNT(id) FROM orders GROUP BY 1"
+"correct, written differently",de_null_test,sql,True,True,3,SELECT id FROM orders WHERE amount IS NULL ORDER BY id
+"correct, written differently",order_customer,sql,True,True,3,"SELECT orders.id, customers.name FROM customers, orders WHERE customers.id = orders.customer_id"
+"correct, written differently",employee_manager,sql,True,True,3,"SELECT e.name, (SELECT m.name FROM employees m WHERE m.id = e.manager_id) FROM employees e WHERE e.manager_id IS NOT NULL"
+"correct, written differently",shout_names,sql,True,True,3,SELECT UPPER(c.name) FROM customers AS c
+"correct, written differently",price_band,sql,True,True,3,"SELECT name, CASE WHEN price >= 10 AND price <= 30 THEN 'mid' WHEN price < 10 THEN 'budget' ELSE 'premium' END FROM products"

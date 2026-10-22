@@ -8,6 +8,7 @@ import type { PracticeResult, PracticeTask, PracticeTasks } from "../../lib/api"
 import { trackName } from "../../components/Shell";
 import { practiceTarget } from "../../lib/plan";
 import { usePracticeSubmit, usePracticeTasks, useResolve } from "../../lib/queries";
+import { FixClip } from "./FixClip";
 
 const MASTERED = 0.75;
 
@@ -765,6 +766,7 @@ function Checks({ result, names }: { result: PracticeResult; names: Map<string, 
               </div>
             </div>
           ))}
+        {!result.correct && result.fix_clip && <FixClip clip={result.fix_clip} />}
       </div>
     </section>
   );

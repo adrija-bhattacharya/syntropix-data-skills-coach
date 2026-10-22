@@ -53,7 +53,7 @@ export function PortfolioPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-space-sm">
         <Stat icon="task_alt" label="Problems solved" value={String(v.solved)} />
         <Stat icon="verified" label="Still pass when re-run" value={`${v.rechecked_ok} / ${v.solved}`} />
-        <Stat icon="school" label="Skills shown" value={String(Object.keys(v.skills).length)} />
+        <Stat icon="shuffle" label="Pass on new data" value={`${v.fresh_ok} / ${v.fresh_testable}`} />
         <Stat icon="folder_special" label="Projects" value={String(v.projects.length)} />
       </div>
 
@@ -61,6 +61,8 @@ export function PortfolioPage() {
         <Profile v={v} learnerId={learnerId} onSaved={set} shareUrl={shareUrl} />
         <Projects v={v} learnerId={learnerId} onSaved={set} />
       </div>
+
+      {v.fresh_testable > 0 && <Reprove learnerId={learnerId} />}
 
       <section className="flex flex-col gap-space-sm">
         <h2 className="font-headline-sm text-headline-sm">Solved and verified</h2>
@@ -84,6 +86,11 @@ export function PortfolioPage() {
                         <Pill tone={s.rechecked ? "tertiary" : "error"} icon={s.rechecked ? "verified" : "error"}>
                           {s.rechecked ? "Passes when re-run" : "No longer passes"}
                         </Pill>
+                        {s.proof && (
+                          <Pill tone={s.proof.payload.passed ? "tertiary" : "error"} icon="shuffle">
+                            {s.proof.payload.passed ? `Passed on ${s.proof.payload.datasets} new datasets` : "Failed on new data"}
+                          </Pill>
+                        )}
                         <RemoveButton label={`Remove ${s.concept_name} from portfolio`} onClick={() => api.portfolioRemove(learnerId, "solves", s.task_id).then(set)} />
                       </span>
                     </div>
@@ -100,6 +107,35 @@ export function PortfolioPage() {
         )}
       </section>
     </div>
+  );
+}
+
+/** Claim H2: re-run the saved answers on newly generated practice data. */
+function Reprove({ learnerId }: { learnerId: string }) {
+  const qc = useQueryClient();
+  const run = useMutation({
+    mutationFn: () => api.portfolioReprove(learnerId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["portfolio", learnerId] }),
+  });
+  return (
+    <section aria-label="Re-test on new data" className="p-space-md rounded-xl bg-surface-container-low flex flex-wrap items-center justify-between gap-space-sm">
+      <div className="flex flex-col gap-1 max-w-3xl">
+        <span className="font-body-strong text-body-md flex items-center gap-space-xs"><Ms name="shuffle" className="text-primary" /> Re-test on data it has never seen</span>
+        <span className="font-body-sm text-body-sm text-on-surface-variant">
+          Your SQL and pandas answers are run on a newly made version of the practice database, with more rows, new values and new edge
+          cases. A memorised answer fails there, so a pass shows real skill. Anyone opening your public page can run this too.
+        </span>
+        {run.isSuccess && (
+          <span className="font-body-sm text-body-sm text-tertiary">
+            {run.data.passed} of {run.data.tested} answers passed on new data just now.
+          </span>
+        )}
+        {run.isError && <span className="font-body-sm text-body-sm text-error">{run.error.message}</span>}
+      </div>
+      <button type="button" disabled={run.isPending} onClick={() => run.mutate()} className="px-space-md py-2 rounded-lg bg-primary text-on-primary font-body-strong text-body-sm flex items-center gap-1.5 disabled:opacity-60">
+        <Ms name="refresh" size={16} /> {run.isPending ? "Re-testing…" : "Re-test now"}
+      </button>
+    </section>
   );
 }
 

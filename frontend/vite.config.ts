@@ -21,6 +21,7 @@ const ENDPOINTS = [
   "/reschedule",
   "/portfolio/", // trailing slash: /portfolio itself is the SPA page
   "/p/", // public portfolio pages
+  "/attest",
 ];
 
 // build output -> web/  (FastAPI serves it from there at /)

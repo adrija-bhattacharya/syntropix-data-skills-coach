@@ -126,28 +126,35 @@ RUNNER = (
 import json, sys, sqlite3
 import pandas as pd, numpy as np
 req = json.loads(sys.stdin.read())
-con = sqlite3.connect(":memory:")
-con.executescript(req["db"])
-env = {"pd": pd, "np": np}
-for t in ("customers", "products", "orders", "order_items", "employees"):
-    env[t] = pd.read_sql(f"SELECT * FROM {t}", con)
-env.update(req.get("env", {}))
 safe = {k: __builtins__.__dict__[k] if hasattr(__builtins__, "__dict__") else __builtins__[k]
         for k in ("abs", "all", "any", "bool", "dict", "enumerate", "filter", "float", "int",
                   "isinstance", "len", "list", "map", "max", "min", "print", "range", "reversed",
                   "round", "set", "sorted", "str", "sum", "tuple", "zip", "ValueError", "KeyError",
                   "TypeError", "Exception", "ZeroDivisionError", "IndexError", "__import__")}
-env["__builtins__"] = safe
-try:
-    exec(compile(req["code"], "<your code>", "exec"), env)
-    if "result" not in env:
-        out = {"error": "set a variable called result", "kind": "no_result"}
-    else:
+
+
+def run_one(db):
+    con = sqlite3.connect(":memory:")
+    con.executescript(db)
+    env = {"pd": pd, "np": np}
+    for t in ("customers", "products", "orders", "order_items", "employees"):
+        env[t] = pd.read_sql(f"SELECT * FROM {t}", con)
+    env.update(req.get("env", {}))
+    env["__builtins__"] = safe
+    try:
+        exec(compile(req["code"], "<your code>", "exec"), env)
+        if "result" not in env:
+            return {"error": "set a variable called result", "kind": "no_result"}
         cols, rows = _table(env["result"])
-        out = {"columns": cols, "rows": rows}
-except Exception as e:
-    out = {"error": f"{type(e).__name__}: {e}", "kind": type(e).__name__}
-sys.stdout.write(json.dumps(out))
+        return {"columns": cols, "rows": rows}
+    except Exception as e:
+        return {"error": f"{type(e).__name__}: {e}", "kind": type(e).__name__}
+
+
+if "dbs" in req:  # one start-up, several databases (fresh-data re-tests)
+    sys.stdout.write(json.dumps([run_one(db) for db in req["dbs"]]))
+else:
+    sys.stdout.write(json.dumps(run_one(req["db"])))
 """
 )
 
@@ -166,9 +173,14 @@ class PyResult:
 
 
 def run_python(
-    code: str, env: dict[str, Any] | None = None, *, timeout_s: float = TIMEOUT_S
+    code: str,
+    env: dict[str, Any] | None = None,
+    *,
+    timeout_s: float = TIMEOUT_S,
+    db: str = SHOP_DB,
 ) -> PyResult:
-    """Run learner code in the sandbox; never raises for learner mistakes."""
+    """Run learner code in the sandbox; never raises for learner mistakes.
+    ``db``: the practice database's script (a fresh variant for re-proving)."""
     t0 = time.perf_counter()
     try:
         check_code(code)
@@ -178,7 +190,7 @@ def run_python(
         )
     except SandboxRejected as e:
         return PyResult(ExecResult((), (), str(e), "forbidden"), "Forbidden")
-    payload = json.dumps({"code": code, "db": SHOP_DB, "env": env or {}})
+    payload = json.dumps({"code": code, "db": db, "env": env or {}})
     try:
         proc = subprocess.run(
             [sys.executable, "-I", "-c", RUNNER],
@@ -197,6 +209,10 @@ def run_python(
             ExecResult((), (), (proc.stderr or "the sandbox failed")[-400:], "other", ms=ms),
             "Crash",
         )
+    return _parse(out, ms)
+
+
+def _parse(out: dict[str, Any], ms: float) -> PyResult:
     if "error" in out:
         kind = _KIND.get(out.get("kind", ""), "other")
         return PyResult(ExecResult((), (), out["error"], kind, ms=ms), out.get("kind", ""))
@@ -206,10 +222,47 @@ def run_python(
     )
 
 
+def run_python_many(
+    code: str, dbs: list[str], env: dict[str, Any] | None = None, *, timeout_s: float = TIMEOUT_S
+) -> list[PyResult]:
+    """The same learner code on several databases, in one sandbox start-up."""
+    try:
+        check_code(code)
+    except SyntaxError as e:
+        bad = PyResult(
+            ExecResult((), (), f"SyntaxError: {e.msg} (line {e.lineno})", "syntax"), "SyntaxError"
+        )
+        return [bad] * len(dbs)
+    except SandboxRejected as e:
+        return [PyResult(ExecResult((), (), str(e), "forbidden"), "Forbidden")] * len(dbs)
+    t0 = time.perf_counter()
+    payload = json.dumps({"code": code, "dbs": dbs, "env": env or {}})
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-I", "-c", RUNNER], input=payload, capture_output=True, text=True,
+            timeout=timeout_s * max(1, len(dbs)),
+        )  # fmt: skip
+    except subprocess.TimeoutExpired:
+        return [PyResult(ExecResult((), (), "your code ran too long", "timeout"), "Timeout")] * len(
+            dbs
+        )
+    ms = (time.perf_counter() - t0) * 1e3 / max(1, len(dbs))
+    try:
+        outs = json.loads(proc.stdout or "[]")
+    except json.JSONDecodeError:
+        outs = []
+    if not isinstance(outs, list) or len(outs) != len(dbs):
+        crash = ExecResult((), (), (proc.stderr or "the sandbox failed")[-400:], "other", ms=ms)
+        return [PyResult(crash, "Crash")] * len(dbs)
+    return [_parse(o, ms) for o in outs]
+
+
 _REF_CACHE: dict[str, ExecResult] = {}
 
 
-def run_reference(key: str, code: str, env: dict[str, Any] | None = None) -> ExecResult:
+def run_reference(
+    key: str, code: str, env: dict[str, Any] | None = None, db: str = SHOP_DB
+) -> ExecResult:
     """Run trusted reference code in-process (fast) and normalise its result."""
     if key in _REF_CACHE:
         return _REF_CACHE[key]
@@ -221,7 +274,7 @@ def run_reference(key: str, code: str, env: dict[str, Any] | None = None) -> Exe
     ns: dict[str, Any] = {}
     exec(NORMALISE_SRC, ns)
     con = sqlite3.connect(":memory:")
-    con.executescript(SHOP_DB)
+    con.executescript(db)
     g: dict[str, Any] = {"pd": pd, "np": np}
     for t in ("customers", "products", "orders", "order_items", "employees"):
         g[t] = pd.read_sql(f"SELECT * FROM {t}", con)

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { ErrorBox, Loading, Ms, Pill } from "../../components/stitch";
+import { ErrorBox, Loading, Ms, Pill, dayLabel } from "../../components/stitch";
 import { api, type RescheduleResponse } from "../../lib/api";
 import { practiceTarget } from "../../lib/plan";
 
@@ -183,6 +183,75 @@ export function WhatFitsCard(props: { learnerId: string; goal: string; goals: st
             </span>
           )}
         </>
+      )}
+    </section>
+  );
+}
+
+const SOURCE_WORD: Record<string, string> = {
+  measured: "measured from your answers",
+  "from prerequisites": "estimated from the topics it builds on",
+  "your average": "your average so far",
+  default: "a typical learner",
+};
+
+/** H3: how long each topic stays with you, and the short reviews that keep it there. */
+export function Memory({ r, domain }: { r: RescheduleResponse; domain: string }) {
+  const { topics } = r.memory;
+  if (!topics.length && !r.reviews.length) {
+    return (
+      <section aria-label="Your memory" className="p-space-md rounded-lg bg-surface-container-lowest flex flex-col gap-1">
+        <span className="font-body-strong text-body-sm flex items-center gap-1.5"><Ms name="psychology" className="text-primary" /> How long topics stay with you</span>
+        <span className="font-body-sm text-body-sm text-on-surface-variant">
+          Not measured yet. Come back to a topic you know after a day or more and answer a practice question: Syntropix learns how fast you
+          forget each topic and books a 10-minute review just before you'd need it.
+        </span>
+      </section>
+    );
+  }
+  const shown = topics.slice(0, 6);
+  return (
+    <section aria-label="Your memory" className="p-space-md rounded-lg bg-surface-container-lowest flex flex-col gap-space-sm">
+      <span className="font-body-strong text-body-sm flex items-center gap-1.5"><Ms name="psychology" className="text-primary" /> How long topics stay with you</span>
+      {shown.length > 0 && (
+        <ul className="flex flex-col gap-1" aria-label="Topic memory">
+          {shown.map((t) => (
+            <li key={t.concept_id} className="flex flex-wrap items-baseline justify-between gap-space-xs font-body-sm text-body-sm">
+              <span>{t.concept}</span>
+              <span className="text-on-surface-variant">
+                half remembered after <b className="text-on-surface">{t.half_life_days < 1.5 ? `${Math.round(t.half_life_days * 24)} h` : `${Math.round(t.half_life_days)} days`}</b>{" "}
+                <span className="text-outline">({SOURCE_WORD[t.source] ?? t.source})</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {r.reviews.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <span className="font-label-annotation text-label-annotation text-outline uppercase tracking-wider">Quick reviews booked in your free time</span>
+          <ul className="flex flex-col gap-1" aria-label="Booked reviews">
+            {r.reviews.map((v) => {
+              const lab = practiceTarget(v.concept_id, domain);
+              return (
+                <li key={`${v.concept_id}-${v.day}`} className="flex flex-wrap items-center gap-space-sm font-body-sm text-body-sm">
+                  <Pill tone={v.late ? "warn" : "neutral"} icon="event">{dayLabel(v.day)} {v.start}</Pill>
+                  <span className="flex-1 min-w-0">
+                    <b>{v.concept}</b>, 10 min:{" "}
+                    {v.before
+                      ? `refresh it before your ${v.before} lesson (you'd have about ${Math.round(v.recall_at_due * 100)}% of it left).`
+                      : `it's fading (about ${Math.round(v.recall_at_due * 100)}% left by then).`}
+                    {v.priority > 0 ? ` ${v.priority} later topic${v.priority === 1 ? "" : "s"} build on it.` : ""}
+                  </span>
+                  {lab && (
+                    <Link to={`/practice?target=${encodeURIComponent(lab)}`} className="px-space-sm py-1 rounded bg-primary text-on-primary font-label-badge text-label-badge">
+                      Review now
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
     </section>
   );
